@@ -1,0 +1,6 @@
+*.pyc
+*.db
+samples/
+Mirai-Source-Code-master/
+obf.py
+

