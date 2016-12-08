@@ -26,7 +26,8 @@ function query_sample_stats() {
 
 function query_conn_history() {
 	global $sql;
-	$date = time() - 3600 * 24;
+	$date = time();
+	$date = $date - (($date % 3600) + 3600 * 24);
 	$q = "select i, a, b from (
 		select COUNT(id) as a, date/3600 as i from conns
 		INNER JOIN conns_urls on conns_urls.id_conn = conns.id WHERE date <= " . $date . " GROUP BY i

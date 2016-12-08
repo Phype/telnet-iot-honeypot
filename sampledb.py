@@ -17,7 +17,7 @@ from virustotal import Virustotal
 class Sampledb:
 	def __init__(self):
 		self.vt         = Virustotal()
-		self.vt_on      = True
+		self.vt_on      = False
 		self.vt_queue   = Queue.Queue()
 		self.vt_worker  = None
 
@@ -73,8 +73,9 @@ class Sampledb:
 		url = url.fetchone()
 		return url
 
-	def put_conn(self, ip, user, password):
-		date = int(time.time())
+	def put_conn(self, ip, user, password, date=None):
+		if date == None:
+			date = int(time.time())
 		c = self.sql.cursor()
 		c.execute("INSERT INTO conns VALUES (NULL,?,?,?,?)", (ip, date, user, password))
 		id_conn = c.lastrowid
@@ -96,6 +97,7 @@ class Sampledb:
 				self.sql.commit()
 			else:
 				dbg("Url already known")
+				self.db_link_url_conn(id_url, id_conn)
 				return
 		else:
 			id_url = self.db_add_url(url, int(time.time()))
