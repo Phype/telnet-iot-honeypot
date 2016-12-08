@@ -29,10 +29,11 @@ class Sampledb:
 		self.sh_re = re.compile(".*\\.sh$")
 		self.dl_re = re.compile(".*wget (?:-[a-zA-Z] )?(http[^ ;><&]*).*")
 
-		if self.vt_on:
-			self.vt_worker = threading.Thread(target=self.vt_work)
-			# self.vt_worker.deamon = True
-			self.vt_worker.start()
+	def enable_vt(self):
+		self.vt_on      = True
+		self.vt_worker = threading.Thread(target=self.vt_work)
+		# self.vt_worker.deamon = True
+		self.vt_worker.start()
 
 	def setup_db(self):
 		self.sql.execute("CREATE TABLE IF NOT EXISTS samples    (id INTEGER PRIMARY KEY AUTOINCREMENT, sha256 TEXT UNIQUE, date INTEGER, name TEXT, file TEXT)")
@@ -51,9 +52,9 @@ class Sampledb:
 		self.sql.execute("INSERT INTO conns_urls VALUES (?,?)", (id_conn, id_url))
 		self.sql.commit()
 
-	def db_add_sample(self, sha256, date, name, filename, id_url):
+	def db_add_sample(self, sha256, date, name, filename, id_url, length):
 		c = self.sql.cursor()
-		c.execute("INSERT INTO samples VALUES (NULL,?,?,?,?)", (sha256, date, name, filename))
+		c.execute("INSERT INTO samples VALUES (NULL,?,?,?,?,?)", (sha256, date, name, filename, length))
 		id_sample = c.lastrowid
 		self.db_url_set_sample(id_sample, id_url)
 		self.sql.commit()
@@ -120,7 +121,7 @@ class Sampledb:
 			os.remove(f["file"])
 			return
 		
-		self.db_add_sample(f["sha256"], f["date"], f["name"], f["file"], id_url)
+		self.db_add_sample(f["sha256"], f["date"], f["name"], f["file"], id_url, f["length"])
 
 		if self.vt_on:
 			dbg("ANALYZE")

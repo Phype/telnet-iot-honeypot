@@ -66,6 +66,7 @@ class Telnetd:
 		self.sock    = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.do_run  = True
 		self.samples = Sampledb()
+		self.samples.enable_vt()
 
 	def run(self):
 		self.sock.bind((self.host, self.port))

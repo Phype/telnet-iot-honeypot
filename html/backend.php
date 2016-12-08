@@ -5,7 +5,7 @@ $sql = new SQLite3("samples.db");
 function query_sample_stats() {
 	global $sql;
 	$q = "select
-	samples.name, samples.sha256, COUNT(samples.id), MAX(conns.date)
+	samples.name, samples.sha256, COUNT(samples.id), MAX(conns.date), samples.length
 	from conns_urls
 	INNER JOIN conns on conns_urls.id_conn = conns.id
 	INNER JOIN urls on conns_urls.id_url = urls.id
@@ -19,7 +19,8 @@ function query_sample_stats() {
 			"count"    => $row[2],
 			"name"     => $row[0],
 			"sha256"   => $row[1],
-			"lastseen" => $row[3]
+			"lastseen" => $row[3],
+			"length"   => $row[4]
 		));
 	}
 	return $list;
@@ -60,13 +61,14 @@ function query_basic() {
 
 function query_newest_samples() {
 	global $sql;
-	$result = $sql->query("select name, date, sha256 from samples order by date desc limit 10");
+	$result = $sql->query("select name, date, sha256, length from samples order by date desc limit 10");
 	$list   = Array();
 	while ($row = $result->fetchArray()) {
 		array_push($list, array(
 			"name"   => $row[0],
 			"date"   => $row[1],
-			"sha256" => $row[2]
+			"sha256" => $row[2],
+			"length" => $row[3]
 		));
 	}
 	return $list;
