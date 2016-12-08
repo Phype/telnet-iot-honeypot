@@ -10,6 +10,12 @@
 <script type="text/javascript" src="https://nack.duckdns.org/backend.php"></script>
 
 <script>
+
+function formatDate(date) {
+	d = new Date(date * 1000);
+	return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
+}
+
 angular.module('stats', ["chart.js"])
 .controller('statController', function($scope) {
 	$scope.samples     = [];
@@ -27,13 +33,14 @@ angular.module('stats', ["chart.js"])
 
 		for (var i = 0; i < data.length; i++) {
 			if (data[i]["count"] >= $scope.threshold * count) {
+				data[i].color = "#" + data[i]["sha256"].substr(0,6); 
 				list.push(data[i]);
 			} else {
 				others += data[i]["count"];
 			}
 		}
 
-		list.push({ "name": "Other", "count": others, "sha256": "dddddd" });
+		list.push({ "name": "Other", "count": others, "color": "#dddddd" });
 		$scope.samples = list;
 	};
 
@@ -41,7 +48,13 @@ angular.module('stats', ["chart.js"])
 
 	$scope.labels = $scope.samples.map(function (s) {return s["name"]});
 	$scope.data   = $scope.samples.map(function (s) {return s["count"]});
-	$scope.colors = $scope.samples.map(function (s) {return "#" + s["sha256"].substr(0,6)});
+	$scope.colors = $scope.samples.map(function (s) {return s["color"]});
+
+	$scope.formatDate = function(date) {
+		if (date == null) return "";
+		d = new Date(date * 1000);
+		return d.getDate() + "." + d.getMonth() + " " + d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
+	}; 
 }).controller('histController', function($scope) {
 	$scope.history = hist;
 	$scope.series  = ["Urls", "Connections"];
@@ -119,11 +132,12 @@ angular.module('stats', ["chart.js"])
 		</div>
 		<div class="col-md-8 col-xs-12">
 			<table class="table table-condensed" style="font-size: 10pt;">
-				<tr><th>Count</th><th>Name</th><th>SHA256</th></tr>
+				<tr><th>Count</th><th>Name</th><th>SHA256</th><th>Last seen</th></tr>
 				<tr ng-repeat="s in samples">
 					<td>{{ s.count }}</td>
 					<td>{{ s.name }}</td>
 					<td><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256 }}</a></td>
+					<td>{{ formatDate(s.lastseen) }}</td>
 				</tr>
 			</table>
 		</div>

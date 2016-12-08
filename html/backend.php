@@ -5,7 +5,7 @@ $sql = new SQLite3("samples.db");
 function query_sample_stats() {
 	global $sql;
 	$q = "select
-	samples.name, samples.sha256, COUNT(samples.id)
+	samples.name, samples.sha256, COUNT(samples.id), MAX(conns.date)
 	from conns_urls
 	INNER JOIN conns on conns_urls.id_conn = conns.id
 	INNER JOIN urls on conns_urls.id_url = urls.id
@@ -16,9 +16,10 @@ function query_sample_stats() {
 	$list   = Array();
 	while ($row = $result->fetchArray()) {
 		array_push($list, array(
-			"count"  => $row[2],
-			"name"   => $row[0],
-			"sha256" => $row[1]
+			"count"    => $row[2],
+			"name"     => $row[0],
+			"sha256"   => $row[1],
+			"lastseen" => $row[3]
 		));
 	}
 	return $list;
