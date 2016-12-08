@@ -31,9 +31,9 @@ function query_conn_history() {
 	$date = $date - (($date % 3600) + 3600 * 24);
 	$q = "select i, a, b from (
 		select COUNT(id) as a, date/3600 as i from conns
-		INNER JOIN conns_urls on conns_urls.id_conn = conns.id WHERE date <= " . $date . " GROUP BY i
+		INNER JOIN conns_urls on conns_urls.id_conn = conns.id WHERE date >= " . $date . " GROUP BY i
 	) INNER JOIN (
-		select COUNT(id) as b, date/3600 as j from conns WHERE date <= " . $date . " GROUP BY j
+		select COUNT(id) as b, date/3600 as j from conns WHERE date >= " . $date . " GROUP BY j
 	) on i=j;";
 	$result = $sql->query($q);
 	$list   = Array();
