@@ -33,7 +33,7 @@ angular.module('stats', ["chart.js"])
 			}
 		}
 
-		list.push({ "name": "Other", "count": others });
+		list.push({ "name": "Other", "count": others, "sha256": "dddddd" });
 		$scope.samples = list;
 	};
 
@@ -41,6 +41,7 @@ angular.module('stats', ["chart.js"])
 
 	$scope.labels = $scope.samples.map(function (s) {return s["name"]});
 	$scope.data   = $scope.samples.map(function (s) {return s["count"]});
+	$scope.colors = $scope.samples.map(function (s) {return "#" + s["sha256"].substr(0,6)});
 }).controller('histController', function($scope) {
 	$scope.history = hist;
 	$scope.series  = ["Urls", "Connections"];
@@ -113,7 +114,7 @@ angular.module('stats', ["chart.js"])
 			</p>
 		</div>
 		<div class="col-md-4 col-xs-12">
-			<canvas id="doughnut" class="chart chart-doughnut" chart-data="data" chart-labels="labels">
+			<canvas id="doughnut" class="chart chart-doughnut" chart-data="data" chart-labels="labels" chart-colors="colors">
 			</canvas> 
 		</div>
 		<div class="col-md-8 col-xs-12">
