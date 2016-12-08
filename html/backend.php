@@ -91,7 +91,7 @@ function query_newest_conns() {
 	$list   = Array();
 	while ($row = $result->fetchArray()) {
 		array_push($list, array(
-			"ip"     => $row[0],
+			"ip"     => preg_replace("/\.\d+$/", ".xxx", $row[0]),
 			"date"   => $row[1],
 			"user"   => $row[2],
 			"pass"   => $row[3]
