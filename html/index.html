@@ -7,13 +7,19 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.2/angular.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/angular.chartjs/latest/angular-chart.min.js"></script>
-<script type="text/javascript" src="https://nack.duckdns.org/backend.php"></script>
+<script type="text/javascript" src="https://nack.duckdns.org/backend.php?beta=true"></script>
 
 <script>
 
 function formatDate(date) {
 	d = new Date(date * 1000);
 	return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
+}
+
+function formatDateTime(date) {
+	if (date == null) return "";
+	d = new Date(date * 1000);
+	return d.getDate() + "." + d.getMonth() + " " + d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
 }
 
 angular.module('stats', ["chart.js"])
@@ -33,7 +39,8 @@ angular.module('stats', ["chart.js"])
 
 		for (var i = 0; i < data.length; i++) {
 			if (data[i]["count"] >= $scope.threshold * count) {
-				data[i].color = "#" + data[i]["sha256"].substr(0,6); 
+				var x = data[i]["sha256"].substr(0,2);
+				data[i].color = "#ff" + x + "11"; 
 				list.push(data[i]);
 			} else {
 				others += data[i]["count"];
@@ -50,11 +57,7 @@ angular.module('stats', ["chart.js"])
 	$scope.data   = $scope.samples.map(function (s) {return s["count"]});
 	$scope.colors = $scope.samples.map(function (s) {return s["color"]});
 
-	$scope.formatDate = function(date) {
-		if (date == null) return "";
-		d = new Date(date * 1000);
-		return d.getDate() + "." + d.getMonth() + " " + d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
-	}; 
+	$scope.formatDate = formatDateTime;
 }).controller('histController', function($scope) {
 	$scope.history = hist;
 	$scope.series  = ["Urls", "Connections"];
@@ -65,8 +68,29 @@ angular.module('stats', ["chart.js"])
 			return "";
 		}
 	});
-	$scope.data    = [ $scope.history.map(function (s) { return s["count_url"]}) ,
-		$scope.history.map(function (s) { return s["count"]}) ];
+	$scope.data    = [
+		$scope.history.map(function (s) { return s["count_url"]}) ,
+		$scope.history.map(function (s) { return s["count"]})
+	];
+}).controller('histController2', function($scope) {
+	$scope.series  = [];
+	$scope.labels  = anal["dates"].map(formatDateTime) ,
+	$scope.data    = [];
+
+	for (var i = 0; i < 8; i++) {
+		var sha256 = data[i]["sha256"];
+		if (anal["samples"][sha256]["data2"])
+			$scope.data.push(anal["samples"][sha256]["data2"]);
+			$scope.series.push(data[i]["result"]);
+	}
+
+	console.log($scope.data);
+
+	//[
+	//	anal["samples"]["33132623f5b37b24b3fd7212419f1080dde41f214ffe89920f737a0591f94b82"]["data2"] ,
+	//	anal["samples"]["df4a0d5a71192be61622cf44220495fc897e53eb04062bcbe6941739a67a1c3a"]["data2"] ,
+	//	anal["samples"]["cbd7a98378aecf45e882a4aca63f4e3c3bff63db78082e416ddf951e6b0f5db6"]["data2"]
+	//];
 }).controller('basicController', function($scope) {
 	$scope.conns   = base.connections;
 	$scope.urls    = base.urls;
@@ -119,6 +143,17 @@ angular.module('stats', ["chart.js"])
 			</p>
 		</div>
 	</div>
+
+	<div class="row">
+		<div class="col-md-12 col-xs-12" ng-controller="histController2">
+			<h3>Top Malware History</h3>
+			<canvas class="chart chart-line" chart-data="data" chart-labels="labels" chart-series="series"></canvas>
+		</div>
+		<!--
+		<div class="col-md-6 col-xs-12" ng-controller="histController2">
+		</div>-->
+	</div>
+
 	<div class="row" ng-controller="statController">
 		<div class="col-md-12 col-xs-12">
 			<h3>Sample distribution by connection count</h3>
@@ -137,11 +172,12 @@ angular.module('stats', ["chart.js"])
 		</div>
 		<div class="col-md-8 col-xs-12">
 			<table class="table table-condensed" style="font-size: 10pt;">
-				<tr><th>Count</th><th>Name</th><th>SHA256</th><th class="hidden-xs">Size</th><th>Last seen</th></tr>
+				<tr><th>Count</th><th>Name</th><th>AV Result</th><th>SHA256</th><th class="hidden-xs">Size</th><th>Last seen</th></tr>
 				<tr ng-repeat="s in samples">
 					<td>{{ s.count }}</td>
 					<td>{{ s.name }}</td>
-					<td class="hidden-xs"><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256.substr(0,48) + "..." }}</a></td>
+					<td>{{ s.result }}</td>
+					<td class="hidden-xs"><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256.substr(0,32) + "..." }}</a></td>
 					<td class="visible-xs"><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256.substr(0,6) + "..." }}</a></td>
 					<td class="hidden-xs">{{ s.length }}</td>
 					<td>{{ formatDate(s.lastseen) }}</td>
@@ -203,6 +239,6 @@ angular.module('stats', ["chart.js"])
 		<span style="unicode-bidi: bidi-override; direction: rtl;" class="pull-right">moc [TOD] liamg [TA] rentiej.p :tcatnoC</span>
 	</div>
 </div>
-</div>
+
 </body>
 </html>

@@ -36,7 +36,7 @@ class Sampledb:
 		self.vt_worker.start()
 
 	def setup_db(self):
-		self.sql.execute("CREATE TABLE IF NOT EXISTS samples    (id INTEGER PRIMARY KEY AUTOINCREMENT, sha256 TEXT UNIQUE, date INTEGER, name TEXT, file TEXT)")
+		self.sql.execute("CREATE TABLE IF NOT EXISTS samples    (id INTEGER PRIMARY KEY AUTOINCREMENT, sha256 TEXT UNIQUE, date INTEGER, name TEXT, file TEXT, result TEXT)")
 		self.sql.execute("CREATE TABLE IF NOT EXISTS urls       (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, date INTEGER, sample INTEGER)")
 		self.sql.execute("CREATE TABLE IF NOT EXISTS conns      (id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT, date INTEGER, user TEXT, pass TEXT)")
 		self.sql.execute("CREATE TABLE IF NOT EXISTS conns_urls (id_conn INTEGER, id_url INTEGER)")
