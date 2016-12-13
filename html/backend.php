@@ -1,19 +1,103 @@
 <?PHP
 
-$sql = new SQLite3("samples.db");
+/**
+ * Should contain something like
+ * $sql = new SQLite3("samples.db");
+ */
+include('db.php');
 
-/*
+/**
+ * Query attack history for given sample.
+ * The resulting list will be zero filled if no attacks were present,
+ * so the resulting list should count exactly ($to - $from) / $timedelta entries.
+ *
+ * assert
+ */
+function query_history_for_sample($sample, $from, $to, $timedelta) {
+	global $sql;
+	
+	assert($sample != "");
+	assert($from % $timedelta == 0);
+	assert($to   % $timedelta == 0);
+	assert($timedelta > 0);
+	
+	$q = $sql->prepare("SELECT id FROM samples WHERE sha256 = :sha256");
+	$q->bindValue(":sha256", $sample, SQLITE3_TEXT);
+	$r = $q->execute();
+	$id_sample = $r->fetchArray()[0];
 
-Over-TIme analysis of samples:
+	assert($id_sample > 0);	
+	
+	$q = $sql->prepare('select COUNT(conns.id), conns.date / :delta as hour from conns
+	INNER JOIN conns_urls on conns_urls.id_conn = conns.id
+	INNER JOIN urls on conns_urls.id_url = urls.id
+	WHERE urls.sample = :id
+	AND conns.date >= :from
+	AND conns.date <= :to
+	GROUP BY hour
+	ORDER BY hour ASC');
+	
+	$q->bindValue(":id",    $id_sample, SQLITE3_INTEGER);
+	$q->bindValue(":delta", $timedelta, SQLITE3_INTEGER);
+	$q->bindValue(":from",  $from,      SQLITE3_INTEGER);
+	$q->bindValue(":to",    $to,        SQLITE3_INTEGER);
 
-select COUNT(conns.id), samples.sha256, conns.date / (3600 * 12) as hour from conns
-INNER JOIN conns_urls on conns_urls.id_conn = conns.id
-INNER JOIN urls on conns_urls.id_url = urls.id
-INNER JOIN samples on urls.sample = samples.id
-WHERE samples.name = ".i"
-GROUP BY hour, samples.id
+	return query_history($q, $from, $to, $timedelta);
+}
 
-*/
+/**
+ * Query global connectin history
+ */
+function query_history_new($from, $to, $timedelta) {
+	global $sql;
+	
+	assert($from % $timedelta == 0);
+	assert($to   % $timedelta == 0);
+	assert($timedelta > 0);
+	
+	$q = $sql->prepare('select COUNT(conns.id), conns.date / :delta as hour from conns
+	WHERE conns.date >= :from
+	AND conns.date <= :to
+	GROUP BY hour');
+	
+	$q->bindValue(":delta", $timedelta, SQLITE3_INTEGER);
+	$q->bindValue(":from",  $from,      SQLITE3_INTEGER);
+	$q->bindValue(":to",    $to,        SQLITE3_INTEGER);
+
+	return query_history($q, $from, $to, $timedelta);
+}
+
+function query_history($q, $from, $to, $timedelta) {
+	$r = $q->execute();
+	
+	$list = array();
+	$last = $from - $timedelta;
+	
+	while ($row = $r->fetchArray()) {
+		$date  = $row[1] * $timedelta;
+		$count = $row[0];
+	
+		while ($last != 0 && $last + $timedelta < $date) {
+			$last += $timedelta;
+			array_push($list, 0);
+		}
+		
+		array_push($list, $count);
+		$last += $timedelta;
+	}
+	
+	while ($last < $to) {
+		$last += $timedelta;
+		array_push($list, 0);		
+	}
+	
+	return array(
+		"from"  => $from,
+		"to"    => $to,
+		"delta" => $timedelta,
+		"data"  => $list
+	);
+}
 
 function query_history_samples() {
 	global $sql;
@@ -178,14 +262,37 @@ function query_newest_conns() {
 	return $list;
 }
 
-echo "var data = " . json_encode(query_sample_stats()) . ";\r\n";
-echo "var hist = " . json_encode(query_conn_history()) . ";\r\n";
-echo "var base = " . json_encode(query_basic()) . ";\r\n";
-echo "var samples = " . json_encode(query_newest_samples()) . ";\r\n";
-echo "var urls = " . json_encode(query_newest_urls()) . ";\r\n";
-echo "var conns = " . json_encode(query_newest_conns()) . ";\r\n";
-
-if (isset($_GET['beta'])) {
-	echo "var anal = " . json_encode(query_history_samples()) . ";\r\n";
+if (!isset($_GET["cmd"])) {
+    echo "var data = " . json_encode(query_sample_stats()) . ";\r\n";
+    echo "var hist = " . json_encode(query_conn_history()) . ";\r\n";
+    echo "var base = " . json_encode(query_basic()) . ";\r\n";
+    echo "var samples = " . json_encode(query_newest_samples()) . ";\r\n";
+    echo "var urls = " . json_encode(query_newest_urls()) . ";\r\n";
+    echo "var conns = " . json_encode(query_newest_conns()) . ";\r\n";
+} else {
+	$cmd = $_GET["cmd"];
+	if ($cmd == "gethistory") {
+		$from   = intval($_GET["from"]);
+		$to     = intval($_GET["to"]);
+		$delta  = intval($_GET["delta"]);
+		
+		// Prevent DoS
+		if (($to - $from) / $delta > 48) {
+			echo json_encode("ERROR: Select smaller interval / bigger deltas");
+			exit;
+		}
+		
+		// Clamp to delta
+		$to    = $to - $to % $delta + $delta;
+		$from  = $from - $from % $delta;
+		
+		if (isset($_GET["sample"])) {
+			$sample = $_GET["sample"];
+			echo json_encode(query_history_for_sample($sample, $from, $to, $delta));
+		} else {
+			echo json_encode(query_history_new($from, $to, $delta));
+		}
+    }
 }
+
 ?>
