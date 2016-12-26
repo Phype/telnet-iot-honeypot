@@ -105,7 +105,7 @@ class Sampledb:
 	
 		self.db_link_url_conn(id_url, id_conn)
 
-		f = self.download(url)	
+		f = self.download(url
 		if f["len"] < 5000 or self.sh_re.match(f["name"]):
 			with open(f["file"], "rb") as fd:
 				for line in fd:
@@ -121,7 +121,7 @@ class Sampledb:
 			os.remove(f["file"])
 			return
 		
-		self.db_add_sample(f["sha256"], f["date"], f["name"], f["file"], id_url, f["length"])
+		self.db_add_sample(f["sha256"], f["date"], f["name"], f["file"], id_url, f["len"])
 
 		if self.vt_on:
 			dbg("ANALYZE")
