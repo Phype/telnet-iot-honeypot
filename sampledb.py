@@ -105,7 +105,7 @@ class Sampledb:
 	
 		self.db_link_url_conn(id_url, id_conn)
 
-		f = self.download(url
+		f = self.download(url)
 		if f["len"] < 5000 or self.sh_re.match(f["name"]):
 			with open(f["file"], "rb") as fd:
 				for line in fd:
