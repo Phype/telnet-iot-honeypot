@@ -54,7 +54,7 @@ class Sampledb:
 
 	def db_add_sample(self, sha256, date, name, filename, id_url, length):
 		c = self.sql.cursor()
-		c.execute("INSERT INTO samples VALUES (NULL,?,?,?,?,?)", (sha256, date, name, filename, length))
+		c.execute("INSERT INTO samples VALUES (NULL,?,?,?,?,?,NULL)", (sha256, date, name, filename, length))
 		id_sample = c.lastrowid
 		self.db_url_set_sample(id_sample, id_url)
 		self.sql.commit()
