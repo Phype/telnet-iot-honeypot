@@ -161,12 +161,14 @@ function query_history_samples() {
 
 function query_sample_stats() {
 	global $sql;
+	$t = time() - 3600 * 24;
 	$q = "select
 	samples.name, samples.sha256, COUNT(samples.id) as count, MAX(conns.date), samples.length, samples.result
 	from conns_urls
 	INNER JOIN conns on conns_urls.id_conn = conns.id
 	INNER JOIN urls on conns_urls.id_url = urls.id
 	INNER JOIN samples on urls.sample = samples.id
+	WHERE conns.date > " . $t . "
 	GROUP BY samples.id
 	ORDER BY count DESC";
 
