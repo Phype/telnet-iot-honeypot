@@ -7,6 +7,7 @@ import time
 import re
 import Queue
 import threading
+import tftpy
 
 from dbg import dbg
 from virustotal import Virustotal
@@ -36,7 +37,7 @@ class Sampledb:
 		self.vt_worker.start()
 
 	def setup_db(self):
-		self.sql.execute("CREATE TABLE IF NOT EXISTS samples    (id INTEGER PRIMARY KEY AUTOINCREMENT, sha256 TEXT UNIQUE, date INTEGER, name TEXT, file TEXT, result TEXT)")
+		self.sql.execute("CREATE TABLE IF NOT EXISTS samples    (id INTEGER PRIMARY KEY AUTOINCREMENT, sha256 TEXT UNIQUE, date INTEGER, name TEXT, file TEXT, length INTEGER, result TEXT)")
 		self.sql.execute("CREATE TABLE IF NOT EXISTS urls       (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, date INTEGER, sample INTEGER)")
 		self.sql.execute("CREATE TABLE IF NOT EXISTS conns      (id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT, date INTEGER, user TEXT, pass TEXT)")
 		self.sql.execute("CREATE TABLE IF NOT EXISTS conns_urls (id_conn INTEGER, id_url INTEGER)")
@@ -152,8 +153,51 @@ class Sampledb:
 			self.vt_queue.join()
 		
 	def download(self, url):
-		url = url.strip()
 		dbg("Downloading " + url)
+		
+		if url.startswith("http://") or url.startswith("https://"):
+			f = self.download_http(url)
+		elif url.startswith("tftp://"):
+			f = self.download_tftp(url)
+		else:
+			raise NotImplementedError("Cannot download " + url)
+		
+		dbg("Downlod finished. length: " + str(f["len"]) + " sha256: " + f["sha256"])
+		return f
+		
+	def download_tftp(self, url):
+		r = re.compile("tftp://([^:/]+):?([0-9]*)/(.*)")	
+		m = r.match(url)
+		if m:
+			host  = m.group(1)
+			port  = m.group(2)
+			fname = m.group(3)
+			
+			if port == "":
+				port = 69
+			
+			f = {}
+			f["name"] = url.split("/")[-1].strip()
+			f["date"] = int(time.time())
+			f["len"]  = 0
+			f["file"] = self.dir + str(f["date"]) + "_" + f["name"]
+			
+			client = tftpy.TftpClient(host, int(port))
+			client.download(fname, f["file"])
+			
+			h = hashlib.sha256()
+			with open(f["file"], 'rb') as fd:
+				chunk = fd.read(4096)
+				h.update(chunk)
+			
+			f["sha256"] = h.hexdigest()
+			
+			return f
+		else:
+			raise ValueError("Invalid tftp url")
+		
+	def download_http(self, url):
+		url = url.strip()
 		hdr = { "User-Agent" : "Wget/1.15 (linux-gnu)" }
 		r   = requests.get(url, stream=True, timeout=5.0)
 		f   = {}
@@ -183,7 +227,6 @@ class Sampledb:
 				h.update(chunk)
 
 		f["sha256"] = h.hexdigest()
-		dbg("Downlod finished. length: " + str(f["len"]) + " sha256: " + f["sha256"])
 
 		return f
 

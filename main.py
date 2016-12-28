@@ -119,6 +119,7 @@ class TelnetSess:
 		elfcat_regex= re.compile(".*cat /bin/echo.*")
 		token_regex = re.compile(".*/bin/busybox ([A-Z]+).*")
 		downl_regex = re.compile(".*wget (?:-[a-zA-Z] )?(http[^ ;><&]*).*")
+		tftp_regex  = re.compile(".*tftp ([^;&<>]+).*")
 
 		if mount_regex.match(l):
 			self.send_string("/dev/root /rom squashfs ro,relatime 0 0\r\nproc /proc proc rw,nosuid,nodev,noexec,noatime 0 0\r\nsysfs /sys sysfs rw,nosuid,nodev,noexec,noatime 0 0\r\ntmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0\r\n/dev/mtdblock10 /overlay jffs2 rw,noatime 0 0\r\noverlayfs:/overlay / overlay rw,noatime,lowerdir=/,upperdir=/overlay/upper,workdir=/overlay/work 0 0\r\ntmpfs /dev tmpfs rw,nosuid,relatime,size=512k,mode=755 0 0\r\ndevpts /dev/pts devpts rw,nosuid,noexec,relatime,mode=600 0 0\r\ndebugfs /sys/kernel/debug debugfs rw,noatime 0 0\r\n")
@@ -151,6 +152,27 @@ class TelnetSess:
 			url = m.group(1)
 			dbg("DOWNLOAD URL " + url)
 			self.serv.samples.put_url(url, self.db_id)
+			
+		m = tftp_regex.match(l)
+		if m:
+			remote = []
+			file   = None
+			opts   = m.group(1).split(" ")
+			i      = 0
+			while i < len(opts):
+				opt = opts[i]
+				if opt[0] == '-':
+					if opt == "-r":
+						i = i + 1
+						file = opts[i]
+					if opt == "-l" or opt == "-b":
+						i = i + 1
+				else:
+					remote.append(opt)
+				i = i + 1
+			url = "tftp://" + ":".join(remote) + "/" + str(file)
+			dbg("DOWNLOAD URL " + url)
+			self.serv.samples.put_url(url, self.db_id)
 
 	def loop(self):
 		dbg("New Session")
@@ -181,7 +203,12 @@ class TelnetSess:
 			l = self.recv_line()
 			dbg(" # " + l)
 			self.text = self.text + " # " + l + "\r\n"
-			self.shell(l)
+			
+			try:
+				self.shell(l)
+			except:
+				traceback.print_exc()
+				self.send_string("sh: error\r\n")
 
 	def test_naws(self):
 		dbg("TEST NAWS")
