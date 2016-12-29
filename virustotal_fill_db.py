@@ -22,15 +22,12 @@ def getName(r):
 	else:
 		return None
 
-sdb.sql.execute('ALTER TABLE samples ADD COLUMN result TEXT')
-sdb.sql.commit()
-for row in sdb.sql.execute('SELECT id, sha256 FROM samples WHERE result == NULL'):
-	if row[2]:
-		pass
-	else:
-		r   = vt.query_hash_sha256(row[1])
-		res = str(getName(r))
-		print(row[1] + ": " + res)
-		sdb.sql.execute('UPDATE samples SET result = ? WHERE id = ?', (res, row[0]))
-		sdb.sql.commit()
+#sdb.sql.execute('ALTER TABLE samples ADD COLUMN result TEXT')
+#sdb.sql.commit()
+for row in sdb.sql.execute('SELECT id, sha256 FROM samples WHERE result is NULL'):
+	r   = vt.query_hash_sha256(row[1])
+	res = str(getName(r))
+	print(row[1] + ": " + res)
+	sdb.sql.execute('UPDATE samples SET result = ? WHERE id = ?', (res, row[0]))
+	sdb.sql.commit()
 
