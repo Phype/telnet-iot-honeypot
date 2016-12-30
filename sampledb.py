@@ -22,8 +22,8 @@ class Sampledb:
 		self.vt_queue   = Queue.Queue()
 		self.vt_worker  = None
 
-		self.dir   = "samples/"
-		self.sql   = sqlite3.connect("samples.db")
+		self.dir    = "samples/"
+		self.sql    = sqlite3.connect("samples.db", check_same_thread = False)
 		self.setup_db()
 
 		self.url_recheck = 3600 * 24 # 1 day
@@ -131,10 +131,44 @@ class Sampledb:
 	def vt_analyze(self, f):
 		self.vt_queue.put(f)
 
+	def vt_get_result(self, r):
+		# Engines to use (this order)
+		engines = ["DrWeb", "Kaspersky", "ESET-NOD32"]
+		if r["scans"]:
+			for e in engines:
+				if r["scans"][e] and r["scans"][e]["detected"]:
+					return r["scans"][e]["result"]
+			for e,x in r["scans"].iteritems():
+				if x["detected"]:
+					return x["result"]
+			return None
+		else:
+			return None
+
+	def vt_fill_db(self, limit = 4):
+		dbg("Updating up to " + str(limit) + " sample results in db")
+		for row in self.sql.execute('SELECT id, sha256 FROM samples WHERE result is NULL LIMIT ?', (limit,)):
+			res = self.vt.query_hash_sha256(row[1])
+			if res == None:
+				dbg("File " + row[1] + " not found by virustotal")
+				continue
+			res = str(self.vt_get_result(res))
+			self.sql.execute('UPDATE samples SET result = ? WHERE id = ?', (res, row[0]))
+			self.sql.commit()
+			dbg("Samples result: " + str(row[1]) + " is " + res)
+
 	def vt_work(self):
 		dbg("Virustotal uploader started")
 		while True:
-			f    = self.vt_queue.get()
+			try:
+				f = self.vt_queue.get(True, 60)
+			except Queue.Empty:
+				try:
+					# Do Some work
+					self.vt_fill_db()
+				except:
+					pass
+				continue
 			if f == "!STOP!":
 				self.vt_queue.task_done()
 				dbg("Stopping worker")
