@@ -8,6 +8,7 @@ import re
 import Queue
 import threading
 import tftpy
+import traceback
 
 from dbg import dbg
 from virustotal import Virustotal
@@ -107,6 +108,10 @@ class Sampledb:
 		self.db_link_url_conn(id_url, id_conn)
 
 		f = self.download(url)
+		if f == None:
+			dbg("Could not download")
+			return
+		
 		if f["len"] < 5000 or self.sh_re.match(f["name"]):
 			with open(f["file"], "rb") as fd:
 				for line in fd:
@@ -189,12 +194,18 @@ class Sampledb:
 	def download(self, url):
 		dbg("Downloading " + url)
 		
-		if url.startswith("http://") or url.startswith("https://"):
-			f = self.download_http(url)
-		elif url.startswith("tftp://"):
-			f = self.download_tftp(url)
-		else:
-			raise NotImplementedError("Cannot download " + url)
+		try:
+			if url.startswith("http://") or url.startswith("https://"):
+				f = self.download_http(url)
+			elif url.startswith("tftp://"):
+				f = self.download_tftp(url)
+			else:
+				return None
+		except ReadTimeout:
+			return None
+		except:
+			traceback.print_exc()
+			return None
 		
 		dbg("Downlod finished. length: " + str(f["len"]) + " sha256: " + f["sha256"])
 		return f

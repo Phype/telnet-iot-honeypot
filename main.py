@@ -5,6 +5,7 @@ import re
 import sys
 import random
 import signal
+import time
 
 from dbg import dbg
 from sampledb import Sampledb
@@ -91,6 +92,9 @@ class Telnetd:
 			sess.loop()
 		except EOFError:
 			pass
+		except socket.timeout:
+			dbg("Timed out")
+			pass
 		except:
 			traceback.print_exc()
 
@@ -106,7 +110,8 @@ class TelnetSess:
 	def __init__(self, serv, sock, remote):
 		self.serv    = serv
 		self.sock    = sock
-		self.timeout = 100.0
+		self.timeout = 15.0 # Read timeout
+		self.maxtime = 60.0 # Max session time
 		self.text    = ""
 		self.db_id   = 0
 		self.remote  = remote
@@ -182,7 +187,10 @@ class TelnetSess:
 		self.sock.settimeout(self.timeout)
 
 		self.test_opt(1)
-
+		
+		# Kill of Session if longer than self.maxtime
+		ts_start = int(time.time())
+		
 		#self.test_naws()
 		#if self.test_opt(1, True):
 		#	self.send_string("123\r\n")
@@ -205,12 +213,16 @@ class TelnetSess:
 			l = self.recv_line()
 			dbg(" # " + l)
 			self.text = self.text + " # " + l + "\r\n"
-			
+
 			try:
 				self.shell(l)
 			except:
 				traceback.print_exc()
 				self.send_string("sh: error\r\n")
+				
+			if ts_start + self.maxtime < int(time.time()):
+				dbg("Session too long. Killing off.")
+				break
 
 	def test_naws(self):
 		dbg("TEST NAWS")
