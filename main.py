@@ -89,6 +89,8 @@ class Telnetd:
 
 			sess = TelnetSess(self, conn, addr)
 			sess.loop()
+		except EOFError:
+			pass
 		except:
 			traceback.print_exc()
 
@@ -269,7 +271,10 @@ class TelnetSess:
 		#dbg("SEND STRING LEN" + str(len(msg)))
 
 	def recv(self):
-		byte = ord(self.sock.recv(1))
+		byte = self.sock.recv(1)
+		if len(byte) == 0:
+			raise EOFError
+		byte = ord(byte)
 		if byte in Telnetd.cmds:
 			dbg("RECV " + str(Telnetd.cmds[byte]))
 		else:
