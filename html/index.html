@@ -16,8 +16,12 @@ function formatDate(date) {
         return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
 }
 
+function time() {
+	return Math.round(new Date().getTime() / 1000);
+}
+
 angular.module('stats', ["chart.js"])
-.controller('statController', function($scope) {
+.controller('statController', function($scope, $http) {
         $scope.samples     = [];
         $scope.threshold   = 0.02;
         $scope.activeIndex = -1;
@@ -45,17 +49,21 @@ angular.module('stats', ["chart.js"])
                 $scope.samples = list;
         };
 
-        $scope.processData(data);
-
-        $scope.labels = $scope.samples.map(function (s) {return s["name"]});
-        $scope.data   = $scope.samples.map(function (s) {return s["count"]});
-        $scope.colors = $scope.samples.map(function (s) {return s["color"]});
+	var since = time() - 24 * 3600;
+	$http.get("backend.php?cmd=getsamplestats&since=" + since).then(function (httpResult) {
+		$scope.processData(httpResult.data);
+	
+		$scope.labels = $scope.samples.map(function (s) {return s["name"]});
+		$scope.data   = $scope.samples.map(function (s) {return s["count"]});
+		$scope.colors = $scope.samples.map(function (s) {return s["color"]});
+	});
 
         $scope.formatDate = function(date) {
                 if (date == null) return "";
                 d = new Date(date * 1000);
                 return d.getDate() + "." + (d.getMonth() + 1) + " " + d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
-        }; 
+        };
+
 }).controller('histController', function($scope) {
         $scope.history = hist;
         $scope.series  = ["Urls", "Connections"];

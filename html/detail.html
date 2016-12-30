@@ -7,7 +7,6 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.2/angular.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/angular.chartjs/latest/angular-chart.min.js"></script>
-<script type="text/javascript" src="backend.php"></script>
 
 <script>
 
@@ -23,56 +22,7 @@ function formatDateTime(date) {
 }
 
 angular.module('stats', ["chart.js"])
-.controller('statController', function($scope) {
-	$scope.samples     = [];
-	$scope.threshold   = 0.02;
-	$scope.activeIndex = -1;
-
-	$scope.processData = function(data) {
-		var list   = [];
-		var count  = 0;
-		var others = 0;
-
-		for (var i = 0; i < data.length; i++) {
-			count += data[i]["count"];
-		}
-
-		for (var i = 0; i < data.length; i++) {
-			if (data[i]["count"] >= $scope.threshold * count) {
-				var x = data[i]["sha256"].substr(0,2);
-				data[i].color = "#ff" + x + "11"; 
-				list.push(data[i]);
-			} else {
-				others += data[i]["count"];
-			}
-		}
-
-		list.push({ "name": "Other", "count": others, "color": "#dddddd" });
-		$scope.samples = list;
-	};
-
-	$scope.processData(data);
-
-	$scope.labels = $scope.samples.map(function (s) {return s["name"]});
-	$scope.data   = $scope.samples.map(function (s) {return s["count"]});
-	$scope.colors = $scope.samples.map(function (s) {return s["color"]});
-
-	$scope.formatDate = formatDateTime;
-}).controller('histController', function($scope) {
-	$scope.history = hist;
-	$scope.series  = ["Urls", "Connections"];
-	$scope.labels  = $scope.history.map(function (s) {
-		if (((s["date"] / 3600) - 1) % 4 == 0) {
-			return new Date(s["date"] * 1000).getHours() + ":00";
-		} else {
-			return "";
-		}
-	});
-	$scope.data    = [
-		$scope.history.map(function (s) { return s["count_url"]}) ,
-		$scope.history.map(function (s) { return s["count"]})
-	];
-}).controller('histController2', function($scope, $http) {
+.controller('histController2', function($scope, $http) {
 	$scope.series  = [];
 	$scope.labels  = [];
 	$scope.data    = [];
@@ -91,14 +41,6 @@ angular.module('stats', ["chart.js"])
 	$scope.to   = $scope.to - $scope.to % $scope.delta + $scope.delta;
 	$scope.from = $scope.from - $scope.from % $scope.delta;
 	
-	for (var i = 0; i < data.length; i++) {
-		var s = data[i];
-		s.active = false;
-		s.data   = null;
-		s.lcol   = "#" + s.sha256.substr(0, 6);
-		$scope.samples[s.sha256] = s;
-	}
-
 	$scope.makeLables = function() {
 		var date  = $scope.from;
 		var count = Math.floor(($scope.to - $scope.from) / $scope.delta) + 1;
@@ -172,31 +114,23 @@ angular.module('stats', ["chart.js"])
 		$scope.colors = newColors;
 	};
 	
-	// $scope.$watch("samples", $scope.samplesChanged);
-	
-	$scope.makeLables();
-	
-	$scope.toggle($scope.samples[data[1].sha256]);
-	$scope.toggle($scope.samples[data[2].sha256]);
-	
-}).controller('basicController', function($scope) {
-	$scope.conns   = base.connections;
-	$scope.urls    = base.urls;
-	$scope.samples = base.samples;
+	var since = 0;
+        $http.get("backend.php?cmd=getsamplestats&since=" + since).then(function (httpResult) {
+		var data = httpResult.data;
 
-	$scope.latestSamples = samples;
-	$scope.latestUrls    = urls;
-	$scope.latestConns   = conns;
+		for (var i = 0; i < data.length; i++) {
+			var s = data[i];
+			s.active = false;
+			s.data   = null;
+			s.lcol   = "#" + s.sha256.substr(0, 6);
+			$scope.samples[s.sha256] = s;
+		}
 
-	$scope.formatDate = function(date) {
-		d = new Date(date * 1000);
-		return d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
-	};
+		$scope.makeLables();
 	
-	$scope.formatDateSecs = function(date) {
-		d = new Date(date * 1000);
-		return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
-	}; 
+		$scope.toggle($scope.samples[data[1].sha256]);
+		$scope.toggle($scope.samples[data[2].sha256]);
+        });	
 });
 </script>
 </head>

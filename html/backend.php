@@ -159,9 +159,9 @@ function query_history_samples() {
 	);
 }
 
-function query_sample_stats() {
+function query_sample_stats($since) {
 	global $sql;
-	$t = time() - 3600 * 24;
+	$t = intval($since);
 	$q = "select
 	samples.name, samples.sha256, COUNT(samples.id) as count, MAX(conns.date), samples.length, samples.result
 	from conns_urls
@@ -265,29 +265,42 @@ function query_newest_conns() {
 }
 
 if (!isset($_GET["cmd"])) {
-    echo "var data = " . json_encode(query_sample_stats()) . ";\r\n";
-    echo "var hist = " . json_encode(query_conn_history()) . ";\r\n";
-    echo "var base = " . json_encode(query_basic()) . ";\r\n";
+    // echo "var data = " .    json_encode(query_sample_stats(0))   . ";\r\n";
+    echo "var hist = " .    json_encode(query_conn_history())   . ";\r\n";
+    echo "var base = " .    json_encode(query_basic())          . ";\r\n";
     echo "var samples = " . json_encode(query_newest_samples()) . ";\r\n";
-    echo "var urls = " . json_encode(query_newest_urls()) . ";\r\n";
-    echo "var conns = " . json_encode(query_newest_conns()) . ";\r\n";
+    echo "var urls = " .    json_encode(query_newest_urls())    . ";\r\n";
+    echo "var conns = " .    json_encode(query_newest_conns())  . ";\r\n";
 } else {
 	$cmd = $_GET["cmd"];
+	if ($cmd == "getsamplestats") {
+		$since = 0;
+		if (isset($_GET["since"])) {
+			$since = intval($_GET["since"]);
+		}
+		echo json_encode(query_sample_stats($since));
+	}
+	if ($cmd == "getbasic") {
+		echo json_encode(query_sample_stats());
+	}
+	if ($cmd == "getconns") {
+		echo json_encode(json_encode(query_newest_conns()));
+	}
 	if ($cmd == "gethistory") {
 		$from   = intval($_GET["from"]);
 		$to     = intval($_GET["to"]);
 		$delta  = intval($_GET["delta"]);
-		
+
 		// Prevent DoS
 		if (($to - $from) / $delta > 48) {
 			echo json_encode("ERROR: Select smaller interval / bigger deltas");
 			exit;
 		}
-		
+
 		// Clamp to delta
 		$to    = $to - $to % $delta + $delta;
 		$from  = $from - $from % $delta;
-		
+
 		if (isset($_GET["sample"])) {
 			$sample = $_GET["sample"];
 			echo json_encode(query_history_for_sample($sample, $from, $to, $delta));
