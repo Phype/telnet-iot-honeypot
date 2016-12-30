@@ -269,7 +269,7 @@ if (!isset($_GET["cmd"])) {
     echo "var hist = " .    json_encode(query_conn_history())   . ";\r\n";
     echo "var base = " .    json_encode(query_basic())          . ";\r\n";
     echo "var samples = " . json_encode(query_newest_samples()) . ";\r\n";
-    echo "var urls = " .    json_encode(query_newest_urls())    . ";\r\n";
+    //echo "var urls = " .    json_encode(query_newest_urls())    . ";\r\n";
     echo "var conns = " .    json_encode(query_newest_conns())  . ";\r\n";
 } else {
 	$cmd = $_GET["cmd"];
