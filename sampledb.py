@@ -41,7 +41,7 @@ class Sampledb:
 		self.sql.execute("CREATE TABLE IF NOT EXISTS samples    (id INTEGER PRIMARY KEY AUTOINCREMENT, sha256 TEXT UNIQUE, date INTEGER, name TEXT, file TEXT, length INTEGER, result TEXT)")
 		self.sql.execute("CREATE TABLE IF NOT EXISTS urls       (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, date INTEGER, sample INTEGER)")
 		self.sql.execute("CREATE TABLE IF NOT EXISTS conns      (id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT, date INTEGER, user TEXT, pass TEXT)")
-		self.sql.execute("CREATE TABLE IF NOT EXISTS conns_urls (id_conn INTEGER, id_url INTEGER)")
+		self.sql.execute("CREATE TABLE IF NOT EXISTS conns_urls (id_conn INTEGER, id_url INTEGER, UNIQUE (id_conn, id_url) ON CONFLICT REPLACE)")
 
 	def db_add_url(self, url, date):
 		c = self.sql.cursor()
