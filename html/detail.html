@@ -10,6 +10,19 @@
 
 <script>
 
+function extractHash() {
+	var table  = {};
+	var values = window.location.hash.substr(1);
+	values = values.split("&");
+	for (var i = 0; i < values.length; i++) {
+		var tuple = values[i].split("=");
+		var name  = tuple[0];
+		var value = tuple.length > 1 ? tuple[1] : null;
+		table[name] = value;
+	}
+	return table;
+}
+
 function formatDate(date) {
 	d = new Date(date * 1000);
 	return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
@@ -31,7 +44,7 @@ angular.module('stats', ["chart.js"])
 	$scope.samples = {};
 	
 	var now = new Date().getTime() / 1000;
-	$scope.delta   = 3600 * 6;
+	$scope.delta   = 3600 * config["delta"];
 	$scope.from    = now - $scope.delta * 40;
 	$scope.to      = now;
 	
@@ -132,6 +145,16 @@ angular.module('stats', ["chart.js"])
 		$scope.toggle($scope.samples[data[2].sha256]);
         });	
 });
+
+var config = extractHash();
+
+if ("delta" in config) {
+	var delta = parseInt(config["delta"]);
+	config["delta"] = delta != NaN ? delta : 6;
+} else {
+	config["delta"] = 6;
+}
+
 </script>
 </head>
 <body ng-app="stats">
