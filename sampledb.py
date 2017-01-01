@@ -201,7 +201,7 @@ class Sampledb:
 				f = self.download_tftp(url)
 			else:
 				return None
-		except ReadTimeout:
+		except requests.exceptions.ReadTimeout:
 			return None
 		except:
 			traceback.print_exc()
