@@ -1,5 +1,7 @@
 # Telnet IoT honeypot
 
+Semi Live Demo: http://ykjs.ga/ (data is manually updated)
+
 'Python telnet honeypot for catching botnet binaries'
 
 This project implements a python telnet server trying to act
