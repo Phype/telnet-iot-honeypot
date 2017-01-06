@@ -67,7 +67,7 @@ angular.module('stats', ["chart.js"])
 	$scope.loadSample = function(sample) {
 		console.log("Load " + sample);
 	
-		var url = "https://nack.duckdns.org/backend.php?cmd=gethistory&sample=" + sample +
+		var url = "backend.php?cmd=gethistory&sample=" + sample +
 		"&from="  + $scope.from +
 		"&to="    + $scope.to +
 		"&delta=" + $scope.delta;
