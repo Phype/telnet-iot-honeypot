@@ -18,6 +18,9 @@ angular.module('stats', ["chart.js"])
         $scope.threshold   = 0.02;
         $scope.activeIndex = -1;
 
+        $scope.formatDate     = formatDate;
+        $scope.formatDateTime = formatDateTime;
+        
         $scope.processData = function(data) {
                 var list   = [];
                 var count  = 0;
@@ -44,6 +47,9 @@ angular.module('stats', ["chart.js"])
 	var since = time() - 24 * 3600;
 	$http.get("backend.php?cmd=getsamplestats&since=" + since).then(function (httpResult) {
 		$scope.processData(httpResult.data);
+		
+        $scope.formatDate     = formatDate;
+        $scope.formatDateTime = formatDateTime;
 	
 		$scope.labels = $scope.samples.map(function (s) {return s["name"]});
 		$scope.data   = $scope.samples.map(function (s) {return s["count"]});
@@ -51,6 +57,9 @@ angular.module('stats', ["chart.js"])
 	});
 
 }).controller('histController', function($scope) {
+        $scope.formatDate     = formatDate;
+        $scope.formatDateTime = formatDateTime;
+        
         $scope.history = hist;
         $scope.series  = ["Urls", "Connections"];
         $scope.labels  = $scope.history.map(function (s) {
@@ -63,6 +72,9 @@ angular.module('stats', ["chart.js"])
         $scope.data    = [ $scope.history.map(function (s) { return s["count_url"]}) ,
                 $scope.history.map(function (s) { return s["count"]}) ];
 }).controller('basicController', function($scope) {
+        $scope.formatDate     = formatDate;
+        $scope.formatDateTime = formatDateTime;
+        
         $scope.conns   = base.connections;
         $scope.urls    = base.urls;
         $scope.samples = base.samples;
@@ -157,7 +169,7 @@ angular.module('stats', ["chart.js"])
                                 <tr><th>Time</th><th>IP</th><th>Username</th><th>Password</th></tr>
                                 <tr ng-repeat="s in latestConns">
                                         <td class="visible-xs">{{ formatDate(s.date) }}</td>
-                                        <td class="hidden-xs">{{ formatDateSecs(s.date) }}</td>
+                                        <td class="hidden-xs">{{ formatDate(s.date) }}</td>
                                         <td>{{ s.ip }}</td>
                                         <td>{{ s.user }}</td>
                                         <td>{{ s.pass }}</td>

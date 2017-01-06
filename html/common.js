@@ -20,7 +20,7 @@ function formatDate(date) {
 function formatDateTime(date) {
 	if (date == null) return "";
 	d = new Date(date * 1000);
-	return d.getDate() + "." + d.getMonth() + " " + d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
+	return d.getDate() + "." + (d.getMonth()+1) + " " + d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
 }
 
 function time() {
