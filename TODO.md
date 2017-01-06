@@ -2,8 +2,12 @@
 
 ## Small
 
+### clean up main.py
 ### clean up html/php frontend
-### auto update Malware Scan Results from virustotal (done by virustotal_fill_db.py for now)
+### find a way to identify "new" downloaders
+
+So that telnet emultaion code can be better adapted
+
 ### nc support
 
 	2017-01-06 01:46:47   main.py:214        # enable^@
