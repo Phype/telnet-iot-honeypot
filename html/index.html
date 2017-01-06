@@ -7,18 +7,10 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.2/angular.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/angular.chartjs/latest/angular-chart.min.js"></script>
+<script type="text/javascript" src="common.js"></script>
 <script type="text/javascript" src="backend.php"></script>
 
 <script>
-
-function formatDate(date) {
-        d = new Date(date * 1000);
-        return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
-}
-
-function time() {
-	return Math.round(new Date().getTime() / 1000);
-}
 
 angular.module('stats', ["chart.js"])
 .controller('statController', function($scope, $http) {
@@ -58,12 +50,6 @@ angular.module('stats', ["chart.js"])
 		$scope.colors = $scope.samples.map(function (s) {return s["color"]});
 	});
 
-        $scope.formatDate = function(date) {
-                if (date == null) return "";
-                d = new Date(date * 1000);
-                return d.getDate() + "." + (d.getMonth() + 1) + " " + d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
-        };
-
 }).controller('histController', function($scope) {
         $scope.history = hist;
         $scope.series  = ["Urls", "Connections"];
@@ -84,16 +70,6 @@ angular.module('stats', ["chart.js"])
         $scope.latestSamples = samples;
         //$scope.latestUrls    = urls;
         $scope.latestConns   = conns;
-
-        $scope.formatDate = function(date) {
-                d = new Date(date * 1000);
-                return d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
-        };
-
-        $scope.formatDateSecs = function(date) {
-                d = new Date(date * 1000);
-                return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
-        }; 
 });
 </script>
 </head>
@@ -166,7 +142,7 @@ angular.module('stats', ["chart.js"])
                                 <tr><th>Time</th><th>Name</th><th>SHA256</th><th>Size</th></tr>
                                 <tr ng-repeat="s in latestSamples">
                                         <td class="visible-xs">{{ formatDate(s.date) }}</td>
-                                        <td class="hidden-xs">{{ formatDateSecs(s.date) }}</td>
+                                        <td class="hidden-xs">{{ formatDate(s.date) }}</td>
                                         <td>{{ s.name }}</td>
                                         <td class="hidden-xs"><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256.substr(0,48) + "..." }}</a></td>
                                         <td class="visible-xs"><a target="_blank" href="https://www.virustotal.com/latest-scan/{{s.sha256}}">{{ s.sha256.substr(0,6) + "..." }}</a></td>

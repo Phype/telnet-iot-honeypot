@@ -7,32 +7,9 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.2/angular.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/angular.chartjs/latest/angular-chart.min.js"></script>
+<script type="text/javascript" src="common.js"></script>
 
 <script>
-
-function extractHash() {
-	var table  = {};
-	var values = window.location.hash.substr(1);
-	values = values.split("&");
-	for (var i = 0; i < values.length; i++) {
-		var tuple = values[i].split("=");
-		var name  = tuple[0];
-		var value = tuple.length > 1 ? tuple[1] : null;
-		table[name] = value;
-	}
-	return table;
-}
-
-function formatDate(date) {
-	d = new Date(date * 1000);
-	return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
-}
-
-function formatDateTime(date) {
-	if (date == null) return "";
-	d = new Date(date * 1000);
-	return d.getDate() + "." + d.getMonth() + " " + d.toTimeString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, "$1");
-}
 
 angular.module('stats', ["chart.js"])
 .controller('histController2', function($scope, $http) {
@@ -129,20 +106,20 @@ angular.module('stats', ["chart.js"])
 	
 	var since = 0;
         $http.get("backend.php?cmd=getsamplestats&since=" + since).then(function (httpResult) {
-		var data = httpResult.data;
+			var data = httpResult.data;
 
-		for (var i = 0; i < data.length; i++) {
-			var s = data[i];
-			s.active = false;
-			s.data   = null;
-			s.lcol   = "#" + s.sha256.substr(0, 6);
-			$scope.samples[s.sha256] = s;
-		}
+			for (var i = 0; i < data.length; i++) {
+				var s = data[i];
+				s.active = false;
+				s.data   = null;
+				s.lcol   = "#" + s.sha256.substr(0, 6);
+				$scope.samples[s.sha256] = s;
+			}
 
-		$scope.makeLables();
-	
-		$scope.toggle($scope.samples[data[1].sha256]);
-		$scope.toggle($scope.samples[data[2].sha256]);
+			$scope.makeLables();
+		
+			$scope.toggle($scope.samples[data[1].sha256]);
+			$scope.toggle($scope.samples[data[2].sha256]);
         });	
 });
 
