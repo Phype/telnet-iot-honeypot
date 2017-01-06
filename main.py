@@ -115,18 +115,41 @@ class TelnetSess:
 		self.text    = ""
 		self.db_id   = 0
 		self.remote  = remote
+		
+	def getopt(self, args, switches=[]):
+		res   = {}
+		opts  = args.split(" ")
+		i     = 0
+		p     = 0
+		named = None
+		while i < len(opts):
+			opt = opts[i]
+			if opt[0] == '-':
+				if not opt in switches:
+					named = opt
+				res[named] = True
+			elif named != None:
+				res[named] = opt
+				named = None
+			else:
+				res[p] = opt
+				p = p + 1
+			i = i + 1
+		return res
 
 	def shell(self, l):
-		sh_regex    = re.compile(".*sh\\s*(;|$)")
-		nc_regex    = re.compile(".*nc\\s*(;|$)")
-		wget_regex  = re.compile(".*wget\\s*(;|$)")
-		dd_regex    = re.compile(".*dd bs=52 count=1 if=.s.*")
-		cat_regex   = re.compile(".*cat .s.*cp /bin/echo .s.*")
-		mount_regex = re.compile(".*cat /proc/mounts.*")
-		elfcat_regex= re.compile(".*cat /bin/echo.*")
-		token_regex = re.compile(".*/bin/busybox ([A-Z]+).*")
-		downl_regex = re.compile(".*wget (?:-[a-zA-Z] )?(http[^ ;><&]*).*")
-		tftp_regex  = re.compile(".*tftp ([^;&<>]+).*")
+		sh_regex      = re.compile(".*sh\\s*(;|$)")
+		nc_regex      = re.compile(".*nc\\s*(;|$)")
+		wget_regex    = re.compile(".*wget\\s*(;|$)")
+		dd_regex      = re.compile(".*dd bs=52 count=1 if=.s.*")
+		cat_regex     = re.compile(".*cat .s.*cp /bin/echo .s.*")
+		mount_regex   = re.compile(".*cat /proc/mounts.*")
+		elfcat_regex  = re.compile(".*cat /bin/echo.*")
+		token_regex   = re.compile(".*/bin/busybox ([A-Z]+).*")
+		downl_regex   = re.compile(".*wget (?:-[a-zA-Z] )?(http[^ ;><&]*).*")
+		tftp_regex    = re.compile(".*tftp ([^;&<>]+).*")
+		nc_dl_regex   = re.compile(".*nc ([^;&<>]+).*")
+		ftp_dl_regex  = re.compile(".*ftpget ([^;&<>]+).*")
 
 		if mount_regex.match(l):
 			self.send_string("/dev/root /rom squashfs ro,relatime 0 0\r\nproc /proc proc rw,nosuid,nodev,noexec,noatime 0 0\r\nsysfs /sys sysfs rw,nosuid,nodev,noexec,noatime 0 0\r\ntmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0\r\n/dev/mtdblock10 /overlay jffs2 rw,noatime 0 0\r\noverlayfs:/overlay / overlay rw,noatime,lowerdir=/,upperdir=/overlay/upper,workdir=/overlay/work 0 0\r\ntmpfs /dev tmpfs rw,nosuid,relatime,size=512k,mode=755 0 0\r\ndevpts /dev/pts devpts rw,nosuid,noexec,relatime,mode=600 0 0\r\ndebugfs /sys/kernel/debug debugfs rw,noatime 0 0\r\n")
@@ -162,25 +185,28 @@ class TelnetSess:
 			
 		m = tftp_regex.match(l)
 		if m:
-			remote = []
-			file   = None
-			opts   = m.group(1).split(" ")
-			i      = 0
-			while i < len(opts):
-				opt = opts[i]
-				if opt[0] == '-':
-					if opt == "-r":
-						i = i + 1
-						file = opts[i]
-					if opt == "-l" or opt == "-b":
-						i = i + 1
-				else:
-					remote.append(opt)
-				i = i + 1
-			url = "tftp://" + ":".join(remote) + "/" + str(file)
-			dbg("DOWNLOAD URL " + url)
+			opts = self.getopt(m.group(1), ["-g", "-p"])
+			ip   = opts[0]
+			port = opts[1] if 1 in opts else 69
+			f    = opts["-r"]
+			url = "tftp://" + str(ip) + ":" + str(port) + "/" + str(f)
 			self.serv.samples.put_url(url, self.db_id)
-
+		
+		m = nc_dl_regex.match(l)
+		if m:
+			opts = self.getopt(m.group(1), ["-l", "-ll"])
+			ip   = opts[0]
+			port = opts[1]
+			self.serv.samples.put_url("nc://" + ip + ":" + port, self.db_id)
+		
+		m = ftp_dl_regex.match(l)
+		if m:
+			opts = self.getopt(m.group(1), ["-c", "-v"])
+			ip   = opts[0]
+			port = opts["-p"] if "-p" in opts else "21"
+			f    = opts[1]
+			self.serv.samples.put_url("ftp://" + ip + ":" + port + "/" + f, self.db_id)
+			
 	def loop(self):
 		dbg("New Session")
 		dbg("Setting timeout to " + str(self.timeout) + " seconds")
