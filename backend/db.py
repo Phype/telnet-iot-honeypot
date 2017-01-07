@@ -5,6 +5,7 @@ from config import config
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 from sqlalchemy.sql import select, join, insert
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.pool import QueuePool
 
 def now():
 	return int(time.time())
@@ -41,7 +42,7 @@ conns_urls = Table('conns_urls', metadata,
 )
 
 class DB:
-	eng = sqlalchemy.create_engine(config["sql"])
+	eng = sqlalchemy.create_engine(config["sql"], poolclass=QueuePool)
 	metadata.create_all(eng)
 
 	def close(self):
