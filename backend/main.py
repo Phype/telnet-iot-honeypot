@@ -63,32 +63,35 @@ auth = Auth()
 
 @app.route("/samples")
 def get_samples():
-	result = []
-	for sample in db.get_samples():
-		result.append(red(sample, ["sha256", "name", "date", "length", "result"]))
-		
-	db.end()
-	return json.dumps(result)
+	try:
+		result = []
+		for sample in db.get_samples():
+			result.append(red(sample, ["sha256", "name", "date", "length", "result"]))
+			
+		return json.dumps(result)
+	finally:
+		db.end()
 
 @app.route("/conns", methods = ["PUT"])
 def put_sample():
-	res = auth.do_auth(request.json)
-	if not res["ok"]:
-		return json.dumps(res)
-	
-	conn = json.loads(request.json["data"])
-	id_conn = db.put_conn(conn["ip"], conn["user"], conn["pass"], conn["date"])
+	try:
+		res = auth.do_auth(request.json)
+		if not res["ok"]:
+			return json.dumps(res)
+		
+		conn = json.loads(request.json["data"])
+		id_conn = db.put_conn(conn["ip"], conn["user"], conn["pass"], conn["date"])
 
-	for url in conn["urls"]:
-		id_url = db.put_url(url["url"], conn["date"])
-		db.link_conn_url(id_conn, id_url)
-		if url["sample"]:
-			sample = url["sample"]
-			id_sample = db.put_sample(sample["sha256"], sample["name"], None, sample["length"], conn["date"])
-			db.link_url_sample(id_url, id_sample)
-	
-	db.end()
-	return json.dumps(res)
+		for url in conn["urls"]:
+			id_url = db.put_url(url["url"], conn["date"])
+			db.link_conn_url(id_conn, id_url)
+			if url["sample"]:
+				sample = url["sample"]
+				id_sample = db.put_sample(sample["sha256"], sample["name"], None, sample["length"], conn["date"])
+				db.link_url_sample(id_url, id_sample)
+		return json.dumps(res)
+	finally:
+		db.end()
 
 if __name__ == "__main__":
 	app.run()

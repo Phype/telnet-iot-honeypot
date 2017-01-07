@@ -56,8 +56,11 @@ class DB:
 
 	def end(self):
 		if self.sess:
-			self.sess.commit()
-			self.sess.close()
+			try:
+				self.sess.commit()
+			except:
+				pass
+			self.sess.remove()
 		self.sess = None
 
 	# INPUT
