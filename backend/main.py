@@ -66,6 +66,8 @@ def get_samples():
 	result = []
 	for sample in db.get_samples():
 		result.append(red(sample, ["sha256", "name", "date", "length", "result"]))
+		
+	db.end()
 	return json.dumps(result)
 
 @app.route("/conns", methods = ["PUT"])
@@ -85,6 +87,7 @@ def put_sample():
 			id_sample = db.put_sample(sample["sha256"], sample["name"], None, sample["length"], conn["date"])
 			db.link_url_sample(id_url, id_sample)
 	
+	db.end()
 	return json.dumps(res)
 
 if __name__ == "__main__":

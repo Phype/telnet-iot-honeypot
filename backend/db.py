@@ -42,14 +42,23 @@ conns_urls = Table('conns_urls', metadata,
 )
 
 class DB:
-	eng = sqlalchemy.create_engine(config["sql"], poolclass=QueuePool)
+	eng = sqlalchemy.create_engine(config["sql"])
 	metadata.create_all(eng)
+	sess = None
 
 	def close(self):
 		pass
 
 	def conn(self):
-		return scoped_session(sessionmaker(bind=self.eng))
+		if not self.sess:
+			self.sess = scoped_session(sessionmaker(bind=self.eng))
+		return self.sess
+
+	def end(self):
+		if self.sess:
+			self.sess.commit()
+			self.sess.close()
+		self.sess = None
 
 	# INPUT
 			
