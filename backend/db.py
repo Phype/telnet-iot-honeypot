@@ -78,4 +78,4 @@ class DB:
 	# OUTPUT
 	
 	def get_samples(self):
-		return self.conn.execute(samples.select())
+		return self.conn().execute(samples.select())
