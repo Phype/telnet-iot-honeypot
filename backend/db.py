@@ -43,35 +43,37 @@ conns_urls = Table('conns_urls', metadata,
 class DB:
 	eng = sqlalchemy.create_engine(config["sql"])
 	metadata.create_all(eng)
-	conn = scoped_session(sessionmaker(bind=eng))
 
 	def close(self):
-		self.conn.close()
+		pass
+
+	def conn(self):
+		return scoped_session(sessionmaker(bind=self.eng))
 
 	# INPUT
 			
 	def put_url(self, url, date = now()):
-		ex_url = self.conn.execute(urls.select().where(urls.c.url == url)).fetchone()
+		ex_url = self.conn().execute(urls.select().where(urls.c.url == url)).fetchone()
 		if ex_url:
 			return ex_url["id"]
 		else:
-			return self.conn.execute(urls.insert().values(url=url, date=date, sample=None)).inserted_primary_key[0]
+			return self.conn().execute(urls.insert().values(url=url, date=date, sample=None)).inserted_primary_key[0]
 
 	def put_conn(self, ip, user, password, date = now()):
-		return self.conn.execute(conns.insert().values((None, ip, date, user, password))).inserted_primary_key[0]
+		return self.conn().execute(conns.insert().values((None, ip, date, user, password))).inserted_primary_key[0]
 		
 	def put_sample(self, sha256, name, file, length, date = now()):
-		ex_sample = self.conn.execute(samples.select().where(samples.c.sha256 == sha256)).fetchone()
+		ex_sample = self.conn().execute(samples.select().where(samples.c.sha256 == sha256)).fetchone()
 		if ex_sample:
 			return ex_sample["id"]
 		else:
-			return self.conn.execute(samples.insert().values(sha256=sha256, date=date, name=name, file=file, length=length, result=None)).inserted_primary_key[0]
+			return self.conn().execute(samples.insert().values(sha256=sha256, date=date, name=name, file=file, length=length, result=None)).inserted_primary_key[0]
 		
 	def link_conn_url(self, id_conn, id_url):
-		self.conn.execute(conns_urls.insert().values(id_conn=id_conn, id_url=id_url))
+		self.conn().execute(conns_urls.insert().values(id_conn=id_conn, id_url=id_url))
 		
 	def link_url_sample(self, id_url, id_sample):
-		self.conn.execute(urls.update().where(urls.c.id == id_url).values(sample=id_sample))
+		self.conn().execute(urls.update().where(urls.c.id == id_url).values(sample=id_sample))
 
 	# OUTPUT
 	

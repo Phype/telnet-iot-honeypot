@@ -21,7 +21,6 @@ class Client:
 			},
 			"data" : jsondata
 		}
-		print str(postdata)
 		r = requests.put(self.url + "/conns", json=postdata, timeout=20.0)
 		r = r.json()
 		self.next_id = r["next"]
