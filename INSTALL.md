@@ -7,7 +7,7 @@
 
 On ubuntu: (i think)
 
-	apt install python-requests
+	apt install python-requests python-pymysql python-sqlalchemy python-flask
 
 ## Virustotal integration
 
