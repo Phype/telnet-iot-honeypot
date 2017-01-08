@@ -13,7 +13,7 @@ def now():
 metadata = MetaData()
 samples = Table('samples', metadata,
 	Column('id', Integer, primary_key=True),
-	Column('sha256', String(32), unique=True),
+	Column('sha256', String(64, collation="latin1_swedish_ci"), unique=True),
 	Column('date', Integer),
 	Column('name', String(32)),
 	Column('file', String(32)),
@@ -80,9 +80,11 @@ class DB:
 	def put_conn(self, ip, user, password, date = now()):
 		return self.conn().execute(conns.insert().values((None, ip, date, user, password))).inserted_primary_key[0]
 
-	def put_sample(self, sha256, name, file, length, date = now()):
-		ex_sample = self.conn().execute(samples.select().where(samples.c.sha256 == sha256)).fetchone()
+	def put_sample(self, sha256, name, file, length, date):
+		ex_sample = self.get_sample(sha256).fetchone()
+		print ex_sample
 		if ex_sample:
+			print "SAMPLE ALREADY EXISTS"
 			return ex_sample["id"]
 		else:
 			return self.conn().execute(samples.insert().values(sha256=sha256, date=date, name=name, file=file, length=length, result=None)).inserted_primary_key[0]
