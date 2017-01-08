@@ -1,6 +1,6 @@
 # Telnet IoT honeypot
 
-Semi Live Demo: http://ykjs.ga/ (data is manually updated)
+Live Demo: http://phype.pythonanywhere.com/
 
 'Python telnet honeypot for catching botnet binaries'
 
