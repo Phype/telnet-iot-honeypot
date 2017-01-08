@@ -30,7 +30,9 @@ class Sampledb:
 				dbg("Deleting " + url + " out of url cache")
 				del self.url_cache[url]
 		
-	def put_conn(self, ip, user, password, date = int(time.time())):
+	def put_conn(self, ip, user, password, date = None):
+		if not date:
+			date = int(time.time())
 		if self.conn:
 			self.commit()
 		self.conn = {
