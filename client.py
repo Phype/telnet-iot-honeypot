@@ -13,26 +13,32 @@ class Client:
 	next_id = 0
 
 	def put(self, data, retry=True):
-		jsondata = json.dumps(data)
-		postdata = {
-			"auth" : {
-				"user" : 0,
-				"hash" : do_hmac(self.secret + str(self.next_id), jsondata),
-				"id"   : self.next_id
-			},
-			"data" : jsondata
-		}
-		r = requests.put(self.url + "/conns", json=postdata, timeout=20.0)
-		r = r.json()
-		self.next_id = r["next"]
-		if r["ok"]:
-			return r
+		r = requests.put(self.url + "/conns", json=data, timeout=20.0)
+		
+		if r.status_code == 200:
+			return r.json()
 		elif retry:
-			msg = None
-			if "msg" in r:
-				msg = r["msg"]
+			msg = r.raw.read()
 			dbg("Backend upload failed, retrying (" + str(msg) + ")")
 			return self.put(data, False)
 		else:
-			raise IOError(r["msg"])
+			msg = r.raw.read()
+			raise IOError(msg)
+
+	def upload(self, sha256, filename, retry=True):
+		fp = open(filename, "rb")
+		data = fp.read()
+		fp.close()
+		
+		r = requests.put(self.url + "/sample/" + sha256, data=data, timeout=20.0)
+		
+		if r.status_code == 200:
+			return
+		elif retry:
+			msg = r.raw.read()
+			dbg("Backend upload failed, retrying (" + str(msg) + ")")
+			return self.upload(sha256, filename, False)
+		else:
+			msg = r.raw.read()
+			raise IOError(msg)
 

@@ -11,7 +11,9 @@ class Sampledb:
 	back = client.Client()
 	conn = None
 	
-	url_cache = {}
+	url_cache    = {}
+	sample_cache = {}
+	
 	url_cache_time = 24 * 3600 # 1 day
 	
 	def __init__(self):
@@ -24,6 +26,8 @@ class Sampledb:
 		pass
 	
 	def clean(self):
+		# TODO: clean sample cache
+		
 		now = int(time.time())
 		for url in self.url_cache.keys():
 			if now - self.url_cache[url] > self.url_cache_time:
@@ -51,6 +55,7 @@ class Sampledb:
 		else:
 			sample = self.download(url)
 			self.url_cache[url] = int(time.time())
+			self.sample_cache[sample["sha256"]] = sample
 		
 		url = {
 			"url"    : url,
@@ -59,13 +64,23 @@ class Sampledb:
 		self.conn["urls"].append(url)
 		
 	def commit(self):
+		# TODO: do async
 		try:
-			self.back.put(self.conn)
+			upload_req = self.back.put(self.conn)
+			if upload_req:
+				for sha256 in upload_req:
+					self.upload(sha256)
 		except:
 			dbg("Backend uplink failed")
 			traceback.print_exc()
 		self.conn = None
 		self.clean()
+		
+	def upload(self, sha256):
+		if sha256 in self.sample_cache:
+			self.back.upload(sha256, self.sample_cache[sha256]["file"])
+		else:
+			print "NOT FOUND"
 		
 	# DONWLOAD
 	

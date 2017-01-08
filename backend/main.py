@@ -8,6 +8,7 @@ from auth import do_hmac
 import json
 import base64
 import time
+import hashlib
 
 app = Flask(__name__)
 db  = DB()
@@ -85,13 +86,10 @@ def add_cors(response):
 ###
 
 @app.route("/conns", methods = ["PUT"])
-def put_sample():
+def put_conn():
 	try:
-		res = auth.do_auth(request.json)
-		if not res["ok"]:
-			return json.dumps(res)
-		
-		conn = json.loads(request.json["data"])
+		upload_request = []
+		conn = request.json
 		id_conn = db.put_conn(conn["ip"], conn["user"], conn["pass"], conn["date"])
 
 		for url in conn["urls"]:
@@ -99,11 +97,31 @@ def put_sample():
 			db.link_conn_url(id_conn, id_url)
 			if url["sample"]:
 				sample = url["sample"]
-				id_sample = db.put_sample(sample["sha256"], sample["name"], None, sample["length"], conn["date"])
+				sha256 = sample["sha256"]
+				id_sample = db.put_sample(sample["sha256"], sample["name"], sample["length"], conn["date"])
 				db.link_url_sample(id_url, id_sample)
-		return json.dumps(res)
+				
+				sample = db.get_sample(sha256).fetchone()
+				if sample["file"] == None:
+					upload_request.append(sha256)
+
+		return json.dumps(upload_request)
 	finally:
 		db.end()
+
+@app.route("/sample/<sha256>", methods = ["PUT"])
+def put_sample(sha256):
+	try:
+		data        = request.get_data()
+		sha256_test = hashlib.sha256(data).hexdigest()
+		if sha256_test != sha256:
+			return fail("sha256 hash mismatch", 400)
+		else:
+			db.put_sample_data(sha256, data)
+			return "ok"
+	finally:
+		db.end()
+	
 		
 ###
 #

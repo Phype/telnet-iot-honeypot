@@ -1,6 +1,8 @@
 import time
 import sqlalchemy
 
+import virustotal
+
 from config import config
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 from sqlalchemy.sql import select, join, insert, text
@@ -16,7 +18,7 @@ samples = Table('samples', metadata,
 	Column('sha256', String(64, collation="latin1_swedish_ci"), unique=True),
 	Column('date', Integer),
 	Column('name', String(32)),
-	Column('file', String(32)),
+	Column('file', String(512)),
 	Column('length', Integer),
 	Column('result', String(32)),
 )
@@ -47,6 +49,7 @@ class DB:
 	sess = None
 	
 	def __init__(self):
+		self.sample_dir    = config["sample_dir"]
 		self.limit_samples = 32
 		self.limit_urls    = 32
 		self.limit_conns   = 32
@@ -69,6 +72,17 @@ class DB:
 		self.sess = None
 
 	# INPUT
+	
+	def put_sample_data(self, sha256, data):
+		file = self.sample_dir + "/" + sha256
+		fp = open(file, "wb")
+		fp.write(data)
+		fp.close()
+		
+		self.conn().execute(samples.update().where(samples.c.sha256 == sha256).values(file=file))
+			
+	def put_sample_result(self, sha256, result):
+		self.conn().execute(samples.update().where(samples.c.sha256 == sha256).values(result=result))
 
 	def put_url(self, url, date = now()):
 		ex_url = self.conn().execute(urls.select().where(urls.c.url == url)).fetchone()
@@ -80,14 +94,12 @@ class DB:
 	def put_conn(self, ip, user, password, date = now()):
 		return self.conn().execute(conns.insert().values((None, ip, date, user, password))).inserted_primary_key[0]
 
-	def put_sample(self, sha256, name, file, length, date):
+	def put_sample(self, sha256, name, length, date):
 		ex_sample = self.get_sample(sha256).fetchone()
-		print ex_sample
 		if ex_sample:
-			print "SAMPLE ALREADY EXISTS"
 			return ex_sample["id"]
 		else:
-			return self.conn().execute(samples.insert().values(sha256=sha256, date=date, name=name, file=file, length=length, result=None)).inserted_primary_key[0]
+			return self.conn().execute(samples.insert().values(sha256=sha256, date=date, name=name, length=length, result=None)).inserted_primary_key[0]
 
 	def link_conn_url(self, id_conn, id_url):
 		self.conn().execute(conns_urls.insert().values(id_conn=id_conn, id_url=id_url))
