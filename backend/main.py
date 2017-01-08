@@ -225,7 +225,7 @@ def search_url():
 def hist_fill(start, end, delta, db_result):
 	result = []
 	start  = start - start % delta
-	end    = end   - end   % delta + delta
+	end    = end   - end   % delta
 
 	now    = start
 	for row in db_result:
