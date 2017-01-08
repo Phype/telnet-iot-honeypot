@@ -1,6 +1,7 @@
 import requests
 import json
 
+from dbg import dbg
 from config import config
 from backend.auth import do_hmac
 
@@ -26,7 +27,11 @@ class Client:
 		self.next_id = r["next"]
 		if r["ok"]:
 			return r
-		elif r["msg"] == "wrong id" and retry:
+		elif retry:
+			msg = None
+			if "msg" in r:
+				msg = r["msg"]
+			dbg("Backend upload failed, retrying (" + str(msg) + ")")
 			return self.put(data, False)
 		else:
 			raise IOError(r["msg"])
