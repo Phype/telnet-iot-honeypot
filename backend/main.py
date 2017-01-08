@@ -69,6 +69,17 @@ auth = Auth()
 
 ###
 #
+# Globals
+#
+###
+
+@app.after_request
+def add_cors(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+###
+#
 # Upload API
 #
 ###
@@ -216,7 +227,7 @@ def hist_fill(start, end, delta, db_result):
 @app.route("/history")
 def hist_global():
 	try:
-		delta  = 3600 * 24
+		delta  = 3600 * 6
 		end    = int(time.time())
 		start  = end - delta * 24
 		

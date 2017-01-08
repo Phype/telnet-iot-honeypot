@@ -17,6 +17,13 @@ function formatDate(date) {
 	return d.toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1");
 }
 
+var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+
+function formatDay(date) {
+	d = new Date(date * 1000);
+	return d.getDate() + " " + months[d.getMonth()];
+}
+
 function formatDateTime(date) {
 	if (date == null) return "";
 	d = new Date(date * 1000);

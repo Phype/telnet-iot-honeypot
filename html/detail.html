@@ -11,6 +11,8 @@
 
 <script>
 
+var api  = "http://127.0.0.1:5000";
+
 angular.module('stats', ["chart.js"])
 .controller('histController2', function($scope, $http) {
 	$scope.formatDate     = formatDate;
@@ -47,10 +49,7 @@ angular.module('stats', ["chart.js"])
 	$scope.loadSample = function(sample) {
 		console.log("Load " + sample);
 	
-		var url = "backend.php?cmd=gethistory&sample=" + sample +
-		"&from="  + $scope.from +
-		"&to="    + $scope.to +
-		"&delta=" + $scope.delta;
+		var url = api + "/history/" + sample;
 
 		//var r = {"from": $scope.from,"to":$scope.to,"delta":$scope.delta,"data":[0,3,3,2,0,0,0,0,0,0,0,2,1,1,1,2,2,2,1,1,3,3,2,0,0,0]};
 
@@ -108,7 +107,7 @@ angular.module('stats', ["chart.js"])
 	};
 	
 	var since = 0;
-        $http.get("backend.php?cmd=getsamplestats&since=" + since).then(function (httpResult) {
+        $http.get(api + "/samples/statistics").then(function (httpResult) {
 			var data = httpResult.data;
 
 			for (var i = 0; i < data.length; i++) {
