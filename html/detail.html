@@ -11,7 +11,8 @@
 
 <script>
 
-var api  = "http://127.0.0.1:5000";
+//var api  = "http://127.0.0.1:5000";
+var api  = "http://phype.pythonanywhere.com";
 
 angular.module('stats', ["chart.js"])
 .controller('histController2', function($scope, $http) {
@@ -25,20 +26,22 @@ angular.module('stats', ["chart.js"])
 	
 	$scope.samples = {};
 	
-	var now = new Date().getTime() / 1000;
-	$scope.delta   = 3600 * config["delta"];
-	$scope.from    = now - $scope.delta * 40;
-	$scope.to      = now;
+	$scope.from    = null;
+	
+	// var now = new Date().getTime() / 1000;
+	// $scope.delta   = 3600 * config["delta"];
+	// $scope.from    = now - $scope.delta * 40;
+	// $scope.to      = now;
 	
 	// Normalize (See backend.php)
 	// $to    = $to - $to % $delta + $delta;
 	// $from  = $from - $from % $delta;
-	$scope.to   = $scope.to - $scope.to % $scope.delta + $scope.delta;
-	$scope.from = $scope.from - $scope.from % $scope.delta;
+	// $scope.to   = $scope.to - $scope.to % $scope.delta + $scope.delta;
+	// $scope.from = $scope.from - $scope.from % $scope.delta;
 	
 	$scope.makeLables = function() {
 		var date  = $scope.from;
-		var count = Math.floor(($scope.to - $scope.from) / $scope.delta) + 1;
+		var count = Math.floor(($scope.to - $scope.from) / $scope.delta);
 		
 		for (var i = 0; i < count; i++) {
 			$scope.labels.push(formatDateTime(date));
@@ -51,9 +54,15 @@ angular.module('stats', ["chart.js"])
 	
 		var url = api + "/history/" + sample;
 
-		//var r = {"from": $scope.from,"to":$scope.to,"delta":$scope.delta,"data":[0,3,3,2,0,0,0,0,0,0,0,2,1,1,1,2,2,2,1,1,3,3,2,0,0,0]};
-
 		$http.get(url).then(function (httpResult) {
+		
+			if ($scope.from == null) {
+				$scope.from  = httpResult.data.start;
+				$scope.to    = httpResult.data.end;
+				$scope.delta = httpResult.data.delta;
+				$scope.makeLables();
+			}
+		
 			var r = httpResult.data;
 		
 			if (r.from != $scope.from) {
