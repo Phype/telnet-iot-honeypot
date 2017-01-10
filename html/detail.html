@@ -128,8 +128,7 @@ angular.module('stats', ["chart.js"])
 
 			$scope.makeLables();
 		
-			$scope.toggle($scope.samples[data[1].sha256]);
-			$scope.toggle($scope.samples[data[2].sha256]);
+			$scope.toggle($scope.samples[data[0].sha256]);
         });	
 });
 
