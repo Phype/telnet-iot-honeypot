@@ -152,9 +152,9 @@ class DB:
 		"""		
 		return self.conn().execute(text(q), {"id_url": id_url})
 
-	def get_sample_stats(self):
+	def get_sample_stats(self, date_from = 0):
 		date_from = 0
-		limit     = 32
+		limit     = self.limit_samples
 		q = """
 		select
 			samples.name as name, samples.sha256 as sha256,

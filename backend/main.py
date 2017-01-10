@@ -173,7 +173,7 @@ def search_sample():
 def get_sample_stats():
 	try:
 		result = []
-		for sample in db.get_sample_stats():
+		for sample in db.get_sample_stats(int(time.time()) - 6 * 24 * 3600):
 			result.append(red(sample, ["sha256", "name", "date", "length", "result", "count", "lastseen"]))
 			
 		return json.dumps(result)
