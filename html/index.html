@@ -21,7 +21,6 @@ var base = {
 angular.module('stats', ["chart.js"])
 .controller('statController', function($scope, $http) {
         $scope.samples     = [];
-        $scope.threshold   = 0.02;
         $scope.activeIndex = -1;
 
         $scope.formatDate     = formatDate;
@@ -31,13 +30,14 @@ angular.module('stats', ["chart.js"])
                 var list   = [];
                 var count  = 0;
                 var others = 0;
+                var end    = Math.min(10, data.length);
 
                 for (var i = 0; i < data.length; i++) {
                         count += data[i]["count"];
                 }
 
                 for (var i = 0; i < data.length; i++) {
-                        if (data[i]["count"] >= $scope.threshold * count) {
+                        if (i <= end) {
                                 var x = data[i]["sha256"].substr(0,2);
                                 data[i].color = "#dd" + x + "" + x; 
                                 list.push(data[i]);
