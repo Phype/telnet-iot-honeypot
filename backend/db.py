@@ -108,6 +108,24 @@ class DB:
 		self.conn().execute(urls.update().where(urls.c.id == id_url).values(sample=id_sample))
 
 	# OUTPUT
+	
+	def get_conn_count(self):
+		q = """
+		SELECT COUNT(id) as count FROM conns
+		"""
+		return self.conn().execute(text(q)).fetchone()["count"]
+	
+	def get_sample_count(self):
+		q = """
+		SELECT COUNT(id) as count FROM samples
+		"""
+		return self.conn().execute(text(q)).fetchone()["count"]
+	
+	def get_url_count(self):
+		q = """
+		SELECT COUNT(id) as count FROM urls
+		"""
+		return self.conn().execute(text(q)).fetchone()["count"]
 
 	def search_sample(self, q):
 		q = "%" + q + "%"

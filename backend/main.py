@@ -219,7 +219,19 @@ def search_url():
 		return json.dumps(result)
 	finally:
 		db.end()
-
+		
+@app.route("/info")
+def get_info():
+	try:
+		obj = {
+			"connections" : db.get_conn_count(),
+			"samples" : db.get_sample_count(),
+			"urls" : db.get_url_count()
+		}
+		return json.dumps(obj)
+	finally:
+		db.end()
+		
 ### Hist
 
 def hist_fill(start, end, delta, db_result):
