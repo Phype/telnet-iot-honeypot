@@ -164,7 +164,7 @@ class DB:
 		INNER JOIN conns on conns_urls.id_conn = conns.id
 		INNER JOIN urls on conns_urls.id_url = urls.id
 		INNER JOIN samples on urls.sample = samples.id
-		WHERE conns.date > :from
+		WHERE lastseen > :from
 		GROUP BY samples.id
 		ORDER BY count DESC
 		LIMIT :limit"""
