@@ -74,8 +74,6 @@ angular.module('stats', ["chart.js"])
 		$scope.data   = httpResult.data.data;
 		$scope.labels = [];
 		
-		console.log(httpResult.data);
-		
 		var last  = -1;
 		var delta = httpResult.data.delta;
 		var now   = httpResult.data.start;
@@ -92,19 +90,23 @@ angular.module('stats', ["chart.js"])
 		
 		console.log($scope.data);
 	});
-}).controller('basicController', function($scope) {
-        /*
+}).controller('basicController', function($scope, $http) {
         $scope.formatDate     = formatDate;
         $scope.formatDateTime = formatDateTime;
         
-        $scope.conns   = base.connections;
-        $scope.urls    = base.urls;
-        $scope.samples = base.samples;
+        $scope.conns   = "";
+        $scope.urls    = ""
+        $scope.samples = "";
 
-        $scope.latestSamples = samples;
-        //$scope.latestUrls    = urls;
-        $scope.latestConns   = conns;
-        */
+        $scope.latestSamples = [];
+        $scope.latestUrls    = [];
+        $scope.latestConns   = [];
+        
+		$http.get(api + "/info").then(function (httpResult) {
+			$scope.conns   = httpResult.data.connections;
+			$scope.urls    = httpResult.data.urls;
+			$scope.samples = httpResult.data.samples;
+		});
 });
 </script>
 </head>
