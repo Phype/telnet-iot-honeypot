@@ -66,12 +66,12 @@ angular.module('stats', ["chart.js"])
 	$scope.formatDate     = formatDate;
 	$scope.formatDateTime = formatDateTime;
 	
-	$scope.series  = ["Connection"];
+	$scope.series  = ["Connections"];
 	$scope.labels  = [];
 	$scope.data    = [];
 	
 	$http.get(api + "/history").then(function (httpResult) {
-		$scope.data   = httpResult.data.data;
+		$scope.data   = [httpResult.data.data];
 		$scope.labels = [];
 		
 		var last  = -1;
