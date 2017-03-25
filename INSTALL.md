@@ -1,13 +1,7 @@
 # INSTALL
 
-## Python packages
-
-	struct socket traceback re sys random signal datetime
-	os.path requests hashlib sqlite3 os time Queue threading
-
-On ubuntu: (i think)
-
-	apt install python-requests python-pymysql python-sqlalchemy python-flask
+Installation instructions for this branch are not available.
+Server is a python flask app, while the client runs on its own, connecting to the Server app.
 
 ## Virustotal integration
 
@@ -23,18 +17,7 @@ When you got one, replace the Key in virustotal.py
 If you want to import virustotal reports of the collected samples,
 run (may have to restart because of db locks)
 
-	python virustotal_fill_db.py
-
-## Html Frontend
-
- - Copy the html/ folder on a php-enabled webserver	
- - Create db.php with content (replace PATH TO SAMPLES.DB whereever your samples.db was created)
-
-	<?PHP
-	$sql = new SQLite3("PATH TO SAMPLES.DB");
-	?>
-
- - Run the honeypot, the samples.db file should be created
+	python virustotal_fill_db.php
  
 ## Run
 
