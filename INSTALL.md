@@ -2,12 +2,12 @@
 
 ## Python packages
 
-	struct socket traceback re sys random signal datetime
+	struct socket traceback re sys random signal datetime tftpy
 	os.path requests hashlib sqlite3 os time Queue threading
 
 On ubuntu: (i think)
 
-	apt install python-requests
+	apt install python-requests python-tftpy
 
 ## Virustotal integration
 
