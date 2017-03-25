@@ -8,19 +8,14 @@
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.0-rc.2/angular.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/angular.chartjs/latest/angular-chart.min.js"></script>
 <script type="text/javascript" src="common.js"></script>
-<script type="text/javascript" src="apiurl.js"></script>
+<script type="text/javascript" src="backend.php"></script>
 
 <script>
-
-var base = {
-	"conns"   : [],
-	"urls"    : [],
-	"samples" : []
-};
 
 angular.module('stats', ["chart.js"])
 .controller('statController', function($scope, $http) {
         $scope.samples     = [];
+        $scope.threshold   = 0.02;
         $scope.activeIndex = -1;
 
         $scope.formatDate     = formatDate;
@@ -30,14 +25,13 @@ angular.module('stats', ["chart.js"])
                 var list   = [];
                 var count  = 0;
                 var others = 0;
-                var end    = Math.min(10, data.length);
 
                 for (var i = 0; i < data.length; i++) {
                         count += data[i]["count"];
                 }
 
                 for (var i = 0; i < data.length; i++) {
-                        if (i <= end) {
+                        if (data[i]["count"] >= $scope.threshold * count) {
                                 var x = data[i]["sha256"].substr(0,2);
                                 data[i].color = "#dd" + x + "" + x; 
                                 list.push(data[i]);
@@ -51,7 +45,7 @@ angular.module('stats', ["chart.js"])
         };
 
 	var since = time() - 24 * 3600;
-	$http.get(api + "/samples/statistics").then(function (httpResult) {
+	$http.get("backend.php?cmd=getsamplestats&since=" + since).then(function (httpResult) {
 		$scope.processData(httpResult.data);
 		
         $scope.formatDate     = formatDate;
@@ -62,51 +56,32 @@ angular.module('stats', ["chart.js"])
 		$scope.colors = $scope.samples.map(function (s) {return s["color"]});
 	});
 
-}).controller('histController', function($scope, $http) {
-	$scope.formatDate     = formatDate;
-	$scope.formatDateTime = formatDateTime;
-	
-	$scope.series  = ["Connections"];
-	$scope.labels  = [];
-	$scope.data    = [];
-	
-	$http.get(api + "/history").then(function (httpResult) {
-		$scope.data   = [httpResult.data.data];
-		$scope.labels = [];
-		
-		var last  = -1;
-		var delta = httpResult.data.delta;
-		var now   = httpResult.data.start;
-		for (var i = 0; i < httpResult.data.data.length; i++) {
-			var d = new Date(now * 1000);
-			if (last != d.getDay()) {
-				$scope.labels[i] = formatDay(now);
-				last = d.getDay();
-			} else {
-				$scope.labels[i] = "";
-			}
-			now += delta;
-		}
-		
-		console.log($scope.data);
-	});
-}).controller('basicController', function($scope, $http) {
+}).controller('histController', function($scope) {
         $scope.formatDate     = formatDate;
         $scope.formatDateTime = formatDateTime;
         
-        $scope.conns   = "";
-        $scope.urls    = ""
-        $scope.samples = "";
-
-        $scope.latestSamples = [];
-        $scope.latestUrls    = [];
-        $scope.latestConns   = [];
+        $scope.history = hist;
+        $scope.series  = ["Urls", "Connections"];
+        $scope.labels  = $scope.history.map(function (s) {
+                if (((s["date"] / 3600) - 1) % 4 == 0) {
+                        return new Date(s["date"] * 1000).getHours() + ":00";
+                } else {
+                        return "";
+                }
+        });
+        $scope.data    = [ $scope.history.map(function (s) { return s["count_url"]}) ,
+                $scope.history.map(function (s) { return s["count"]}) ];
+}).controller('basicController', function($scope) {
+        $scope.formatDate     = formatDate;
+        $scope.formatDateTime = formatDateTime;
         
-		$http.get(api + "/info").then(function (httpResult) {
-			$scope.conns   = httpResult.data.connections;
-			$scope.urls    = httpResult.data.urls;
-			$scope.samples = httpResult.data.samples;
-		});
+        $scope.conns   = base.connections;
+        $scope.urls    = base.urls;
+        $scope.samples = base.samples;
+
+        $scope.latestSamples = samples;
+        //$scope.latestUrls    = urls;
+        $scope.latestConns   = conns;
 });
 </script>
 </head>
@@ -132,8 +107,8 @@ angular.module('stats', ["chart.js"])
                         </table>
                 </div>
                 <div class="col-md-6 col-xs-12" ng-controller="histController">
-                        <h3>Connection history</h3>
-                        <canvas class="chart chart-line" chart-data="data" chart-labels="labels" chart-series="series"></canvas> 
+                        <h3>Connection history per hour</h3>
+                        <canvas id="doughnut" class="chart chart-line" chart-data="data" chart-labels="labels" chart-series="series"></canvas> 
                         <p>
                                 Succesful connections to the telnet server. A successful
                                 connection is defined by logging in with username and password.
