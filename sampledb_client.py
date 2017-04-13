@@ -6,81 +6,49 @@ import requests
 import hashlib
 
 from dbg import dbg
+from db import DB
+from clientcontroller import ClientController
+from config import config
+
+is_local = config["use_local_db"]
+
+def get_sample_db():
+	if is_local:
+		return Sampledb(ClientController())
+	else:
+		return Sampledb(client.Client())
 
 class Sampledb:
-	back = client.Client()
-	conn = None
 	
-	url_cache    = {}
-	sample_cache = {}
-	
-	url_cache_time = 24 * 3600 # 1 day
-	
-	def __init__(self):
+	def __init__(self, back):
 		self.dir = "samples/"
+		self.back = back
+				
+	def put_session(self, session):
+		session_obj = {
+			"ip"            : session.remote_addr,
+			"user"          : session.user,
+			"pass"          : session.password,
+			"date"          : session.date,
+			"urls"          : session.urls,
 
-	def enable_vt(self):
-		pass
-
-	def stop(self):
-		pass
-	
-	def clean(self):
-		# TODO: clean sample cache
-		
-		now = int(time.time())
-		for url in self.url_cache.keys():
-			if now - self.url_cache[url] > self.url_cache_time:
-				dbg("Deleting " + url + " out of url cache")
-				del self.url_cache[url]
-		
-	def put_conn(self, ip, user, password, date = None):
-		if not date:
-			date = int(time.time())
-		if self.conn:
-			self.commit()
-		self.conn = {
-			"ip"   : ip,
-			"user" : user,
-			"pass" : password,
-			"date" : date,
-			"urls" : []
+			"text_in"       : session.text_in,
+			"text_out"      : session.text_out,
+			"text_combined" : session.text_combined
 		}
-		return 0
-
-	def put_url(self, url, id_conn):
-		if url in self.url_cache:
-			dbg("Url " + url + " already cached")
-			sample = None
-		else:
-			sample = self.download(url)
-			self.url_cache[url] = int(time.time())
-			self.sample_cache[sample["sha256"]] = sample
 		
-		url = {
-			"url"    : url,
-			"sample" : sample
-		}
-		self.conn["urls"].append(url)
+		upload_req = self.back.put_session(session_obj)
 		
-	def commit(self):
-		# TODO: do async
-		try:
-			upload_req = self.back.put(self.conn)
-			if upload_req:
-				for sha256 in upload_req:
-					self.upload(sha256)
-		except:
-			dbg("Backend uplink failed")
-			traceback.print_exc()
-		self.conn = None
-		self.clean()
-		
-	def upload(self, sha256):
-		if sha256 in self.sample_cache:
-			self.back.upload(sha256, self.sample_cache[sha256]["file"])
-		else:
-			print "NOT FOUND"
+		for url in upload_req:
+			dbg("Upload requested: " + url)
+			self.get_sample(url)
+			
+	def get_sample(self, url):
+		f = self.download(url)
+		if f:
+			print(f)
+			if self.back.put_sample_info(f):
+				self.back.put_sample(f["sha256"], f["file"])
 		
 	# DONWLOAD
 	
@@ -115,10 +83,13 @@ class Sampledb:
 				port = 69
 			
 			f = {}
+			
+			f["url"]  = url
 			f["name"] = url.split("/")[-1].strip()
 			f["date"] = int(time.time())
 			f["length"]  = 0
 			f["file"] = self.dir + str(f["date"]) + "_" + f["name"]
+			f["info"] = None
 			
 			client = tftpy.TftpClient(host, int(port))
 			client.download(fname, f["file"])
@@ -135,12 +106,14 @@ class Sampledb:
 			raise ValueError("Invalid tftp url")
 		
 	def download_http(self, url):
-		url = url.strip()
-		hdr = { "User-Agent" : "Wget/1.15 (linux-gnu)" }
-		r   = requests.get(url, stream=True, timeout=5.0)
-		f   = {}
-		h   = hashlib.sha256()
+		url  = url.strip()
+		hdr  = { "User-Agent" : "Wget/1.15 (linux-gnu)" }
+		r    = requests.get(url, stream=True, timeout=5.0)
+		f    = {}
+		h    = hashlib.sha256()
+		info = ""
 
+		f["url"]  = url
 		f["name"] = url.split("/")[-1].strip()
 		f["date"] = int(time.time())
 		f["length"]  = 0
@@ -150,13 +123,13 @@ class Sampledb:
 		f["file"] = self.dir + str(f["date"]) + "_" + f["name"]
 
 		for his in r.history:
-			dbg("HTTP Response " + str(his.status_code))
+			info = info + "HTTP " + str(his.status_code) + "\n"
 			for k,v in his.headers.iteritems():
-				dbg("HEADER " + k + ": " + v)
+				info = info + k + ": " + v + "\n"
 
-		dbg("HTTP Response " + str(r.status_code))
+		info = info + "HTTP " + str(r.status_code) + "\n"
 		for k,v in r.headers.iteritems():
-			dbg("HEADER " + k + ": " + v)
+			info = info + k + ": " + v + "\n"
 
 		with open(f["file"], 'wb') as fd:
 			for chunk in r.iter_content(chunk_size = 4096):
@@ -165,5 +138,6 @@ class Sampledb:
 				h.update(chunk)
 
 		f["sha256"] = h.hexdigest()
+		f["info"]   = info
 
 		return f

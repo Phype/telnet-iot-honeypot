@@ -1,19 +1,26 @@
 import requests
+import requests.exceptions
+
 import json
 
 from dbg import dbg
 from config import config
-from backend.auth import do_hmac
 
 class Client:
 	user    = config["user"]
-	secret  = config["secret"]
 	url     = config["backend"]
 
 	next_id = 0
 
-	def put(self, data, retry=True):
-		r = requests.put(self.url + "/conns", json=data, timeout=20.0)
+	def put_session(self, data, retry=True):
+		# TODO: Debug purpose only
+		return data["urls"]
+		
+		try:
+			r = requests.put(self.url + "/conns", json=data, timeout=20.0)
+		except requests.exceptions.RequestException:
+			dbg("Cannot connect to backend")
+			return []
 		
 		if r.status_code == 200:
 			return r.json()
@@ -25,12 +32,16 @@ class Client:
 			msg = r.raw.read()
 			raise IOError(msg)
 
-	def upload(self, sha256, filename, retry=True):
+	def put_sample(self, sha256, filename, retry=True):
 		fp = open(filename, "rb")
 		data = fp.read()
 		fp.close()
 		
-		r = requests.put(self.url + "/sample/" + sha256, data=data, timeout=20.0)
+		try:
+			r = requests.put(self.url + "/sample/" + sha256, data=data, timeout=20.0)
+		except requests.exceptions.RequestException:
+			dbg("Cannot connect to backend")
+			return
 		
 		if r.status_code == 200:
 			return

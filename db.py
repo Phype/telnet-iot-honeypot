@@ -9,13 +9,16 @@ from sqlalchemy.sql import select, join, insert, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.pool import QueuePool
 
+print("Creating/Connecting to DB")
+
 def now():
 	return int(time.time())
 
 metadata = MetaData()
 samples = Table('samples', metadata,
 	Column('id', Integer, primary_key=True),
-	Column('sha256', String(64, collation="latin1_swedish_ci"), unique=True),
+	#Column('sha256', String(64, collation="latin1_swedish_ci"), unique=True),
+	Column('sha256', String(64), unique=True),
 	Column('date', Integer),
 	Column('name', String(32)),
 	Column('file', String(512)),
@@ -33,7 +36,8 @@ conns = Table('conns', metadata,
 
 urls = Table('urls', metadata,
 	Column('id', Integer, primary_key=True),
-	Column('url', String(256, collation="latin1_swedish_ci"), unique=True),
+	#Column('url', String(256, collation="latin1_swedish_ci"), unique=True),
+	Column('url', String(256), unique=True),
 	Column('date', Integer),
 	Column('sample', None, ForeignKey('samples.id')),
 )
@@ -58,9 +62,12 @@ class DB:
 		pass
 
 	def conn(self):
-		if not self.sess:
-			self.sess = scoped_session(sessionmaker(bind=self.eng))
-		return self.sess
+		return self.eng
+		
+		# Mysql?!
+		# if not self.sess:
+		# 	self.sess = scoped_session(sessionmaker(bind=self.eng))
+		# return self.sess
 
 	def end(self):
 		if self.sess:
@@ -217,3 +224,5 @@ class DB:
 	
 	def get_sample(self, sha256):
 		return self.conn().execute(samples.select().where(samples.c.sha256 == sha256))
+	
+print("DB Setup done")
