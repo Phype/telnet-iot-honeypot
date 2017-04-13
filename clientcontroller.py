@@ -1,6 +1,7 @@
 from db import DB
 from dbg import dbg
 
+# Controls Actions perfomed by Honeypot Clients
 class ClientController:
 	
 	def __init__(self):

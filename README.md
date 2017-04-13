@@ -16,12 +16,27 @@ which may try to infect the honeypot with malware.
 Luckily, these malwares infection processes are quite simple,
 just using wget do download something and running it.
 
-Statistics of the downloaded binaries and corresponding
-Urls/Telnet connections may be created via the generated
-SQLite database.
+## Architekure
 
-All binaries are also uploaded to virustotal.com, if not
-already present.
+The application has a client/server architekture,
+with a client (the actual honeypot) accepting telnet connections
+and a server aggregating connection data and sample analysis.
+
+However, for local deployments, the application can also be run
+in local mode to eliminate the need to run a client and server locally.
+
+# Running
+
+The application has a config file named config.py.
+Samples are included for local and client/server deployments.
+
+## Client/Local Mode
+
+	python honey.py
+	
+## Server
+
+	python backend.py
 
 ## Sample Connection
 

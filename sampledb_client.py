@@ -19,7 +19,6 @@ def get_sample_db():
 		return Sampledb(client.Client())
 
 class Sampledb:
-	
 	def __init__(self, back):
 		self.dir = "samples/"
 		self.back = back
