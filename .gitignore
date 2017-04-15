@@ -1,6 +1,5 @@
 *.pyc
 *.db
-config.py
 samples/
 Mirai-Source-Code-master/
 obf.py
