@@ -32,7 +32,7 @@ class ClientController:
 				else:
 					# Sample exists already
 					# TODO: Check url for oldness
-					pass
+					url_id = db_url["id"]
 					
 				db.link_conn_url(s_id, url_id)
 			

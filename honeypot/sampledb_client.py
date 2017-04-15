@@ -46,7 +46,8 @@ class Sampledb:
 		if f:
 			print(f)
 			if self.back.put_sample_info(f):
-				self.back.put_sample(data)
+				if config["save_samples"]:
+					self.back.put_sample(data)
 		
 	# DONWLOAD
 	

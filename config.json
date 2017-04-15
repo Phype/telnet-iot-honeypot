@@ -4,7 +4,9 @@
 	"user": "testuser",
 	"backend": "http://localhost:5000",
 
-	"sql": "sqlite:///test.sqlite",
+	"sql": "sqlite:///test.db",
 	"max_db_conn": 1,
-	"sample_dir": "samples/"
+	"sample_dir": "samples",
+
+	"save_samples": false
 }
