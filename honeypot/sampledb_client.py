@@ -20,7 +20,6 @@ def get_sample_db():
 
 class Sampledb:
 	def __init__(self, back):
-		self.dir = "/tmp"
 		self.back = back
 				
 	def put_session(self, session):
@@ -43,19 +42,11 @@ class Sampledb:
 			self.get_sample(url)
 			
 	def get_sample(self, url):
-		f = self.download(url)
+		f, data = self.download(url)
 		if f:
 			print(f)
 			if self.back.put_sample_info(f):
-				
-				fp = None
-				try:
-					fp = open(f["file"], "rb")
-					data = fp.read()
-					self.back.put_sample(data)
-				finally:
-					fp.close()
-					os.remove(f["file"])
+				self.back.put_sample(data)
 		
 	# DONWLOAD
 	
@@ -64,9 +55,7 @@ class Sampledb:
 		
 		try:
 			if url.startswith("http://") or url.startswith("https://"):
-				f = self.download_http(url)
-			elif url.startswith("tftp://"):
-				f = self.download_tftp(url)
+				f, data = self.download_http(url)
 			else:
 				return None
 		except requests.exceptions.ReadTimeout:
@@ -76,41 +65,7 @@ class Sampledb:
 			return None
 		
 		dbg("Downlod finished. length: " + str(f["length"]) + " sha256: " + f["sha256"])
-		return f
-		
-	def download_tftp(self, url):
-		r = re.compile("tftp://([^:/]+):?([0-9]*)/(.*)")	
-		m = r.match(url)
-		if m:
-			host  = m.group(1)
-			port  = m.group(2)
-			fname = m.group(3)
-			
-			if port == "":
-				port = 69
-			
-			f = {}
-			
-			f["url"]  = url
-			f["name"] = url.split("/")[-1].strip()
-			f["date"] = int(time.time())
-			f["length"]  = 0
-			f["file"] = self.dir + "/" + str(f["date"]) + "_" + f["name"]
-			f["info"] = None
-			
-			client = tftpy.TftpClient(host, int(port))
-			client.download(fname, f["file"])
-			
-			h = hashlib.sha256()
-			with open(f["file"], 'rb') as fd:
-				chunk = fd.read(4096)
-				h.update(chunk)
-			
-			f["sha256"] = h.hexdigest()
-			
-			return f
-		else:
-			raise ValueError("Invalid tftp url")
+		return f, data
 		
 	def download_http(self, url):
 		url  = url.strip()
@@ -127,8 +82,6 @@ class Sampledb:
 		if len(f["name"]) < 1:
 			f["name"] = "index.html"
 
-		f["file"] = self.dir + "/" + str(f["date"]) + "_" + f["name"]
-
 		for his in r.history:
 			info = info + "HTTP " + str(his.status_code) + "\n"
 			for k,v in his.headers.iteritems():
@@ -138,13 +91,13 @@ class Sampledb:
 		for k,v in r.headers.iteritems():
 			info = info + k + ": " + v + "\n"
 
-		with open(f["file"], 'wb') as fd:
-			for chunk in r.iter_content(chunk_size = 4096):
-				f["length"] = f["length"] + len(chunk)
-				fd.write(chunk)
-				h.update(chunk)
+		data = ""
+		for chunk in r.iter_content(chunk_size = 4096):
+			f["length"] = f["length"] + len(chunk)
+			data = data + chunk
+			h.update(chunk)
 
 		f["sha256"] = h.hexdigest()
 		f["info"]   = info
 
-		return f
+		return f, data
