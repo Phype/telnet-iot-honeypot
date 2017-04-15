@@ -1,6 +1,6 @@
 import os
 
-from dbg import dbg
+from util.dbg import dbg
 from virustotal import Virustotal
 from sampledb import Sampledb
 

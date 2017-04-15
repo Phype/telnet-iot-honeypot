@@ -3,8 +3,8 @@ import socket
 import traceback
 import time
 
-from dbg import dbg
 from session import Session
+from util.dbg import dbg
 
 class Telnetd:
 	cmds   = {}

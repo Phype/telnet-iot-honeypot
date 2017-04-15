@@ -3,7 +3,8 @@ import re
 import random
 import time
 
-from dbg import dbg
+from util.dbg import dbg
+
 from sampledb_client import Sampledb
 from sampledb_client import get_sample_db
 

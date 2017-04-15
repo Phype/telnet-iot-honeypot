@@ -1,0 +1,10 @@
+{
+	"use_local_db": true,
+
+	"user": "testuser",
+	"backend": "http://localhost:5000",
+
+	"sql": "sqlite:///test.sqlite",
+	"max_db_conn": 1,
+	"sample_dir": "samples/"
+}

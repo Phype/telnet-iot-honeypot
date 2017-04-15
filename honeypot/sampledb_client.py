@@ -5,12 +5,12 @@ import os
 import requests
 import hashlib
 
-from dbg import dbg
-from db import DB
-from clientcontroller import ClientController
-from config import config
+from util.dbg import dbg
+from util.config import config
 
 is_local = config["use_local_db"]
+if is_local:
+	from backend.clientcontroller import ClientController
 
 def get_sample_db():
 	if is_local:
@@ -20,7 +20,7 @@ def get_sample_db():
 
 class Sampledb:
 	def __init__(self, back):
-		self.dir = "samples/"
+		self.dir = "/tmp"
 		self.back = back
 				
 	def put_session(self, session):
@@ -47,7 +47,15 @@ class Sampledb:
 		if f:
 			print(f)
 			if self.back.put_sample_info(f):
-				self.back.put_sample(f["sha256"], f["file"])
+				
+				fp = None
+				try:
+					fp = open(f["file"], "rb")
+					data = fp.read()
+					self.back.put_sample(data)
+				finally:
+					fp.close()
+					os.remove(f["file"])
 		
 	# DONWLOAD
 	
@@ -87,7 +95,7 @@ class Sampledb:
 			f["name"] = url.split("/")[-1].strip()
 			f["date"] = int(time.time())
 			f["length"]  = 0
-			f["file"] = self.dir + str(f["date"]) + "_" + f["name"]
+			f["file"] = self.dir + "/" + str(f["date"]) + "_" + f["name"]
 			f["info"] = None
 			
 			client = tftpy.TftpClient(host, int(port))
@@ -119,7 +127,7 @@ class Sampledb:
 		if len(f["name"]) < 1:
 			f["name"] = "index.html"
 
-		f["file"] = self.dir + str(f["date"]) + "_" + f["name"]
+		f["file"] = self.dir + "/" + str(f["date"]) + "_" + f["name"]
 
 		for his in r.history:
 			info = info + "HTTP " + str(his.status_code) + "\n"

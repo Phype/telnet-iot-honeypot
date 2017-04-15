@@ -1,13 +1,15 @@
 import time
 import sqlalchemy
 
-import virustotal
-
-from config import config
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 from sqlalchemy.sql import select, join, insert, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.pool import QueuePool
+
+import virustotal
+
+from util.config import config
+
 
 print("Creating/Connecting to DB")
 
@@ -47,36 +49,31 @@ conns_urls = Table('conns_urls', metadata,
 	Column('id_url', None, ForeignKey('urls.id'), primary_key=True),
 )
 
+eng = sqlalchemy.create_engine(config["sql"],
+							   poolclass=QueuePool,
+							   pool_size=config["max_db_conn"],
+							   max_overflow=config["max_db_conn"],
+							   connect_args={'check_same_thread': False})
+
+metadata.create_all(eng)
+
+def get_db():
+	return DB(scoped_session(sessionmaker(bind=eng)))
+
 class DB:
-	eng = sqlalchemy.create_engine(config["sql"], poolclass=QueuePool, pool_size=config["max_db_conn"], max_overflow=config["max_db_conn"])
-	metadata.create_all(eng)
-	sess = None
 	
-	def __init__(self):
+	def __init__(self, sess):
 		self.sample_dir    = config["sample_dir"]
 		self.limit_samples = 32
 		self.limit_urls    = 32
 		self.limit_conns   = 32
-
-	def close(self):
-		pass
-
-	def conn(self):
-		return self.eng
-		
-		# Mysql?!
-		# if not self.sess:
-		# 	self.sess = scoped_session(sessionmaker(bind=self.eng))
-		# return self.sess
+		self.sess          = sess
 
 	def end(self):
-		if self.sess:
-			try:
-				self.sess.commit()
-			except:
-				pass
+		try:
+			self.sess.commit()
+		finally:
 			self.sess.remove()
-		self.sess = None
 
 	# INPUT
 	
@@ -86,33 +83,33 @@ class DB:
 		fp.write(data)
 		fp.close()
 		
-		self.conn().execute(samples.update().where(samples.c.sha256 == sha256).values(file=file))
+		self.sess.execute(samples.update().where(samples.c.sha256 == sha256).values(file=file))
 			
 	def put_sample_result(self, sha256, result):
-		self.conn().execute(samples.update().where(samples.c.sha256 == sha256).values(result=result))
+		self.sess.execute(samples.update().where(samples.c.sha256 == sha256).values(result=result))
 
 	def put_url(self, url, date = now()):
-		ex_url = self.conn().execute(urls.select().where(urls.c.url == url)).fetchone()
+		ex_url = self.sess.execute(urls.select().where(urls.c.url == url)).fetchone()
 		if ex_url:
 			return ex_url["id"]
 		else:
-			return self.conn().execute(urls.insert().values(url=url, date=date, sample=None)).inserted_primary_key[0]
+			return self.sess.execute(urls.insert().values(url=url, date=date, sample=None)).inserted_primary_key[0]
 
 	def put_conn(self, ip, user, password, date = now()):
-		return self.conn().execute(conns.insert().values((None, ip, date, user, password))).inserted_primary_key[0]
+		return self.sess.execute(conns.insert().values((None, ip, date, user, password))).inserted_primary_key[0]
 
 	def put_sample(self, sha256, name, length, date):
 		ex_sample = self.get_sample(sha256).fetchone()
 		if ex_sample:
 			return ex_sample["id"]
 		else:
-			return self.conn().execute(samples.insert().values(sha256=sha256, date=date, name=name, length=length, result=None)).inserted_primary_key[0]
+			return self.sess.execute(samples.insert().values(sha256=sha256, date=date, name=name, length=length, result=None)).inserted_primary_key[0]
 
 	def link_conn_url(self, id_conn, id_url):
-		self.conn().execute(conns_urls.insert().values(id_conn=id_conn, id_url=id_url))
+		self.sess.execute(conns_urls.insert().values(id_conn=id_conn, id_url=id_url))
 
 	def link_url_sample(self, id_url, id_sample):
-		self.conn().execute(urls.update().where(urls.c.id == id_url).values(sample=id_sample))
+		self.sess.execute(urls.update().where(urls.c.id == id_url).values(sample=id_sample))
 
 	# OUTPUT
 	
@@ -120,23 +117,23 @@ class DB:
 		q = """
 		SELECT COUNT(id) as count FROM conns
 		"""
-		return self.conn().execute(text(q)).fetchone()["count"]
+		return self.sess.execute(text(q)).fetchone()["count"]
 	
 	def get_sample_count(self):
 		q = """
 		SELECT COUNT(id) as count FROM samples
 		"""
-		return self.conn().execute(text(q)).fetchone()["count"]
+		return self.sess.execute(text(q)).fetchone()["count"]
 	
 	def get_url_count(self):
 		q = """
 		SELECT COUNT(id) as count FROM urls
 		"""
-		return self.conn().execute(text(q)).fetchone()["count"]
+		return self.sess.execute(text(q)).fetchone()["count"]
 
 	def search_sample(self, q):
 		q = "%" + q + "%"
-		return self.conn().execute(samples.select().where(samples.c.name.like(q) | samples.c.result.like(q)).limit(self.limit_samples))
+		return self.sess.execute(samples.select().where(samples.c.name.like(q) | samples.c.result.like(q)).limit(self.limit_samples))
 
 	def search_url(self, q):
 		search = "%" + q + "%"
@@ -147,7 +144,7 @@ class DB:
 		WHERE urls.url LIKE :search
 		LIMIT :limit
 		"""		
-		return self.conn().execute(text(q), {"search": search, "limit": self.limit_urls})
+		return self.sess.execute(text(q), {"search": search, "limit": self.limit_urls})
 	
 	def get_url(self, url):
 		q = """
@@ -156,7 +153,7 @@ class DB:
 		LEFT JOIN samples on samples.id = urls.sample
 		WHERE urls.url = :search
 		"""		
-		return self.conn().execute(text(q), {"search": url})
+		return self.sess.execute(text(q), {"search": url})
 		
 	def get_url_conns(self, id_url):
 		q = """
@@ -167,7 +164,7 @@ class DB:
 		ORDER BY conns.date DESC
 		LIMIT :limit
 		"""		
-		return self.conn().execute(text(q), {"id_url": id_url, "limit" : self.limit_samples})
+		return self.sess.execute(text(q), {"id_url": id_url, "limit" : self.limit_samples})
 	
 	def get_url_conns_count(self, id_url):
 		q = """
@@ -175,7 +172,7 @@ class DB:
 		FROM conns_urls
 		WHERE conns_urls.id_url = :id_url
 		"""		
-		return self.conn().execute(text(q), {"id_url": id_url})
+		return self.sess.execute(text(q), {"id_url": id_url})
 
 	def get_sample_stats(self, date_from = 0):
 		date_from = 0
@@ -193,7 +190,7 @@ class DB:
 		GROUP BY samples.id
 		ORDER BY count DESC
 		LIMIT :limit"""
-		return self.conn().execute(text(q), {"from": date_from, "limit": self.limit_samples})
+		return self.sess.execute(text(q), {"from": date_from, "limit": self.limit_samples})
 
 	def history_global(self, fromdate, todate, delta=3600):
 		q = """
@@ -203,7 +200,7 @@ class DB:
 		AND conns.date <= :to
 		GROUP BY hour
 		"""
-		return self.conn().execute(text(q), {"from": fromdate, "to": todate, "delta": delta})
+		return self.sess.execute(text(q), {"from": fromdate, "to": todate, "delta": delta})
 	
 	def history_sample(self, id_sample, fromdate, todate, delta=3600):
 		q = """
@@ -217,12 +214,12 @@ class DB:
 		GROUP BY hour
 		ORDER BY hour ASC
 		"""
-		return self.conn().execute(text(q), {"from": fromdate, "to": todate, "delta": delta, "id_sample" : id_sample})
+		return self.sess.execute(text(q), {"from": fromdate, "to": todate, "delta": delta, "id_sample" : id_sample})
 
 	def get_samples(self):
-		return self.conn().execute(samples.select().limit(self.limit_samples))
+		return self.sess.execute(samples.select().limit(self.limit_samples))
 	
 	def get_sample(self, sha256):
-		return self.conn().execute(samples.select().where(samples.c.sha256 == sha256))
+		return self.sess.execute(samples.select().where(samples.c.sha256 == sha256))
 	
 print("DB Setup done")

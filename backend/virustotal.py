@@ -3,7 +3,7 @@ import time
 import db
 import Queue
 
-from config import config
+from util.config import config
 
 
 class QuotaExceededError(Exception):		
