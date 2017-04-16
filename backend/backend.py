@@ -79,6 +79,11 @@ def get_sample(sha256):
 		return json.dumps(sample)
 	else:
 		return "", 404
+	
+@app.route("/sample/newest")
+def get_newest_samples():
+	samples = web.get_newest_samples()
+	return json.dumps(samples)
 		
 ### Urls
 
@@ -92,6 +97,11 @@ def get_url(ref_enc):
 		return json.dumps(url)
 	else:
 		return "", 404
+	
+@app.route("/url/newest")
+def get_newest_urls():
+	urls = web.get_newest_urls()
+	return json.dumps(urls)
 		
 ### connections
 

@@ -1,0 +1,39 @@
+<h2>Latest Urls</h2>
+
+<table class="table table-condensed">
+
+	<tr>
+		<th>Url</th>
+		<th>Date</th>
+		<th>Sample</th>
+		<th>N⁰ Connections</th>
+	</tr>
+	<tr ng-repeat="url in urls | limitTo : 8">
+		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
+		<td>{{ formatDate(url.date) }}</td>
+		<td><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></td>
+		<td>{{ url.connections.length }}</td>
+	</tr>
+
+</table>
+
+<h2>Latest Samples</h2>
+
+<table class="table table-condensed">
+
+	<tr>
+		<th>SHA256</th>
+		<th>Name</th>
+		<th>Size (Bytes)</th>
+		<th>First Seen</th>
+		<th>N⁰ Urls</th>
+	</tr>
+	<tr ng-repeat="sample in samples | limitTo : 8">
+		<td><a href="{{ '#/sample/' + sample.sha256 }}">{{ short(sample.sha256, 16) }}</a></td>
+		<td>{{ sample.name }}</td>
+		<td>{{ sample.length }}</a></td>
+		<td>{{ formatDate(sample.date) }}</td>
+		<td>{{ sample.urls.length }}</td>
+	</tr>
+
+</table>

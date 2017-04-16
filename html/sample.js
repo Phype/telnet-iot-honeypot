@@ -16,8 +16,30 @@ app.config(function($routeProvider) {
 		controller : "connection"
 	})
 	.otherwise({
-		template: "none"
+		templateUrl : "overview.html",
+		controller : "overview"
 	});
+});
+
+app.controller('overview', function($scope, $http, $routeParams) {
+
+	$scope.urls = null;
+	$scope.samples = null;
+	
+	$scope.formatDate = formatDateTime;
+	$scope.nicenull = nicenull;
+	$scope.short = short;
+	$scope.encurl = encurl;
+	$scope.decurl = decurl;
+	
+	$http.get(api + "/url/newest").then(function (httpResult) {
+		$scope.urls = httpResult.data;
+	});
+	
+	$http.get(api + "/sample/newest").then(function (httpResult) {
+		$scope.samples = httpResult.data;
+	});
+
 });
 
 app.controller('sample', function($scope, $http, $routeParams) {
@@ -65,6 +87,7 @@ app.controller('url', function($scope, $http, $routeParams) {
 app.controller('connection', function($scope, $http, $routeParams) {
 
 	$scope.connection = null;
+	$scope.lines = [];
 	
 	$scope.formatDate = formatDateTime;
 	$scope.nicenull = nicenull;
@@ -75,7 +98,19 @@ app.controller('connection', function($scope, $http, $routeParams) {
 	var id = $routeParams.id;
 	$http.get(api + "/connection/" + id).then(function (httpResult) {
 		$scope.connection = httpResult.data;
-		console.log($scope.connection);
+		
+		var lines = $scope.connection.text_combined.split("\n");
+		var newl  = [];
+		for (var i = 0; i < lines.length; i++)
+		{
+			newl.push({
+				text: lines[i],
+				is_input: lines[i].startsWith(" #")
+			});
+		}
+		
+		$scope.lines = newl;
+		
 	});
 
 });

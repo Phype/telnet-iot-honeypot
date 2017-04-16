@@ -9,6 +9,14 @@
 
 </table>
 
+<div ng-show="connection.text_combined != null">
+	<h2>Session text</h2>
+
+	<div class="well well-sm code">
+		<div class="code-line" ng-class="{ isinput: l.is_input }" ng-repeat="l in lines track by $index">{{ l.text }}</div>
+	</div>
+</div>
+
 <h2>URLs gathared</h2>
 
 <table class="table">

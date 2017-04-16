@@ -1,7 +1,7 @@
 import time
 import sqlalchemy
 
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
+from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Text
 
 from sqlalchemy.sql import select, join, insert, text
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session
@@ -59,6 +59,8 @@ class Connection(Base):
 	user = Column('user', String(16))
 	password = Column('pass', String(16))
 	
+	text_combined = Column('text_combined', Text())
+	
 	urls = relationship("Url", secondary=conns_urls, back_populates="connections")
 	
 	def json(self, depth=0):
@@ -68,6 +70,8 @@ class Connection(Base):
 			"date": self.date,
 			"user": self.user,
 			"pass": self.password,
+			"text_combined": self.text_combined,
+			
 			"urls": map(lambda url : url.url if depth == 0
 			   else url.json(depth - 1), self.urls)
 		}
@@ -145,8 +149,8 @@ class DB:
 		else:
 			return self.sess.execute(urls.insert().values(url=url, date=date, sample=None)).inserted_primary_key[0]
 
-	def put_conn(self, ip, user, password, date = now()):
-		return self.sess.execute(conns.insert().values((None, ip, date, user, password))).inserted_primary_key[0]
+	def put_conn(self, ip, user, password, date, text_combined):
+		return self.sess.execute(conns.insert().values((None, ip, date, user, password, text_combined))).inserted_primary_key[0]
 
 	def put_sample(self, sha256, name, length, date):
 		ex_sample = self.get_sample(sha256).fetchone()
