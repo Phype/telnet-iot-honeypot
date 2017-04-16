@@ -2,9 +2,11 @@ import time
 import sqlalchemy
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
+
 from sqlalchemy.sql import select, join, insert, text
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 from sqlalchemy.pool import QueuePool
+from sqlalchemy.ext.declarative import declarative_base
 
 import virustotal
 
@@ -16,38 +18,86 @@ print("Creating/Connecting to DB")
 def now():
 	return int(time.time())
 
-metadata = MetaData()
-samples = Table('samples', metadata,
-	Column('id', Integer, primary_key=True),
-	#Column('sha256', String(64, collation="latin1_swedish_ci"), unique=True),
-	Column('sha256', String(64), unique=True),
-	Column('date', Integer),
-	Column('name', String(32)),
-	Column('file', String(512)),
-	Column('length', Integer),
-	Column('result', String(32)),
-)
+Base = declarative_base()
 
-conns = Table('conns', metadata,
-	Column('id', Integer, primary_key=True),
-	Column('ip', String(16)),
-	Column('date', Integer),
-	Column('user', String(16)),
-	Column('pass', String(16)),
-)
-
-urls = Table('urls', metadata,
-	Column('id', Integer, primary_key=True),
-	#Column('url', String(256, collation="latin1_swedish_ci"), unique=True),
-	Column('url', String(256), unique=True),
-	Column('date', Integer),
-	Column('sample', None, ForeignKey('samples.id')),
-)
-
-conns_urls = Table('conns_urls', metadata,
+# n tom relation connection <-> url
+conns_urls = Table('conns_urls', Base.metadata,
 	Column('id_conn', None, ForeignKey('conns.id'), primary_key=True),
 	Column('id_url', None, ForeignKey('urls.id'), primary_key=True),
 )
+
+class Sample(Base):
+	__tablename__ = 'samples'
+	
+	id = Column('id', Integer, primary_key=True)
+	sha256 = Column('sha256', String(64), unique=True)
+	date = Column('date', Integer)
+	name = Column('name', String(32))
+	file = Column('file', String(512))
+	length = Column('length', Integer)
+	result = Column('result', String(32))
+	
+	urls = relationship("Url", back_populates="sample")
+	
+	def json(self, depth=0):
+		return {
+			"sha256": self.sha256,
+			"date": self.date,
+			"name": self.name,
+			"length": self.length,
+			"result": self.result,
+			"urls": map(lambda url : url.url if depth == 0
+			   else url.json(depth - 1), self.urls)
+		}
+	
+class Connection(Base):
+	__tablename__ = 'conns'
+	
+	id = Column('id', Integer, primary_key=True)
+	ip = Column('ip', String(16))
+	date = Column('date', Integer)
+	user = Column('user', String(16))
+	password = Column('pass', String(16))
+	
+	urls = relationship("Url", secondary=conns_urls, back_populates="connections")
+	
+	def json(self, depth=0):
+		return {
+			"id": self.id,
+			"ip": self.ip,
+			"date": self.date,
+			"user": self.user,
+			"pass": self.password,
+			"urls": map(lambda url : url.url if depth == 0
+			   else url.json(depth - 1), self.urls)
+		}
+	
+class Url(Base):
+	__tablename__ = 'urls'
+	
+	id = Column('id', Integer, primary_key=True)
+	url = Column('url', String(256), unique=True)
+	date = Column('date', Integer)
+	
+	sample_id = Column('sample', None, ForeignKey('samples.id'))
+	sample = relationship("Sample", back_populates="urls")
+	
+	connections = relationship("Connection", secondary=conns_urls, back_populates="urls")
+	
+	def json(self, depth=0):
+		return {
+			"url": self.url,
+			"date": self.date,
+			"sample": None if self.sample == None else 
+				(self.sample.sha256 if depth == 0
+					else self.sample.json(depth - 1)),
+			"connections": map(lambda connection : connection.id if depth == 0
+					  else connection.json(depth - 1), self.connections),
+		}
+	
+samples = Sample.__table__ 
+conns = Connection.__table__ 
+urls = Url.__table__ 
 
 eng = sqlalchemy.create_engine(config["sql"],
 							   poolclass=QueuePool,
@@ -55,7 +105,7 @@ eng = sqlalchemy.create_engine(config["sql"],
 							   max_overflow=config["max_db_conn"],
 							   connect_args={'check_same_thread': False})
 
-metadata.create_all(eng)
+Base.metadata.create_all(eng)
 
 def get_db():
 	return DB(scoped_session(sessionmaker(bind=eng)))

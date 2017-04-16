@@ -1,8 +1,46 @@
 import hashlib
 
-from db import get_db
+from db import get_db, Sample, Connection, Url
 
 from util.dbg import dbg
+
+class WebController:
+	
+	def __init__(self):
+		pass
+	
+	def get_connection(self, id):
+		db      = get_db()
+		session = db.sess
+		
+		try:
+			connection = session.query(Connection).filter(Connection.id == id).first()
+			return connection.json(depth=1) if connection else None
+			
+		finally:
+			db.end()
+			
+	def get_sample(self, sha256):
+		db      = get_db()
+		session = db.sess
+		
+		try:
+			sample = session.query(Sample).filter(Sample.sha256 == sha256).first()
+			return sample.json(depth=1) if sample else None
+			
+		finally:
+			db.end()
+			
+	def get_url(self, url):
+		db      = get_db()
+		session = db.sess
+		
+		try:
+			url_obj = session.query(Url).filter(Url.url == url).first()
+			return url_obj.json(depth=1) if url_obj else None
+			
+		finally:
+			db.end()
 
 # Controls Actions perfomed by Honeypot Clients
 class ClientController:
