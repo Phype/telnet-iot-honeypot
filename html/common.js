@@ -33,3 +33,25 @@ function formatDateTime(date) {
 function time() {
 	return Math.round(new Date().getTime() / 1000);
 }
+
+function nicenull (str, el) {
+	if (str == null || str == "")
+		return el;
+	else
+		return str;
+}
+
+function short (str, l) {
+	if (str)
+		return str.substring(0, l) + "...";
+	else
+		return "None";
+}
+
+function encurl(url) {
+	return btoa(url);
+}
+
+function decurl(url) {
+	return atob(url);
+}

@@ -1,0 +1,32 @@
+<div>
+
+<h1>Sample Information about {{ sample.name }}</h1>
+
+<table class="table">
+
+	<tr><td>First seen</td><td>{{ formatDate(sample.date) }}</td></tr>
+	<tr><td>First seen file name</td><td>{{ sample.name }}</td></tr>
+	<tr><td>File size</td><td>{{ sample.length }} Bytes</td></tr>
+	<tr><td>SHA256</td><td>{{ sample.sha256 }}</td></tr>
+	<tr><td>Virustotal result</td><td>{{ nicenull(sample.result, "Not Scanned yet") }}</td></tr>
+
+</table>
+
+<h2>Downloaded from</h2>
+
+<table class="table">
+
+	<tr>
+		<th>Url</th>
+		<th>Date</th>
+		<th>No Connections</th>
+	</tr>
+	<tr ng-repeat="url in sample.urls">
+		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
+		<td>{{ formatDate(url.date) }}</td>
+		<td>{{ url.connections.length }}</td>
+	</tr>
+
+</table>
+
+</div>

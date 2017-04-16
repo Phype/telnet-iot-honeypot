@@ -1,0 +1,38 @@
+<h1>URL {{ url.url }}</h1>
+
+<table class="table">
+
+	<tr><td>First seen</td><td>{{ formatDate(url.date) }}</td></tr>
+
+</table>
+
+<h2>Sample</h2>
+
+<table class="table" ng-show="url.sample != null">
+
+	<tr><td>First seen</td><td>{{ formatDate(url.sample.date) }}</td></tr>
+	<tr><td>First seen file name</td><td>{{ url.sample.name }}</td></tr>
+	<tr><td>File size</td><td>{{ url.sample.length }} Bytes</td></tr>
+	<tr><td>SHA256</td><td>{{ url.sample.sha256 }}</td></tr>
+	<tr><td>Virustotal result</td><td>{{ nicenull(url.sample.result, "Not Scanned yet") }}</td></tr>
+
+</table>
+
+<h2>Connections included this URL</h2>
+
+<table class="table">
+
+	<tr>
+		<th>Date</th>
+		<th>IP</th>
+		<th>Username</th>
+		<th>Password</th>
+	</tr>
+	<tr ng-repeat="connection in url.connections">
+		<td>{{ formatDate(connection.date) }}</td>
+		<td>{{ connection.ip }}</td>
+		<td>{{ connection.user }}</td>
+		<td>{{ connection.pass }}</td>
+	</tr>
+
+</table>
