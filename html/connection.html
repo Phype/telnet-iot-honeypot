@@ -1,0 +1,27 @@
+<h1>Connection Info</h1>
+
+<table class="table">
+
+	<tr><td>Date</td><td>{{ formatDate(connection.date) }}</td></tr>
+	<tr><td>ID</td><td>{{ connection.id }}</td></tr>
+	<tr><td>Username</td><td>{{ connection.user }}</td></tr>
+	<tr><td>Password</td><td>{{ connection.pass }}</td></tr>
+
+</table>
+
+<h2>URLs gathared</h2>
+
+<table class="table">
+
+	<tr>
+		<th>Url</th>
+		<th>First Seen</th>
+		<th>Sample</th>
+	</tr>
+	<tr ng-repeat="url in connection.urls">
+		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
+		<td>{{ formatDate(url.date) }}</td>
+		<td><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></td>
+	</tr>
+
+</table>

@@ -1,7 +1,8 @@
-<h1>URL {{ url.url }}</h1>
+<h1>URL Info</h1>
 
 <table class="table">
 
+	<tr><td>URL</td><td>{{ url.url }}</td></tr>
 	<tr><td>First seen</td><td>{{ formatDate(url.date) }}</td></tr>
 
 </table>
@@ -13,7 +14,7 @@
 	<tr><td>First seen</td><td>{{ formatDate(url.sample.date) }}</td></tr>
 	<tr><td>First seen file name</td><td>{{ url.sample.name }}</td></tr>
 	<tr><td>File size</td><td>{{ url.sample.length }} Bytes</td></tr>
-	<tr><td>SHA256</td><td>{{ url.sample.sha256 }}</td></tr>
+	<tr><td>SHA256</td><td><a href="{{ '#/sample/' + url.sample.sha256 }}">{{ url.sample.sha256 }}</a></td></tr>
 	<tr><td>Virustotal result</td><td>{{ nicenull(url.sample.result, "Not Scanned yet") }}</td></tr>
 
 </table>
@@ -29,7 +30,7 @@
 		<th>Password</th>
 	</tr>
 	<tr ng-repeat="connection in url.connections">
-		<td>{{ formatDate(connection.date) }}</td>
+		<td><a href="{{ '#/connection/' + connection.id }}">{{ formatDate(connection.date) }}</a></td>
 		<td>{{ connection.ip }}</td>
 		<td>{{ connection.user }}</td>
 		<td>{{ connection.pass }}</td>

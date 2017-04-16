@@ -61,3 +61,21 @@ app.controller('url', function($scope, $http, $routeParams) {
 	});
 
 });
+
+app.controller('connection', function($scope, $http, $routeParams) {
+
+	$scope.connection = null;
+	
+	$scope.formatDate = formatDateTime;
+	$scope.nicenull = nicenull;
+	$scope.short = short;
+	$scope.encurl = encurl;
+	$scope.decurl = decurl;
+	
+	var id = $routeParams.id;
+	$http.get(api + "/connection/" + id).then(function (httpResult) {
+		$scope.connection = httpResult.data;
+		console.log($scope.connection);
+	});
+
+});
