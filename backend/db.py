@@ -8,8 +8,6 @@ from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.ext.declarative import declarative_base
 
-import virustotal
-
 from util.config import config
 
 is_sqlite = "sqlite://" in config["sql"]
@@ -179,12 +177,12 @@ class DB:
 	def put_conn(self, ip, user, password, date, text_combined, asn, block, country):
 		return self.sess.execute(conns.insert().values((None, ip, date, user, password, text_combined, asn, block, country))).inserted_primary_key[0]
 
-	def put_sample(self, sha256, name, length, date, info):
+	def put_sample(self, sha256, name, length, date, info, result):
 		ex_sample = self.get_sample(sha256).fetchone()
 		if ex_sample:
 			return ex_sample["id"]
 		else:
-			return self.sess.execute(samples.insert().values(sha256=sha256, date=date, name=name, length=length, result=None, info=info)).inserted_primary_key[0]
+			return self.sess.execute(samples.insert().values(sha256=sha256, date=date, name=name, length=length, result=result, info=info)).inserted_primary_key[0]
 
 	def link_conn_url(self, id_conn, id_url):
 		self.sess.execute(conns_urls.insert().values(id_conn=id_conn, id_url=id_url))

@@ -8,5 +8,6 @@
 	"max_db_conn": 1,
 	"sample_dir": "samples",
 
-	"save_samples": false
+	"save_samples": false,
+	"vt_key": "GET_YOUR_OWN"
 }

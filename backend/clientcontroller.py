@@ -1,4 +1,5 @@
 import hashlib
+import traceback
 
 from sqlalchemy import desc, func
 from decorator import decorator
@@ -6,7 +7,10 @@ from functools import wraps
 
 from additionalinfo import get_ip_info, get_url_info
 from db import get_db, Sample, Connection, Url
+from virustotal import Virustotal
+
 from util.dbg import dbg
+from util.config import config
 
 @decorator
 def db_wrapper(func, *args, **kwargs):
@@ -74,7 +78,7 @@ class WebController:
 class ClientController:
 	
 	def __init__(self):
-		pass
+		self.vt = Virustotal(config["vt_key"])
 		
 	@db_wrapper
 	def put_session(self, session):
@@ -122,12 +126,18 @@ class ClientController:
 	
 	@db_wrapper
 	def put_sample_info(self, f):
-		print(f)
-		
 		url = f["url"]
 		url_id = self.db.get_url(url).fetchone()["id"]
 		
-		sample_id = self.db.put_sample(f["sha256"], f["name"], f["length"], f["date"], f["info"])
+		result = None
+		try:
+			vtobj  = self.vt.query_hash_sha256(f["sha256"])
+			if vtobj:
+				result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
+		except:
+			pass
+		
+		sample_id = self.db.put_sample(f["sha256"], f["name"], f["length"], f["date"], f["info"], result)
 		self.db.link_url_sample(url_id, sample_id)
 		return f
 	
