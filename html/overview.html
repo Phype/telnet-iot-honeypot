@@ -11,7 +11,7 @@
 	<tr ng-repeat="url in urls | limitTo : 5">
 		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
 		<td>{{ formatDate(url.date) }}</td>
-		<td><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></td>
+		<td><span ng-show="url.sample != null"><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></span></td>
 		<td>{{ url.connections.length }}</td>
 	</tr>
 

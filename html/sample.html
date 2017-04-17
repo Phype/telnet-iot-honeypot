@@ -6,7 +6,15 @@
 	<tr><td>First seen file name</td><td>{{ sample.name }}</td></tr>
 	<tr><td>File size</td><td>{{ sample.length }} Bytes</td></tr>
 	<tr><td>SHA256</td><td>{{ sample.sha256 }}</td></tr>
-	<tr><td><a href="https://www.virustotal.com/latest-scan/{{ sample.sha256 }}" target="_blank">Virustotal result</a></td><td>{{ nicenull(sample.result, "Not Scanned yet") }}</td></tr>
+	<tr>
+		<td>Virustotal result</a></td>
+		<td>
+			<a href="https://www.virustotal.com/latest-scan/{{ sample.sha256 }}" target="_blank" ng-show="sample.result != null">
+				<span class="glyphicon glyphicon-link"></span> {{ sample.result }}
+			</a>
+			<span ng-show="sample.result == null">Unknown, <a href="https://www.virustotal.com/latest-scan/{{ sample.sha256 }}" target="_blank">search yourself</a></span>
+		</td>
+	</tr>
 
 </table>
 

@@ -87,6 +87,7 @@ class Sampledb:
 			info = info + "HTTP " + str(his.status_code) + "\n"
 			for k,v in his.headers.iteritems():
 				info = info + k + ": " + v + "\n"
+			info = info + "\n"
 
 		info = info + "HTTP " + str(r.status_code) + "\n"
 		for k,v in r.headers.iteritems():
