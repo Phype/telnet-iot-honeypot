@@ -25,6 +25,7 @@ app.controller('overview', function($scope, $http, $routeParams) {
 
 	$scope.urls = null;
 	$scope.samples = null;
+	$scope.connections = null;
 	
 	$scope.formatDate = formatDateTime;
 	$scope.nicenull = nicenull;
@@ -38,6 +39,10 @@ app.controller('overview', function($scope, $http, $routeParams) {
 	
 	$http.get(api + "/sample/newest").then(function (httpResult) {
 		$scope.samples = httpResult.data;
+	});
+	
+	$http.get(api + "/connection/newest").then(function (httpResult) {
+		$scope.connections = httpResult.data;
 	});
 
 });

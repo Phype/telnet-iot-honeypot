@@ -37,3 +37,24 @@
 	</tr>
 
 </table>
+
+<h2>Latest Connections</h2>
+
+<table class="table table-condensed">
+
+	<tr>
+		<th>Date</th>
+		<th>IP</th>
+		<th>Username</th>
+		<th>Password</th>
+		<th>N⁰ Urls</th>
+	</tr>
+	<tr ng-repeat="connection in connections | limitTo : 8">
+		<td><a href="{{ '#/connection/' + connection.id }}">{{ formatDate(connection.date) }}</a></td>
+		<td>{{ connection.ip }}</td>
+		<td>{{ connection.user }}</a></td>
+		<td>{{ connection.pass }}</td>
+		<td>{{ connection.urls.length }}</td>
+	</tr>
+
+</table>

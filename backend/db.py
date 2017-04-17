@@ -36,6 +36,7 @@ class Sample(Base):
 	file = Column('file', String(512))
 	length = Column('length', Integer)
 	result = Column('result', String(32))
+	info = Column('info', Text())
 	
 	urls = relationship("Url", back_populates="sample")
 	
@@ -46,6 +47,7 @@ class Sample(Base):
 			"name": self.name,
 			"length": self.length,
 			"result": self.result,
+			"info": self.info,
 			"urls": map(lambda url : url.url if depth == 0
 			   else url.json(depth - 1), self.urls)
 		}
@@ -61,6 +63,10 @@ class Connection(Base):
 	
 	text_combined = Column('text_combined', Text())
 	
+	asn = Column('asn', Integer)
+	ipblock = Column('ipblock', String(32))
+	country = Column('country', String(3))
+	
 	urls = relationship("Url", secondary=conns_urls, back_populates="connections")
 	
 	def json(self, depth=0):
@@ -71,6 +77,10 @@ class Connection(Base):
 			"user": self.user,
 			"pass": self.password,
 			"text_combined": self.text_combined,
+			
+			"asn": self.asn,
+			"ipblock": self.ipblock,
+			"country": self.country,
 			
 			"urls": map(lambda url : url.url if depth == 0
 			   else url.json(depth - 1), self.urls)
@@ -149,15 +159,15 @@ class DB:
 		else:
 			return self.sess.execute(urls.insert().values(url=url, date=date, sample=None)).inserted_primary_key[0]
 
-	def put_conn(self, ip, user, password, date, text_combined):
-		return self.sess.execute(conns.insert().values((None, ip, date, user, password, text_combined))).inserted_primary_key[0]
+	def put_conn(self, ip, user, password, date, text_combined, asn, block, country):
+		return self.sess.execute(conns.insert().values((None, ip, date, user, password, text_combined, asn, block, country))).inserted_primary_key[0]
 
-	def put_sample(self, sha256, name, length, date):
+	def put_sample(self, sha256, name, length, date, info):
 		ex_sample = self.get_sample(sha256).fetchone()
 		if ex_sample:
 			return ex_sample["id"]
 		else:
-			return self.sess.execute(samples.insert().values(sha256=sha256, date=date, name=name, length=length, result=None)).inserted_primary_key[0]
+			return self.sess.execute(samples.insert().values(sha256=sha256, date=date, name=name, length=length, result=None, info=info)).inserted_primary_key[0]
 
 	def link_conn_url(self, id_conn, id_url):
 		self.sess.execute(conns_urls.insert().values(id_conn=id_conn, id_url=id_url))

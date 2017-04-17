@@ -112,6 +112,11 @@ def get_connection(id):
 		return json.dumps(conn)
 	else:
 		return "", 404
+	
+@app.route("/connection/newest")
+def get_newest_connections():
+	connections = web.get_newest_connections()
+	return json.dumps(connections)
 
 ### Hist
 

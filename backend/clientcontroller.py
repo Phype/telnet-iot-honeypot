@@ -4,6 +4,7 @@ from sqlalchemy import desc
 from decorator import decorator
 from functools import wraps
 
+from additionalinfo import get_ip_info
 from db import get_db, Sample, Connection, Url
 from util.dbg import dbg
 
@@ -34,13 +35,18 @@ class WebController:
 		return connection.json(depth=1) if connection else None
 			
 	@db_wrapper
+	def get_newest_connections(self):
+		connections = self.session.query(Connection).order_by(desc(Connection.date)).limit(16).all()
+		return map(lambda connection : connection.json(), connections)
+			
+	@db_wrapper
 	def get_sample(self, sha256):
 		sample = self.session.query(Sample).filter(Sample.sha256 == sha256).first()
 		return sample.json(depth=1) if sample else None
 			
 	@db_wrapper
 	def get_newest_samples(self):
-		samples = self.session.query(Sample).all()
+		samples = self.session.query(Sample).order_by(desc(Sample.date)).limit(16).all()
 		return map(lambda sample : sample.json(), samples)
 	
 	@db_wrapper
@@ -61,7 +67,17 @@ class ClientController:
 		
 	@db_wrapper
 	def put_session(self, session):
-		s_id = self.db.put_conn(session["ip"], session["user"], session["pass"], session["date"], session["text_combined"])
+		ipinfo  = get_ip_info(session["ip"])
+		asn     = None
+		block   = None
+		country = None
+		
+		if ipinfo:
+			asn     = ipinfo["asn"]
+			block   = ipinfo["ipblock"]
+			country = ipinfo["country"]
+		
+		s_id = self.db.put_conn(session["ip"], session["user"], session["pass"], session["date"], session["text_combined"], asn, block, country)
 		req_urls = []
 		
 		for url in session["urls"]:
@@ -92,7 +108,7 @@ class ClientController:
 		url = f["url"]
 		url_id = self.db.get_url(url).fetchone()["id"]
 		
-		sample_id = self.db.put_sample(f["sha256"], f["name"], f["length"], f["date"])
+		sample_id = self.db.put_sample(f["sha256"], f["name"], f["length"], f["date"], f["info"])
 		self.db.link_url_sample(url_id, sample_id)
 		return f
 	

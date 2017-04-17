@@ -6,9 +6,13 @@
 	<tr><td>First seen file name</td><td>{{ sample.name }}</td></tr>
 	<tr><td>File size</td><td>{{ sample.length }} Bytes</td></tr>
 	<tr><td>SHA256</td><td>{{ sample.sha256 }}</td></tr>
-	<tr><td>Virustotal result</td><td>{{ nicenull(sample.result, "Not Scanned yet") }}</td></tr>
+	<tr><td><a href="https://www.virustotal.com/latest-scan/{{ sample.sha256 }}" target="_blank">Virustotal result</a></td><td>{{ nicenull(sample.result, "Not Scanned yet") }}</td></tr>
 
 </table>
+
+<h2>Download Info</h2>
+
+<pre>{{ sample.info }}</pre>
 
 <h2>Downloaded from</h2>
 
