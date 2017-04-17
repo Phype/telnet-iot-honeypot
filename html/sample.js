@@ -49,7 +49,7 @@ app.controller('overview', function($scope, $http, $routeParams) {
 		httpResult.data.sort(function(a, b) { return b[0] - a[0] });
 		
 		$scope.country_stats_values = httpResult.data.map(function(x) {return x[0]});
-		$scope.country_stats_labels = httpResult.data.map(function(x) {return x[1]});
+		$scope.country_stats_labels = httpResult.data.map(function(x) {return COUNTRY_LIST[x[1]]});
 	});
 		
 });
@@ -110,6 +110,8 @@ app.controller('connection', function($scope, $http, $routeParams) {
 	var id = $routeParams.id;
 	$http.get(api + "/connection/" + id).then(function (httpResult) {
 		$scope.connection = httpResult.data;
+	
+		$scope.connection.countryname = COUNTRY_LIST[$scope.connection.country];
 		
 		var lines = $scope.connection.text_combined.split("\n");
 		var newl  = [];
