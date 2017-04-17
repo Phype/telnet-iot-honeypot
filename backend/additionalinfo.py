@@ -1,5 +1,9 @@
 import dns.resolver
 import ipaddress
+import urlparse
+import re
+
+import traceback
 
 def query_txt(cname):
 	try:
@@ -8,6 +12,18 @@ def query_txt(cname):
 		for rr in answer.rrset:
 			if rr.strings: return rr.strings[0]
 	except:
+		pass
+
+	return None
+
+def query_a(cname):
+	try:
+		answer = dns.resolver.query(cname, "A")
+		
+		for data in answer:
+			if data.address: return data.address
+	except:
+		traceback.print_exc()
 		pass
 
 	return None
@@ -77,6 +93,39 @@ def get_asn_info(asn):
 	
 	return None
 
+def get_url_info(url):
+	try:
+		parsed = urlparse.urlparse(url)
+		netloc = parsed.netloc
+		ip     = None
+		
+		# IPv6
+		if "[" in netloc:
+			netloc = re.match("\\[(.*)\\]", netloc).group(1)
+			ip = netloc
+			
+		# IPv4 / domain name
+		else:
+			if ":" in netloc:
+				netloc = re.match("(.*?):", netloc).group(1)
+			
+			if re.match("[a-zA-Z]", netloc):
+				ip = query_a(netloc)
+			else:
+				ip = netloc
+		
+		return ip, get_ip_info(ip)
+	
+	except:
+		traceback.print_exc()
+		pass
+	
+	return None
+
 #print get_ip_info("79.220.249.125")
 #print get_ip_info("2a00:1450:4001:81a::200e")
 #print get_asn_info(3320)
+
+#print url_info("http://google.com")
+#print url_info("http://183.144.16.51:14722/.i")
+#print url_info("http://[::1]:14722/.i")

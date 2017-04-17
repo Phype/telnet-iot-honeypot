@@ -4,7 +4,7 @@ from sqlalchemy import desc, func
 from decorator import decorator
 from functools import wraps
 
-from additionalinfo import get_ip_info
+from additionalinfo import get_ip_info, get_url_info
 from db import get_db, Sample, Connection, Url
 from util.dbg import dbg
 
@@ -96,7 +96,15 @@ class ClientController:
 			url_id = 0
 			
 			if db_url == None:
-				url_id = self.db.put_url(url, session["date"])
+				url_ip, url_info = get_url_info(url)
+				url_asn     = None
+				url_country = None
+				
+				if url_info:
+					url_asn     = url_info["asn"]
+					url_country = url_info["country"]
+				
+				url_id = self.db.put_url(url, session["date"], url_ip, url_asn, url_country)
 				req_urls.append(url)
 				
 			elif db_url["sample"] == None:

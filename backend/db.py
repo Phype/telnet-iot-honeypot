@@ -99,6 +99,10 @@ class Url(Base):
 	
 	connections = relationship("Connection", secondary=conns_urls, back_populates="urls")
 	
+	asn = Column('asn', Integer)
+	ip  = Column('ip', String(32))
+	country = Column('country', String(3))
+	
 	def json(self, depth=0):
 		return {
 			"url": self.url,
@@ -161,12 +165,12 @@ class DB:
 	def put_sample_result(self, sha256, result):
 		self.sess.execute(samples.update().where(samples.c.sha256 == sha256).values(result=result))
 
-	def put_url(self, url, date = now()):
+	def put_url(self, url, date, url_ip, url_asn, url_country):
 		ex_url = self.sess.execute(urls.select().where(urls.c.url == url)).fetchone()
 		if ex_url:
 			return ex_url["id"]
 		else:
-			return self.sess.execute(urls.insert().values(url=url, date=date, sample=None)).inserted_primary_key[0]
+			return self.sess.execute(urls.insert().values(url=url, date=date, sample=None, ip=url_ip, asn=url_asn, country=url_country)).inserted_primary_key[0]
 
 	def put_conn(self, ip, user, password, date, text_combined, asn, block, country):
 		return self.sess.execute(conns.insert().values((None, ip, date, user, password, text_combined, asn, block, country))).inserted_primary_key[0]
