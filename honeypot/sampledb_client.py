@@ -30,9 +30,9 @@ class Sampledb:
 			"date"          : session.date,
 			"urls"          : session.urls,
 
-			"text_in"       : session.text_in,
-			"text_out"      : session.text_out,
-			"text_combined" : session.text_combined
+			"text_in"       : session.text_in.decode('ascii', 'ignore'),
+			"text_out"      : session.text_out.decode('ascii', 'ignore'),
+			"text_combined" : session.text_combined.decode('ascii', 'ignore')
 		}
 		
 		upload_req = self.back.put_session(session_obj)
