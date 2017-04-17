@@ -4,6 +4,7 @@
 
 	<tr><td>URL</td><td>{{ url.url }}</td></tr>
 	<tr><td>First seen</td><td>{{ formatDate(url.date) }}</td></tr>
+	<tr><td>Resolves to</td><td><img src="img/flags/{{ url.country.toLowerCase() }}.png"> {{ url.countryname }} - {{ url.ip }} - <a href="http://bgp.he.net/AS{{ url.asn }}" target="_blank">AS{{ url.asn }}</a></td></tr>
 
 </table>
 

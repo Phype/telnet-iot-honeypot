@@ -112,6 +112,10 @@ class Url(Base):
 					else self.sample.json(depth - 1)),
 			"connections": map(lambda connection : connection.id if depth == 0
 					  else connection.json(depth - 1), self.connections),
+			
+			"asn": self.asn,
+			"ip": self.ip,
+			"country": self.country,
 		}
 	
 samples = Sample.__table__ 

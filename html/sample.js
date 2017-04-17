@@ -91,7 +91,7 @@ app.controller('url', function($scope, $http, $routeParams) {
 	var url = $routeParams.url;
 	$http.get(api + "/url/" + url).then(function (httpResult) {
 		$scope.url = httpResult.data;
-		console.log($scope.url);
+		$scope.url.countryname = COUNTRY_LIST[$scope.url.country];
 	});
 
 });
