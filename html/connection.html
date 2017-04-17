@@ -4,13 +4,20 @@
 
 	<tr><td>Date</td><td>{{ formatDate(connection.date) }}</td></tr>
 	<tr><td>ID</td><td>{{ connection.id }}</td></tr>
-	<tr><td>IP</td><td>{{ connection.ip }}</td></tr>
+	<tr>
+		<td>IP</td>
+		<td>{{ connection.ip }}
+			<span ng-show="connection.asn">
+				<br>{{ connection.country }} - <a href="http://bgp.he.net/AS{{ connection.asn }}" target="_blank">AS{{ connection.asn }}</a> - {{ connection.ipblock }}
+			</span>
+		</td>
+	</tr>
 	<tr><td>Username</td><td>{{ connection.user }}</td></tr>
 	<tr><td>Password</td><td>{{ connection.pass }}</td></tr>
 
 </table>
 
-<div ng-show="connection.text_combined != null">
+<div ng-show="connection.text_combined != ''">
 	<h2>Session text</h2>
 
 	<div class="well well-sm code">
