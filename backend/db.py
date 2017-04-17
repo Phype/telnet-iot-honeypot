@@ -12,6 +12,7 @@ import virustotal
 
 from util.config import config
 
+is_sqlite = "sqlite://" in config["sql"]
 
 print("Creating/Connecting to DB")
 
@@ -113,11 +114,19 @@ samples = Sample.__table__
 conns = Connection.__table__ 
 urls = Url.__table__ 
 
-eng = sqlalchemy.create_engine(config["sql"],
-							   poolclass=QueuePool,
-							   pool_size=config["max_db_conn"],
-							   max_overflow=config["max_db_conn"],
-							   connect_args={'check_same_thread': False})
+eng = None
+
+if is_sqlite:
+	eng = sqlalchemy.create_engine(config["sql"],
+								poolclass=QueuePool,
+								pool_size=1,
+								max_overflow=1,
+								connect_args={'check_same_thread': False})
+else
+	eng = sqlalchemy.create_engine(config["sql"],
+								poolclass=QueuePool,
+								pool_size=config["max_db_conn"],
+								max_overflow=config["max_db_conn"])
 
 Base.metadata.create_all(eng)
 
