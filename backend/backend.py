@@ -1,6 +1,6 @@
 from flask import Flask, request, Response
 
-from db import DB
+from db import get_db
 from clientcontroller import ClientController, WebController
 
 from util.config import config
@@ -12,7 +12,6 @@ import time
 app  = Flask(__name__)
 ctrl = ClientController()
 web  = WebController()
-db   = None
 
 app.debug = True
 
@@ -113,6 +112,11 @@ def get_connection(id):
 	else:
 		return "", 404
 	
+@app.route("/connection/statistics/per_country")
+def get_country_stats():
+	stats = web.get_country_stats()
+	return json.dumps(stats)
+	
 @app.route("/connection/newest")
 def get_newest_connections():
 	connections = web.get_newest_connections()
@@ -143,6 +147,8 @@ def hist_fill(start, end, delta, db_result):
 @app.route("/history")
 def hist_global():
 	try:
+		db = get_db()
+		
 		delta  = 3600 * 6
 		end    = int(time.time())
 		start  = end - delta * 24

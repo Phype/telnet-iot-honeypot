@@ -8,7 +8,7 @@
 		<th>Sample</th>
 		<th>N⁰ Connections</th>
 	</tr>
-	<tr ng-repeat="url in urls | limitTo : 8">
+	<tr ng-repeat="url in urls | limitTo : 5">
 		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
 		<td>{{ formatDate(url.date) }}</td>
 		<td><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></td>
@@ -28,7 +28,7 @@
 		<th>First Seen</th>
 		<th>N⁰ Urls</th>
 	</tr>
-	<tr ng-repeat="sample in samples | limitTo : 8">
+	<tr ng-repeat="sample in samples | limitTo : 3">
 		<td><a href="{{ '#/sample/' + sample.sha256 }}">{{ short(sample.sha256, 16) }}</a></td>
 		<td>{{ sample.name }}</td>
 		<td>{{ sample.length }}</a></td>
@@ -38,23 +38,37 @@
 
 </table>
 
+
 <h2>Latest Connections</h2>
 
-<table class="table table-condensed">
+<div class="row">
+	<div class="col-md-9">
 
-	<tr>
-		<th>Date</th>
-		<th>IP</th>
-		<th>Username</th>
-		<th>Password</th>
-		<th>N⁰ Urls</th>
-	</tr>
-	<tr ng-repeat="connection in connections | limitTo : 8">
-		<td><a href="{{ '#/connection/' + connection.id }}">{{ formatDate(connection.date) }}</a></td>
-		<td>{{ connection.ip }}</td>
-		<td>{{ connection.user }}</a></td>
-		<td>{{ connection.pass }}</td>
-		<td>{{ connection.urls.length }}</td>
-	</tr>
+		<table class="table table-condensed">
 
-</table>
+			<tr>
+				<th>Date</th>
+				<th>Country</th>
+				<!-- <th>IP</th> -->
+				<th>Username</th>
+				<th>Password</th>
+				<th>N⁰ Urls</th>
+			</tr>
+			<tr ng-repeat="connection in connections | limitTo : 8">
+				<td><a href="{{ '#/connection/' + connection.id }}">{{ formatDate(connection.date) }}</a></td>
+				<td>{{ connection.country }}</td>
+				<!-- <td>{{ connection.ip }}</td> -->
+				<td>{{ connection.user }}</a></td>
+				<td>{{ connection.pass }}</td>
+				<td>{{ connection.urls.length }}</td>
+			</tr>
+
+		</table>
+	</div>
+	<div class="col-md-3">
+		<canvas id="doughnut" class="chart chart-doughnut" chart-data="country_stats_values" chart-labels="country_stats_labels">
+		</canvas>
+		<br>
+		<center>All Connections by Country</center>
+	</div>
+</div>

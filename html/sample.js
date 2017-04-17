@@ -1,5 +1,5 @@
 
-var app = angular.module('honey', ["ngRoute"]);
+var app = angular.module('honey', ["ngRoute", "chart.js"]);
 
 app.config(function($routeProvider) {
 	$routeProvider
@@ -44,7 +44,14 @@ app.controller('overview', function($scope, $http, $routeParams) {
 	$http.get(api + "/connection/newest").then(function (httpResult) {
 		$scope.connections = httpResult.data;
 	});
-
+	
+	$http.get(api + "/connection/statistics/per_country").then(function (httpResult) {
+		httpResult.data.sort(function(a, b) { return b[0] - a[0] });
+		
+		$scope.country_stats_values = httpResult.data.map(function(x) {return x[0]});
+		$scope.country_stats_labels = httpResult.data.map(function(x) {return x[1]});
+	});
+		
 });
 
 app.controller('sample', function($scope, $http, $routeParams) {

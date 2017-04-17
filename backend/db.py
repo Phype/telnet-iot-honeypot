@@ -258,7 +258,7 @@ class DB:
 
 	def history_global(self, fromdate, todate, delta=3600):
 		q = """
-		SELECT COUNT(conns.id) as count, :delta * (conns.date DIV :delta) as hour
+		SELECT COUNT(conns.id) as count, :delta * cast((conns.date / :delta) as INTEGER) as hour
 		FROM conns
 		WHERE conns.date >= :from
 		AND conns.date <= :to
@@ -268,7 +268,7 @@ class DB:
 	
 	def history_sample(self, id_sample, fromdate, todate, delta=3600):
 		q = """
-		SELECT COUNT(conns.id) as count, :delta * (conns.date DIV :delta) as hour
+		SELECT COUNT(conns.id) as count, :delta * cast((conns.date / :delta) as INTEGER) as hour
 		FROM conns
 		INNER JOIN conns_urls on conns_urls.id_conn = conns.id
 		INNER JOIN urls on conns_urls.id_url = urls.id

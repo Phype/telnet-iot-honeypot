@@ -1,6 +1,6 @@
 import hashlib
 
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from decorator import decorator
 from functools import wraps
 
@@ -38,6 +38,8 @@ class WebController:
 	def get_newest_connections(self):
 		connections = self.session.query(Connection).order_by(desc(Connection.date)).limit(16).all()
 		return map(lambda connection : connection.json(), connections)
+	
+	##
 			
 	@db_wrapper
 	def get_sample(self, sha256):
@@ -49,6 +51,8 @@ class WebController:
 		samples = self.session.query(Sample).order_by(desc(Sample.date)).limit(16).all()
 		return map(lambda sample : sample.json(), samples)
 	
+	##
+	
 	@db_wrapper
 	def get_url(self, url):
 		url_obj = self.session.query(Url).filter(Url.url == url).first()
@@ -58,6 +62,13 @@ class WebController:
 	def get_newest_urls(self):
 		urls = self.session.query(Url).order_by(desc(Url.date)).limit(16).all()
 		return map(lambda url : url.json(), urls)
+
+	##
+	
+	@db_wrapper
+	def get_country_stats(self):
+		stats = self.session.query(func.count(Connection.country), Connection.country).group_by(Connection.country).all()
+		return stats
 
 # Controls Actions perfomed by Honeypot Clients
 class ClientController:

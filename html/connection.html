@@ -21,23 +21,27 @@
 	<h2>Session text</h2>
 
 	<div class="well well-sm code">
+		<div style="font-size: 0.7em;">Session Text does not include non-ascii characters</div>
 		<div class="code-line" ng-class="{ isinput: l.is_input }" ng-repeat="l in lines track by $index">{{ l.text }}</div>
 	</div>
 </div>
 
-<h2>URLs gathared</h2>
 
-<table class="table">
+<div ng-show="connection.urls.length > 0">
+	<h2>URLs gathared</h2>
 
-	<tr>
-		<th>Url</th>
-		<th>First Seen</th>
-		<th>Sample</th>
-	</tr>
-	<tr ng-repeat="url in connection.urls">
-		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
-		<td>{{ formatDate(url.date) }}</td>
-		<td><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></td>
-	</tr>
+	<table class="table">
 
-</table>
+		<tr>
+			<th>Url</th>
+			<th>First Seen</th>
+			<th>Sample</th>
+		</tr>
+		<tr ng-repeat="url in connection.urls">
+			<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
+			<td>{{ formatDate(url.date) }}</td>
+			<td><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></td>
+		</tr>
+
+	</table>
+</div>

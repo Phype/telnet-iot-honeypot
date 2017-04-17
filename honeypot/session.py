@@ -110,10 +110,10 @@ class Session:
 			# Select random binary header, so we get multiple samples
 			bin = ELF_BINS[random.randint(0, len(ELF_BINS) - 1)]
 			self.send_string(bin)
-			self.send_string("41+0 records in\r\n1+0 records out")
+			self.send_string("41+0 records in\r\n1+0 records out\r\n")
 
 		if cat_regex.match(l):
-			self.send_string("cat: can't open '.s': No such file or directory")
+			self.send_string("cat: can't open '.s': No such file or directory\r\n")
 
 		m = token_regex.match(l)
 		if m:
