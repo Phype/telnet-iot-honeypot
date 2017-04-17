@@ -56,7 +56,7 @@
 			</tr>
 			<tr ng-repeat="connection in connections | limitTo : 8">
 				<td><a href="{{ '#/connection/' + connection.id }}">{{ formatDate(connection.date) }}</a></td>
-				<td>{{ connection.country }}</td>
+				<td><img src="img/flags/{{ connection.country.toLowerCase() }}.png">  {{ connection.country }}</td>
 				<!-- <td>{{ connection.ip }}</td> -->
 				<td>{{ connection.user }}</a></td>
 				<td>{{ connection.pass }}</td>

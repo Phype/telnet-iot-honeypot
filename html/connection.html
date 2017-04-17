@@ -8,7 +8,7 @@
 		<td>IP</td>
 		<td>{{ connection.ip }}
 			<span ng-show="connection.asn">
-				<br>{{ connection.countryname }} - <a href="http://bgp.he.net/AS{{ connection.asn }}" target="_blank">AS{{ connection.asn }}</a> - {{ connection.ipblock }}
+				<br><img src="img/flags/{{ connection.country.toLowerCase() }}.png"> {{ connection.countryname }} - <a href="http://bgp.he.net/AS{{ connection.asn }}" target="_blank">AS{{ connection.asn }}</a> - {{ connection.ipblock }}
 			</span>
 		</td>
 	</tr>
