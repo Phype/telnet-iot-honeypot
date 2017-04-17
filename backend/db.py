@@ -122,7 +122,7 @@ if is_sqlite:
 								pool_size=1,
 								max_overflow=1,
 								connect_args={'check_same_thread': False})
-else
+else:
 	eng = sqlalchemy.create_engine(config["sql"],
 								poolclass=QueuePool,
 								pool_size=config["max_db_conn"],
