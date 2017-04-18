@@ -36,11 +36,55 @@ class WebController:
 	@db_wrapper
 	def get_connection(self, id):
 		connection = self.session.query(Connection).filter(Connection.id == id).first()
-		return connection.json(depth=1) if connection else None
+		date = connection.date
+		ts   = 120
+		
+		if connection:
+			
+			# Find associates == connections with same user/pass in the same timespan
+			# TODO: add filter by same honeypot, this requires honeypot accounts somehow
+			# TODO: maybe do this when creating the connection, may by adding event handlers
+			associates = (self.session.query(Connection).
+				filter(Connection.date > (connection.date-ts),
+				Connection.date < (connection.date+ts),
+				Connection.user == connection.user,
+				Connection.password == connection.password,
+				Connection.id != connection.id).all())
+			
+			json = connection.json(depth=1)
+			json['associates'] = map(lambda connection : connection.json(), associates)
+			
+			return json
+		else:
+			return None
 			
 	@db_wrapper
 	def get_newest_connections(self):
 		connections = self.session.query(Connection).order_by(desc(Connection.date)).limit(16).all()
+		return map(lambda connection : connection.json(), connections)
+			
+	@db_wrapper
+	def get_country_connections(self, country, older_than=None):
+		if older_than == None:
+			older_than = 0xFFFFFFFF
+		
+		connections = (self.session.query(Connection)
+			.filter(Connection.date < older_than, Connection.country == country)
+			.order_by(desc(Connection.date))
+			.limit(32).all())
+		
+		return map(lambda connection : connection.json(), connections)
+			
+	@db_wrapper
+	def get_ip_connections(self, ip, older_than=None):
+		if older_than == None:
+			older_than = 0xFFFFFFFF
+		
+		connections = (self.session.query(Connection)
+			.filter(Connection.date < older_than, Connection.ip == ip)
+			.order_by(desc(Connection.date))
+			.limit(32).all())
+		
 		return map(lambda connection : connection.json(), connections)
 	
 	##

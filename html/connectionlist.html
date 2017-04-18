@@ -1,0 +1,29 @@
+<h2>Latest Connections</h2>
+
+<p>
+	<span>Showing only Connections</span>
+	<span ng-show="field == 'ip'">from {{ ip }}</span>
+	<span ng-show="field == 'country'">from <img src="img/flags/{{ country.toLowerCase() }}.png">  {{ countryname }}</span>
+	<span ng-show="older_than != null">, older than {{ older_than }}</span>
+</p>
+
+<table class="table table-condensed">
+
+	<tr>
+		<th>Date</th>
+		<th ng-show="field != 'ip'">IP</th>
+		<th ng-show="field != 'country'">Country</th>
+		<th>Username</th>
+		<th>Password</th>
+		<th>N⁰ Urls</th>
+	</tr>
+	<tr ng-repeat="connection in connections">
+		<td><a href="{{ '#/connection/' + connection.id }}">{{ formatDate(connection.date) }}</a></td>
+		<td ng-show="field != 'ip'"><a href="#/connection/by/ip/{{ connection.ip }}">{{ connection.ip }}</a></td>
+		<td ng-show="field != 'country'"><img src="img/flags/{{ connection.country.toLowerCase() }}.png">  {{ connection.country }}</td>
+		<td>{{ connection.user }}</a></td>
+		<td>{{ connection.pass }}</td>
+		<td>{{ connection.urls.length }}</td>
+	</tr>
+
+</table>

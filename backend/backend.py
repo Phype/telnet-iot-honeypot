@@ -116,6 +116,18 @@ def get_connection(id):
 def get_country_stats():
 	stats = web.get_country_stats()
 	return json.dumps(stats)
+
+@app.route("/connection/by_country/<country>")
+def get_country_connections(country):
+	older_than = request.args.get('older_than', None)
+	stats = web.get_country_connections(country, older_than)
+	return json.dumps(stats)
+
+@app.route("/connection/by_ip/<ip>")
+def get_ip_connections(ip):
+	older_than = request.args.get('older_than', None)
+	stats = web.get_ip_connections(ip, older_than)
+	return json.dumps(stats)
 	
 @app.route("/connection/newest")
 def get_newest_connections():

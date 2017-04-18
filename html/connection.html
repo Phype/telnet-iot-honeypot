@@ -6,7 +6,7 @@
 	<tr><td>ID</td><td>{{ connection.id }}</td></tr>
 	<tr>
 		<td>IP</td>
-		<td>{{ connection.ip }}
+		<td><a href="#/connection/by/ip/{{ connection.ip }}">{{ connection.ip }}</a>
 			<span ng-show="connection.asn">
 				<br><img src="img/flags/{{ connection.country.toLowerCase() }}.png"> {{ connection.countryname }} - <a href="http://bgp.he.net/AS{{ connection.asn }}" target="_blank">AS{{ connection.asn }}</a> - {{ connection.ipblock }}
 			</span>
@@ -14,6 +14,15 @@
 	</tr>
 	<tr><td>Username</td><td>{{ connection.user }}</td></tr>
 	<tr><td>Password</td><td>{{ connection.pass }}</td></tr>
+	<tr ng-show="connection.associates.length > 0">
+		<td>Associated Connections</td>
+		<td>
+			<p ng-repeat="associate in connection.associates">
+				<a href="{{ '#/connection/' + associate.id }}">{{ formatDate(associate.date) }}</a> from 
+				<img src="img/flags/{{ associate.country.toLowerCase() }}.png"> {{ associate.ip }}
+			</p>
+		</td>
+	</tr>
 
 </table>
 
