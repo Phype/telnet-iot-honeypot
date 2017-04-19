@@ -15,13 +15,16 @@ app.config(function($routeProvider) {
 		templateUrl : "connection.html",
 		controller : "connection"
 	})
-	.when("/connection/by/:field/:value", {
+	.when("/connections", {
 		templateUrl : "connectionlist.html",
 		controller : "connectionlist"
 	})
-	.otherwise({
+	.when("/", {
 		templateUrl : "overview.html",
 		controller : "overview"
+	})
+	.otherwise({
+		template: '<h1>Error</h1>View not found.<br><a href="#/">Go to index</a>'
 	});
 });
 
@@ -45,7 +48,7 @@ app.controller('overview', function($scope, $http, $routeParams, $location) {
 		$scope.samples = httpResult.data;
 	});
 	
-	$http.get(api + "/connection/newest").then(function (httpResult) {
+	$http.get(api + "/connections").then(function (httpResult) {
 		$scope.connections = httpResult.data;
 	});
 	
@@ -59,7 +62,7 @@ app.controller('overview', function($scope, $http, $routeParams, $location) {
 	
 	$scope.clickchart_countries = function(a,b,c,d,e) {
 		var c = $scope.country_stats_data[c._index];
-		$location.path("/connection/by/country/" + c);
+		$location.path("/connections").search({country: c});
 		$scope.$apply()
 	};
 		
@@ -140,7 +143,7 @@ app.controller('connection', function($scope, $http, $routeParams) {
 
 });
 
-app.controller('connectionlist', function($scope, $http, $routeParams) {
+app.controller('connectionlist', function($scope, $http, $routeParams, $location) {
 
 	$scope.connection = null;
 	$scope.lines = [];
@@ -150,32 +153,18 @@ app.controller('connectionlist', function($scope, $http, $routeParams) {
 	$scope.short = short;
 	$scope.encurl = encurl;
 	$scope.decurl = decurl;
+	$scope.COUNTRY_LIST = COUNTRY_LIST;
 	
-	var url = "";
+	$scope.filter = $routeParams;
 	
-	$scope.field = $routeParams.field;
-	$scope.value = $routeParams.value;
+	var url = api + "/connections?";
 	
-	if ($routeParams.field == "country")
+	for (key in $routeParams)
 	{
-		$scope.country     = $routeParams.value;
-		$scope.countryname = COUNTRY_LIST[$scope.country];
-		
-		url = "/connection/by_country/" + $scope.country;
-	}
-	else if ($routeParams.field == "ip")
-	{
-		$scope.ip = $routeParams.value;
-		
-		url = "/connection/by_ip/" + $scope.ip;
+		url = url + key + "=" + $routeParams[key] + "&";
 	}
 	
-	$scope.older_than  = $routeParams.older_than ? $routeParams.older_than : null;
-	var params         = "";
-	
-	if ($scope.older_than) params = "?older_than=" + $scope.older_than;
-	
-	$http.get(api + url + params).then(function (httpResult) {
+	$http.get(url).then(function (httpResult) {
 		$scope.connections = httpResult.data;
 		
 		$scope.connections.map(function(connection) {
@@ -184,5 +173,14 @@ app.controller('connectionlist', function($scope, $http, $routeParams) {
 		});
 		
 	});
+	
+	$scope.nextpage = function() {
+		var filter = $scope.filter;
+		
+		filter['older_than'] = $scope.connections[$scope.connections.length - 1].date;
+		
+		$location.path("/connections").search(filter);
+		$scope.$apply();
+	};
 
 });

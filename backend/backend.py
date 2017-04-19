@@ -112,6 +112,21 @@ def get_connection(id):
 	else:
 		return "", 404
 	
+@app.route("/connections")
+def get_connections():
+	obj          = {}
+	allowed_keys = ["ipblock", "user", "password", "ip", "country", "asn"]
+	
+	for k,v in request.args.iteritems():
+		if k in allowed_keys:
+			obj[k] = v
+	
+	conn = web.get_connections(obj, request.args.get("older_than", None))
+	if conn:
+		return json.dumps(conn)
+	else:
+		return "", 404
+	
 @app.route("/connection/statistics/per_country")
 def get_country_stats():
 	stats = web.get_country_stats()

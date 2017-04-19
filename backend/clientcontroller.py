@@ -59,32 +59,15 @@ class WebController:
 			return None
 			
 	@db_wrapper
-	def get_newest_connections(self):
-		connections = self.session.query(Connection).order_by(desc(Connection.date)).limit(16).all()
-		return map(lambda connection : connection.json(), connections)
+	def get_connections(self, filter_obj={}, older_than=None):
+		query = self.session.query(Connection).filter_by(**filter_obj)
+		
+		if older_than:
+			query = query.filter(Connection.date < older_than)
 			
-	@db_wrapper
-	def get_country_connections(self, country, older_than=None):
-		if older_than == None:
-			older_than = 0xFFFFFFFF
+		query = query.order_by(desc(Connection.date))
 		
-		connections = (self.session.query(Connection)
-			.filter(Connection.date < older_than, Connection.country == country)
-			.order_by(desc(Connection.date))
-			.limit(32).all())
-		
-		return map(lambda connection : connection.json(), connections)
-			
-	@db_wrapper
-	def get_ip_connections(self, ip, older_than=None):
-		if older_than == None:
-			older_than = 0xFFFFFFFF
-		
-		connections = (self.session.query(Connection)
-			.filter(Connection.date < older_than, Connection.ip == ip)
-			.order_by(desc(Connection.date))
-			.limit(32).all())
-		
+		connections = query.limit(16).all()
 		return map(lambda connection : connection.json(), connections)
 	
 	##

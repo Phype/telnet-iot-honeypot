@@ -74,7 +74,7 @@ class Connection(Base):
 			"ip": self.ip,
 			"date": self.date,
 			"user": self.user,
-			"pass": self.password,
+			"password": self.password,
 			"text_combined": self.text_combined,
 			
 			"asn": self.asn,
@@ -236,7 +236,7 @@ class DB:
 		
 	def get_url_conns(self, id_url):
 		q = """
-		SELECT conns.ip as ip, conns.user as user, conns.pass as pass, conns.date as date
+		SELECT conns.ip as ip, conns.user as user, conns.pass as password, conns.date as date
 		FROM conns_urls
 		LEFT JOIN conns on conns.id = conns_urls.id_conn
 		WHERE conns_urls.id_url = :id_url
