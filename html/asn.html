@@ -1,0 +1,19 @@
+<h1>ASN Info</h1>
+
+<table class="table">
+
+	<tr><td>Name</td><td><b>{{ asn.name }}</b></td></tr>
+	<tr><td>Country</td><td><img src="img/flags/{{ asn.country.toLowerCase() }}.png"> {{ asn.countryname }}</td></tr>
+	<tr><td>ASN</td><td>AS{{ asn.asn }}</td></tr>
+	<tr><td>Internet Registry</td><td>{{ REGISTRIES[asn.reg] }}</td></tr>
+	<tr><td>More Info</td><td><a href="http://bgp.he.net/AS{{ asn.asn }}" target="_blank"><span class="glyphicon glyphicon-link"></span> AS{{ asn.asn }} on bgp.he.net</a></td></tr>
+
+</table>
+
+<h2>Connections from AS{{ asn.asn }} <small><a href="#/connections?asn_id={{ asn.asn }}">more</a></small></h2>
+
+<div ng-include="'connectionlist-embed.html'"></div>
+
+<h2>URLs located in AS{{ asn.asn }}</h2>
+
+<small>Coming soon</small>

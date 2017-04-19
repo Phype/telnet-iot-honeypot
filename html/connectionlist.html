@@ -8,34 +8,13 @@
 		</button>
 		<div class="collapse" id="collapseExample">
 			<p>You may use the url bar to edit filters</p>
-			<p>Available arguments: ["ipblock", "user", "password", "ip", "country", "asn"]</p>
+			<p>Available arguments: ["ipblock", "user", "password", "ip", "country", "asn_id"]</p>
 		</div>
 	</div>
 	<span ng-repeat="(k, v) in filter">{{ k }} == <img ng-show="k == 'country'" src="img/flags/{{ v.toLowerCase() }}.png"> {{ v }} {{ k == 'country' ? '(' + COUNTRY_LIST[v] + ')' : '' }} {{ $last ? '' : ', ' }}</span>
 </div>
 
-<table class="table table-condensed">
-
-	<tr>
-		<th>Date</th>
-		<th ng-show="!filter['ip']">IP</th>
-		<th ng-show="!filter['asn']">ASN</th>
-		<th ng-show="!filter['country']">Country</th>
-		<th>Username</th>
-		<th>Password</th>
-		<th>N⁰ Urls</th>
-	</tr>
-	<tr ng-repeat="connection in connections">
-		<td><a href="{{ '#/connection/' + connection.id }}">{{ formatDate(connection.date) }}</a></td>
-		<td ng-show="!filter['ip']"> {{ connection.ip }} <a href="#/connections?ip={{ connection.ip }}"><span class="glyphicon glyphicon-screenshot"></a></td>
-		<td ng-show="!filter['asn']">{{ connection.asn }} <a href="#/connections?asn={{ connection.asn }}"><span class="glyphicon glyphicon-screenshot"></a></td>
-		<td ng-show="!filter['country']"><img src="img/flags/{{ connection.country.toLowerCase() }}.png">  {{ connection.country }} <a href="#/connections?country={{ connection.country }}"><span class="glyphicon glyphicon-screenshot"></span></a></td>
-		<td>{{ connection.user }} <a href="#/connections?user={{ connection.user }}"><span class="glyphicon glyphicon-screenshot"></span></a></td>
-		<td>{{ connection.password }} <a href="#/connections?password={{ connection.password }}"><span class="glyphicon glyphicon-screenshot"></span></td>
-		<td>{{ connection.urls.length }}</td>
-	</tr>
-
-</table>
+<div ng-include="'connectionlist-embed.html'"></div>
 
 <div class="pull-right">
 	<button type="button" class="btn btn-default" ng-click="nextpage()">More &raquo;</button>

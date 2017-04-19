@@ -25,6 +25,31 @@ conns_urls = Table('conns_urls', Base.metadata,
 	Column('id_url', None, ForeignKey('urls.id'), primary_key=True),
 )
 
+class ASN(Base):
+	__tablename__ = 'asn'
+	
+	asn = Column('asn', Integer, primary_key=True)
+	name = Column('name', String(64))
+	reg = Column('reg', String(32))
+	country = Column('country', String(3))
+	
+	urls = relationship("Url", back_populates="asn")
+	connections = relationship("Connection", back_populates="asn")
+	
+	def json(self, depth=0):
+		return {
+			"asn": self.asn,
+			"name": self.name,
+			"reg": self.reg,
+			"country": self.country,
+			
+			"urls": map(lambda url : url.url if depth == 0
+			   else url.json(depth - 1), self.urls),
+			
+			"connections": map(lambda connection : connection.id if depth == 0
+					  else connection.json(depth - 1), self.connections)
+		}
+
 class Sample(Base):
 	__tablename__ = 'samples'
 	
@@ -62,7 +87,9 @@ class Connection(Base):
 	
 	text_combined = Column('text_combined', Text())
 	
-	asn = Column('asn', Integer)
+	asn_id = Column('asn', None, ForeignKey('asn.asn'))
+	asn = relationship("ASN", back_populates="connections")
+	
 	ipblock = Column('ipblock', String(32))
 	country = Column('country', String(3))
 	
@@ -77,7 +104,8 @@ class Connection(Base):
 			"password": self.password,
 			"text_combined": self.text_combined,
 			
-			"asn": self.asn,
+			"asn": None if self.asn == None else self.asn.json(0),
+			
 			"ipblock": self.ipblock,
 			"country": self.country,
 			
@@ -97,7 +125,9 @@ class Url(Base):
 	
 	connections = relationship("Connection", secondary=conns_urls, back_populates="urls")
 	
-	asn = Column('asn', Integer)
+	asn_id = Column('asn', None, ForeignKey('asn.asn'))
+	asn = relationship("ASN", back_populates="urls")
+	
 	ip  = Column('ip', String(32))
 	country = Column('country', String(3))
 	
@@ -108,10 +138,14 @@ class Url(Base):
 			"sample": None if self.sample == None else 
 				(self.sample.sha256 if depth == 0
 					else self.sample.json(depth - 1)),
+				
 			"connections": map(lambda connection : connection.id if depth == 0
 					  else connection.json(depth - 1), self.connections),
 			
-			"asn": self.asn,
+			"asn": None if self.asn == None else 
+				(self.asn.asn if depth == 0
+					else self.asn.json(depth - 1)),
+				
 			"ip": self.ip,
 			"country": self.country,
 		}

@@ -115,7 +115,7 @@ def get_connection(id):
 @app.route("/connections")
 def get_connections():
 	obj          = {}
-	allowed_keys = ["ipblock", "user", "password", "ip", "country", "asn"]
+	allowed_keys = ["ipblock", "user", "password", "ip", "country", "asn_id"]
 	
 	for k,v in request.args.iteritems():
 		if k in allowed_keys:
@@ -207,8 +207,15 @@ def hist_sample(sha256):
 	finally:
 		db.end()
 		
+### ASN
 
-
+@app.route("/asn/<asn>")
+def get_asn(asn):
+	info = web.get_asn(asn)
+	if not info:
+		return "", 404
+	
+	return json.dumps(info)
 
 if __name__ == "__main__":
 	app.run()

@@ -5,8 +5,8 @@ from sqlalchemy import desc, func
 from decorator import decorator
 from functools import wraps
 
-from additionalinfo import get_ip_info, get_url_info
-from db import get_db, Sample, Connection, Url
+from additionalinfo import get_ip_info, get_url_info, get_asn_info
+from db import get_db, Sample, Connection, Url, ASN
 from virustotal import Virustotal
 
 from util.dbg import dbg
@@ -100,6 +100,21 @@ class WebController:
 	def get_country_stats(self):
 		stats = self.session.query(func.count(Connection.country), Connection.country).group_by(Connection.country).all()
 		return stats
+	
+	##
+	
+	@db_wrapper
+	def get_asn(self, asn):
+		asn_obj = self.session.query(ASN).filter(ASN.asn == asn).first()
+		
+		if asn_obj:
+			return asn_obj.json(depth=1)
+		else:
+			asn_info = get_asn_info(asn)
+			if asn_info:
+				asn_obj = ASN(asn=asn, name=asn_info['name'], reg=asn_info['reg'], country=asn_info['country'])
+				self.session.add(asn_obj)
+				return asn_obj.json(depth=1)
 
 # Controls Actions perfomed by Honeypot Clients
 class ClientController:

@@ -15,6 +15,10 @@ app.config(function($routeProvider) {
 		templateUrl : "connection.html",
 		controller : "connection"
 	})
+	.when("/asn/:asn", {
+		templateUrl : "asn.html",
+		controller : "asn"
+	})
 	.when("/connections", {
 		templateUrl : "connectionlist.html",
 		controller : "connectionlist"
@@ -182,5 +186,37 @@ app.controller('connectionlist', function($scope, $http, $routeParams, $location
 		$location.path("/connections").search(filter);
 		$scope.$apply();
 	};
+
+});
+
+app.controller('asn', function($scope, $http, $routeParams, $location) {
+
+	$scope.connection = null;
+	$scope.lines = [];
+	
+	$scope.formatDate = formatDateTime;
+	$scope.nicenull = nicenull;
+	$scope.short = short;
+	$scope.encurl = encurl;
+	$scope.decurl = decurl;
+	$scope.COUNTRY_LIST = COUNTRY_LIST;
+	$scope.REGISTRIES = {
+		"arin": "American Registry for Internet Numbers",
+		"ripencc": "RIPE Network Coordination Centre",
+		"latnic": "Latin America and Caribbean Network Information Centre",
+		"afrinic": "African Network Information Centre",
+		"apnic": "Asia-Pacific Network Information Centre"
+	};
+	
+	var asn = $routeParams.asn;
+	$scope.filter = { "asn_id" : asn};
+	
+	$http.get(api + "/asn/" + asn).then(function (httpResult) {
+		$scope.asn = httpResult.data;
+		$scope.asn.countryname = COUNTRY_LIST[$scope.asn.country];
+		
+		$scope.connections = $scope.asn.connections.sort(function(x, y) {return y.date - x.date} ).slice(0,8);
+		$scope.urls = $scope.asn.urls.sort(function(x, y) {return y.date - x.date} ).slice(0,8);
+	});
 
 });

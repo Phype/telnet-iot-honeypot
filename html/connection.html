@@ -6,14 +6,17 @@
 	<tr><td>ID</td><td>{{ connection.id }}</td></tr>
 	<tr>
 		<td>IP</td>
-		<td><a href="#/connections?ip={{ connection.ip }}">{{ connection.ip }}</a>
-			<span ng-show="connection.asn">
-				<br><img src="img/flags/{{ connection.country.toLowerCase() }}.png"> {{ connection.countryname }} - <a href="http://bgp.he.net/AS{{ connection.asn }}" target="_blank">AS{{ connection.asn }}</a> - {{ connection.ipblock }}
-			</span>
+		<td>
+			<span ng-show="connection.asn"><img src="img/flags/{{ connection.country.toLowerCase() }}.png"> {{ connection.countryname }} <a href="#/connections?country={{ connection.country }}"><span class="glyphicon glyphicon-screenshot"></span></a><br></span>
+			<span>{{ connection.ip }} <a href="#/connections?ip={{ connection.ip }}"><span class="glyphicon glyphicon-screenshot"></span></a></span><br>
+			<span ng-show="connection.asn">AS{{ connection.asn.asn }} <b>{{ connection.asn.name }}</b>
+				<a href="#/asn/{{ connection.asn.asn }}"><span class="glyphicon glyphicon-screenshot"></span></a>
+			</span><br>
+			<span ng-show="connection.asn">{{ connection.ipblock }}</span>
 		</td>
 	</tr>
-	<tr><td>Username</td><td>{{ connection.user }}</td></tr>
-	<tr><td>Password</td><td>{{ connection.password }}</td></tr>
+	<tr><td>Username</td><td>{{ connection.user }} <a href="#/connections?user={{ connection.user }}"><span class="glyphicon glyphicon-screenshot"></span></a></td></tr>
+	<tr><td>Password</td><td>{{ connection.password }} <a href="#/connections?password={{ connection.password }}"><span class="glyphicon glyphicon-screenshot"></span></a></td></tr>
 	<tr ng-show="connection.associates.length > 0">
 		<td>Associated Connections</td>
 		<td>
