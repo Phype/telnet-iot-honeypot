@@ -8,3 +8,4 @@ import-length.py
 review-sampels.py
 *.kate-swp
 *.sql
+config.json

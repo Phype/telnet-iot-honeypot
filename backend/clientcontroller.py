@@ -110,17 +110,27 @@ class WebController:
 		if asn_obj:
 			return asn_obj.json(depth=1)
 		else:
-			asn_info = get_asn_info(asn)
-			if asn_info:
-				asn_obj = ASN(asn=asn, name=asn_info['name'], reg=asn_info['reg'], country=asn_info['country'])
-				self.session.add(asn_obj)
-				return asn_obj.json(depth=1)
+			return null
 
 # Controls Actions perfomed by Honeypot Clients
 class ClientController:
 	
 	def __init__(self):
-		self.vt = Virustotal(config["vt_key"])
+		self.vt   = Virustotal(config["vt_key"])
+		self.db   = None
+		self.sess = None
+
+	def get_asn(self, asn):
+		asn_obj = self.session.query(ASN).filter(ASN.asn == asn).first()
+		
+		if asn_obj:
+			return asn_obj.json(depth=1)
+		else:
+			asn_info = get_asn_info(asn)
+			if asn_info:
+				asn_obj = ASN(asn=asn, name=asn_info['name'], reg=asn_info['reg'], country=asn_info['country'])
+				self.session.add(asn_obj)
+				return asn_obj.json(depth=1)
 		
 	@db_wrapper
 	def put_session(self, session):
@@ -130,6 +140,7 @@ class ClientController:
 		country = None
 		
 		if ipinfo:
+			asn_obj = self.get_asn(ipinfo["asn"])
 			asn     = ipinfo["asn"]
 			block   = ipinfo["ipblock"]
 			country = ipinfo["country"]
@@ -147,6 +158,7 @@ class ClientController:
 				url_country = None
 				
 				if url_info:
+					asn_obj_url = self.get_asn(url_info["asn"])
 					url_asn     = url_info["asn"]
 					url_country = url_info["country"]
 				

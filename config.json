@@ -4,7 +4,7 @@
 	"user": "testuser",
 	"backend": "http://localhost:5000",
 
-	"sql": "sqlite:///test.db",
+	"sql": "mysql+mysqldb://telhoney:xTAqFLqJ2AxAGDgV@localhost/telhoney",
 	"max_db_conn": 1,
 	"sample_dir": "samples",
 
