@@ -203,7 +203,7 @@ app.controller('asn', function($scope, $http, $routeParams, $location) {
 	$scope.REGISTRIES = {
 		"arin": "American Registry for Internet Numbers",
 		"ripencc": "RIPE Network Coordination Centre",
-		"latnic": "Latin America and Caribbean Network Information Centre",
+		"lacnic": "Latin America and Caribbean Network Information Centre",
 		"afrinic": "African Network Information Centre",
 		"apnic": "Asia-Pacific Network Information Centre"
 	};
