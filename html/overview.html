@@ -1,3 +1,14 @@
+<img src="img/icon.svg" style="height: 10em; margin-top: -4em; padding: 1em; background: white;" class="pull-right">
+
+<div class="page-header">
+	<h1>Telnet-Iot-Honeypot <small>Python honeypot for catching botnet binaries </small></h1>
+</div>
+
+<p>
+	This is the start page of this installation of the Telnet-Iot-Honeypot.<br>
+	More info: <a href="https://github.com/Phype/telnet-iot-honeypot" target="_blank">https://github.com/Phype/telnet-iot-honeypot</a>
+</p>
+
 <h2>Latest Urls</h2>
 
 <table class="table table-condensed">
@@ -5,14 +16,14 @@
 	<tr>
 		<th>Url</th>
 		<th>Date</th>
-		<th>Sample</th>
-		<th>N⁰ Connections</th>
+		<th class="hidden-xs">Sample</th>
+		<th class="hidden-xs">N⁰ Connections</th>
 	</tr>
 	<tr ng-repeat="url in urls | limitTo : 5">
 		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
 		<td>{{ formatDate(url.date) }}</td>
-		<td><span ng-show="url.sample != null"><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></span></td>
-		<td>{{ url.connections.length }}</td>
+		<td class="hidden-xs"><span ng-show="url.sample != null"><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></span></td>
+		<td class="hidden-xs">{{ url.connections.length }}</td>
 	</tr>
 
 </table>
@@ -22,18 +33,18 @@
 <table class="table table-condensed">
 
 	<tr>
-		<th>SHA256</th>
+		<th class="hidden-xs">SHA256</th>
 		<th>Name</th>
 		<th>Size (Bytes)</th>
 		<th>First Seen</th>
-		<th>N⁰ Urls</th>
+		<th class="hidden-xs">N⁰ Urls</th>
 	</tr>
 	<tr ng-repeat="sample in samples | limitTo : 3">
-		<td><a href="{{ '#/sample/' + sample.sha256 }}">{{ short(sample.sha256, 16) }}</a></td>
-		<td>{{ sample.name }}</td>
+		<td class="hidden-xs">{{ short(sample.sha256, 16) }}</td>
+		<td><a href="{{ '#/sample/' + sample.sha256 }}">{{ sample.name }}</a></td>
 		<td>{{ sample.length }}</a></td>
 		<td>{{ formatDate(sample.date) }}</td>
-		<td>{{ sample.urls.length }}</td>
+		<td class="hidden-xs">{{ sample.urls.length }}</td>
 	</tr>
 
 </table>
@@ -42,7 +53,7 @@
 <h2>Latest Connections <small><a href="#/connections">more</a></small></h2>
 
 <div class="row">
-	<div class="col-md-9">
+	<div class="col-md-9 col-sm-12">
 
 		<table class="table table-condensed">
 
@@ -52,7 +63,7 @@
 				<!-- <th>IP</th> -->
 				<th>Username</th>
 				<th>Password</th>
-				<th>N⁰ Urls</th>
+				<th class="hidden-xs">N⁰ Urls</th>
 			</tr>
 			<tr ng-repeat="connection in connections | limitTo : 8">
 				<td><a href="{{ '#/connection/' + connection.id }}">{{ formatDate(connection.date) }}</a></td>
@@ -60,15 +71,21 @@
 				<!-- <td>{{ connection.ip }}</td> -->
 				<td>{{ connection.user }}</a></td>
 				<td>{{ connection.password }}</td>
-				<td>{{ connection.urls.length }}</td>
+				<td class="hidden-xs">{{ connection.urls.length }}</td>
 			</tr>
 
 		</table>
 	</div>
-	<div class="col-md-3">
+	
+	<div class="col-sm-3 col-xs-1 hidden-md hidden-lg"><!-- spacer --></div>
+	
+	<div class="col-md-3 col-sm-6 col-xs-10">
 		<canvas id="doughnut" class="chart chart-doughnut" chart-data="country_stats_values" chart-labels="country_stats_labels" chart-click="clickchart_countries">
 		</canvas>
 		<br>
 		<center><small><b>All Connections by Country</b><br>Click on country to see all connections</small></center>
+	</div>
+	
+	<div class="">
 	</div>
 </div>
