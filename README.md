@@ -55,5 +55,3 @@ Samples are included for local and client/server deployments.
 ![Screenshot 1](images/screen1.png)
 
 ![Screenshot 2](images/screen2.png)
-
-![Screenshot 3](images/screen3.png)
