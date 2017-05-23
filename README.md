@@ -38,6 +38,12 @@ Samples are included for local and client/server deployments.
 
 	python backend.py
 
+## Opening the frontend
+
+After the server is started, open `html/index.html` in your favorite browser.
+For this to work, the url in `html/apiurl.js` should point to your running backend,
+which it should do automatically for local deployments.
+
 ## Sample Connection
 
 	enable
