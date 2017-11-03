@@ -9,5 +9,11 @@
 	"sample_dir": "samples",
 
 	"save_samples": false,
-	"vt_key": "GET_YOUR_OWN"
+	"vt_key": "GET_YOUR_OWN",
+
+    "cuckoo_enabled": false,
+    "cuckoo_url_base": "http://127.0.0.1:8090",
+    "cuckoo_user": "user",
+    "cuckoo_passwd": "passwd",
+    "cuckoo_force": 0
 }

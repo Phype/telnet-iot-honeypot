@@ -40,7 +40,7 @@
 		<th class="hidden-xs">N⁰ Urls</th>
 	</tr>
 	<tr ng-repeat="sample in samples | limitTo : 3">
-		<td class="hidden-xs">{{ short(sample.sha256, 16) }}</td>
+		<td class="hidden-xs"><span ng-show="sample.sha256 != null"><a href="{{ '#/sample/' + sample.sha256 }}">{{ short(sample.sha256, 16) }}</a></span></td>
 		<td><a href="{{ '#/sample/' + sample.sha256 }}">{{ sample.name }}</a></td>
 		<td>{{ sample.length }}</a></td>
 		<td>{{ formatDate(sample.date) }}</td>
@@ -76,16 +76,16 @@
 
 		</table>
 	</div>
-	
+
 	<div class="col-sm-3 col-xs-1 hidden-md hidden-lg"><!-- spacer --></div>
-	
+
 	<div class="col-md-3 col-sm-6 col-xs-10">
 		<canvas id="doughnut" class="chart chart-doughnut" chart-data="country_stats_values" chart-labels="country_stats_labels" chart-click="clickchart_countries">
 		</canvas>
 		<br>
 		<center><small><b>All Connections by Country</b><br>Click on country to see all connections</small></center>
 	</div>
-	
+
 	<div class="">
 	</div>
 </div>

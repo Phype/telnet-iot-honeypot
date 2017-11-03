@@ -1,0 +1,20 @@
+<h1>Urls</h1>
+
+<table class="table table-condensed">
+
+	<tr>
+		<th>Country</th>
+		<th>Url</th>
+		<th>Date</th>
+		<th class="hidden-xs">Sample</th>
+		<th class="hidden-xs">N⁰ Connections</th>
+	</tr>
+	<tr ng-repeat="url in urls">
+		<td><span ng-show="url.country"><img src="img/flags/{{ url.country.toLowerCase() }}.png"> {{ url.countryname }} <a href="#/connections?country={{ url.country }}"><span class="glyphicon glyphicon-screenshot"></span></a></span></td>
+		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
+		<td>{{ formatDate(url.date) }}</td>
+		<td class="hidden-xs"><span ng-show="url.sample != null"><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></span></td>
+		<td class="hidden-xs">{{ url.connections.length }}</td>
+	</tr>
+
+</table>
