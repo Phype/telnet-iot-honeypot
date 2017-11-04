@@ -9,7 +9,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from util.config import config
 
-class Cuckoo(Object):
+class Cuckoo():
 
     def __init__(self, config):
         self.url_base = config["cuckoo_url_base"]
