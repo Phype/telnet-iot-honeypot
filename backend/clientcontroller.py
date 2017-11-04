@@ -206,4 +206,4 @@ class ClientController:
 		if config["cuckoo_enabled"]:
 			self.cuckoo.upload(os.path.join(config["sample_dir"], sha256), sha256)
 		elif config["submit_to_vt"]:
-			self.self.vt.upload_file(os.path.join(config["sample_dir"], sha256), sha256)
+			self.vt.upload_file(os.path.join(config["sample_dir"], sha256), sha256)
