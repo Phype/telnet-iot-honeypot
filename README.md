@@ -16,7 +16,7 @@ which may try to infect the honeypot with malware.
 Luckily, these malwares infection processes are quite simple,
 just using wget do download something and running it.
 
-## Architekure
+## Architecture
 
 The application has a client/server architekture,
 with a client (the actual honeypot) accepting telnet connections
