@@ -66,6 +66,7 @@ class Telnetd:
 		dbg("Socket Closed")
 
 	def handle(self):
+		conn = False
 		try:
 			conn, addr = self.sock.accept()
 			dbg("Client connected at " + str(addr))
@@ -77,7 +78,7 @@ class Telnetd:
 
 		if conn:
 			conn.close()
-		
+
 	def stop(self):
 		self.do_run = False
 
@@ -90,16 +91,16 @@ class TelnetSess:
 		self.db_id   = 0
 		self.remote  = remote
 		self.session = None
-			
+
 	def loop(self):
 		self.session = Session(self.send_string, self.remote[0])
-		
+
 		dbg("Setting timeout to " + str(self.timeout) + " seconds")
 		self.sock.settimeout(self.timeout)
 
 		try:
 			self.test_opt(1)
-			
+
 			# Kill of Session if longer than self.maxtime
 			ts_start = int(time.time())
 
@@ -109,7 +110,7 @@ class TelnetSess:
 			p = self.recv_line()
 
 			self.send_string("\r\nWelcome to EmbyLinux 3.13.0-24-generic\r\n")
-			
+
 			self.session.login(u, p)
 
 			while True:
@@ -121,16 +122,16 @@ class TelnetSess:
 				except:
 					traceback.print_exc()
 					self.send_string("sh: error\r\n")
-					
+
 				if ts_start + self.maxtime < int(time.time()):
 					dbg("Session too long. Killing off.")
 					break
-			
+
 		except socket.timeout:
 			dbg("Connection timed out")
 		except EOFError:
 			dbg("Connection closed")
-			
+
 		self.session.end()
 
 	def test_naws(self):
@@ -139,7 +140,7 @@ class TelnetSess:
 			self.need(Telnetd.IAC)
 			self.need(Telnetd.SB)
 			self.need(Telnetd.NAWS)
-			
+
 			w = self.recv_short()
 			h = self.recv_short()
 
@@ -168,14 +169,14 @@ class TelnetSess:
 		else:
 			self.send(Telnetd.DONT)
 		self.send(opt)
-	
+
 	def send(self, byte):
 		#if byte in Telnetd.cmds:
 		#	dbg("SEND " + str(Telnetd.cmds[byte]))
 		#else:
 		#	dbg("SEND " + str(byte))
 		self.sock.send(chr(byte))
-	
+
 	def send_string(self, msg):
 		self.sock.send(msg)
 		#dbg("SEND STRING LEN" + str(len(msg)))

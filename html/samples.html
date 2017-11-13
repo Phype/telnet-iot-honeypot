@@ -1,0 +1,20 @@
+<h2>Samples</h2>
+
+<table class="table table-condensed">
+
+	<tr>
+		<th class="hidden-xs">SHA256</th>
+		<th>Name</th>
+		<th>Size (Bytes)</th>
+		<th>First Seen</th>
+		<th class="hidden-xs">N⁰ Urls</th>
+	</tr>
+	<tr ng-repeat="sample in samples">
+		<td class="hidden-xs"><span ng-show="sample.sha256 != null"><a href="{{ '#/sample/' + sample.sha256 }}">{{sample.sha256}}</a></span></td>
+		<td><a href="{{ '#/sample/' + sample.sha256 }}">{{ sample.name }}</a></td>
+		<td>{{ sample.length }}</a></td>
+		<td>{{ formatDate(sample.date) }}</td>
+		<td class="hidden-xs">{{ sample.urls.length }}</td>
+	</tr>
+
+</table>
