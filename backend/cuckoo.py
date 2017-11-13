@@ -39,7 +39,7 @@ class Cuckoo():
                 verify=False,
                 auth=HTTPBasicAuth(self.api_user,self.api_passwd),
                 timeout=60)
-            if res and res.ok:
+            if res and res.ok and res.status_code == 200:
                 print("Sample found in Sandbox, with ID: {}".format(res.json().get("sample", {}).get("id", 0)))
                 return True
             else:
