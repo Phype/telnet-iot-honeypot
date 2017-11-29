@@ -28,8 +28,8 @@ The mode is set in the `config.json` file using the option `use_local_db`.
 
 In local db mode, the honeypot will put all information into the database itself,
 however since no backend server is running no frontend will be available.
-If you have set `use_local_db = true` and decide you want to use the backend,
-just set `use_local_db = false` (re-)start both backend and honeypot and the data
+If you have set `"use_local_db": true` and decide you want to use the backend,
+just set `"use_local_db": false` (re-)start both backend and honeypot and the data
 should now be available in the frontend.
 
 ## Frontend
