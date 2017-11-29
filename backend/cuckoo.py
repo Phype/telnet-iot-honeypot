@@ -9,6 +9,12 @@ import requests
 from requests.auth import HTTPBasicAuth
 from util.config import config
 
+try:
+    import urllib3
+    urllib3.disable_warnings()
+except (AttributeError, ImportError):
+    pass
+
 class Cuckoo():
 
     def __init__(self, config):
@@ -27,19 +33,21 @@ class Cuckoo():
         """
         Check if file already was analyzed by cuckoo
         """
-        res = ""
         try:
             print("Looking for tasks for: {}".format(sha256))
             res = requests.get(urljoin(self.url_base, "/files/view/sha256/{}".format(sha256)),
                 verify=False,
                 auth=HTTPBasicAuth(self.api_user,self.api_passwd),
                 timeout=60)
-            if res and res.ok:
+            if res and res.ok and res.status_code == 200:
                 print("Sample found in Sandbox, with ID: {}".format(res.json().get("sample", {}).get("id", 0)))
+                return True
+            else:
+                return False
         except Exception as e:
             print(e)
 
-        return res
+        return False
 
     def postfile(self, artifact, fileName):
         """
