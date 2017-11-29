@@ -1,7 +1,6 @@
 # INSTALL
 
-Installation instructions for this branch are not available.
-Server is a python flask app, while the client runs on its own, connecting to the Server app.
+Install all requirements:
 
 ```
 apt-get install python-pip libmysqlclient-dev python-mysqldb git
@@ -10,14 +9,28 @@ pip install setuptools flask sqlalchemy requests decorator dnspython ipaddress
 sudo mysql_secure_installation
 
 git clone https://github.com/Phype/telnet-iot-honeypot.git
+```
 
-# Create a mysql database
-# default mysql max key length is 767 bytes, so it is recommended to use latin1 charset
-# else the db setup will fail
+Create a mysql database. Default mysql max key length is 767 bytes,
+so it is recommended to use latin1 charset, else the db setup will fail.
+
+```
 CREATE DATABASE telhoney CHARACTER SET latin1 COLLATE latin1_swedish_ci;
 grant all privileges on telhoney.* to telhoney@localhost identified by "YOUR_PASSWORD";
 flush privileges;
 ```
+
+## Configuration
+
+The honeypot can run in two modes: local db and backend operated db.
+If you want to use the frontend seen in the screenshots, you have to use the backend operated db mode.
+The mode is set in the `config.json` file using the option `use_local_db`.
+
+In local db mode, the honeypot will put all information into the database itself,
+however since no backend server is running no frontend will be available.
+If you have set `use_local_db = true` and decide you want to use the backend,
+just set `use_local_db = false` (re-)start both backend and honeypot and the data
+should now be available in the frontend.
 
 ## Frontend
 
