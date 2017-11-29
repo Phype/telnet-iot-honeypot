@@ -19,12 +19,16 @@ grant all privileges on telhoney.* to telhoney@localhost identified by "YOUR_PAS
 flush privileges;
 ```
 
-## FrontEnd
+## Frontend
+
+You can use the frontend by just opening the file html/index.html in your browser.
+If you want to make the frontend publically available, deploy the html/ folder to you webserver,
+or install one:
 
 ```
 sudo apt-get install apache2
 cd telnet-iot-honeypot
-mv html /var/www
+cp -R html /var/www
 sudo chown www-data:www-data /var/www -R
 ```
 
@@ -46,4 +50,11 @@ run (may have to restart because of db locks)
 
 ## Run
 
+Start the honeypotl like so:
+
 	python honeypot.py
+	
+If you have set `use_local_db = false` in your config, start the backend:
+
+	python backend.py
+
