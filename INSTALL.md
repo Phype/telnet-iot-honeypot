@@ -45,6 +45,14 @@ cp -R html /var/www
 sudo chown www-data:www-data /var/www -R
 ```
 
+You can also post the data to the test-backend running at http://phype.pythonanywhere.com/.
+To do set the following options in `config.json`:
+
+```
+        "use_local_db": false,
+        "backend": "https://phype.pythonanywhere.com/",
+```
+
 ## Virustotal integration
 
 Please get yout own virustotal key,
