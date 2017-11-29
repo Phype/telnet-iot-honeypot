@@ -4,17 +4,19 @@ Installation instructions for this branch are not available.
 Server is a python flask app, while the client runs on its own, connecting to the Server app.
 
 ```
-apt install python-pip libmysqlclient-dev python-mysqldb git
-apt-get install mysql-server mysql-client -y
+apt-get install python-pip libmysqlclient-dev python-mysqldb git
+apt-get install mysql-server mysql-client
+pip install setuptools flask sqlalchemy requests decorator dnspython ipaddress
 sudo mysql_secure_installation
 
 git clone https://github.com/Phype/telnet-iot-honeypot.git
 
-create database telhoney;
+# Create a mysql database
+# default mysql max key length is 767 bytes, so it is recommended to use latin1 charset
+# else the db setup will fail
+CREATE DATABASE telhoney CHARACTER SET latin1 COLLATE latin1_swedish_ci;
 grant all privileges on telhoney.* to telhoney@localhost identified by "YOUR_PASSWORD";
 flush privileges;
-
-pip install setuptools flask sqlalchemy requests decorator dnspython ipaddress
 ```
 
 ## FrontEnd
@@ -44,4 +46,4 @@ run (may have to restart because of db locks)
 
 ## Run
 
-	python main.py
+	python honeypot.py
