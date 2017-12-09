@@ -4,17 +4,19 @@ Install all requirements:
 
 ```
 apt-get install python-pip libmysqlclient-dev python-mysqldb git
-apt-get install mysql-server mysql-client
 pip install setuptools flask sqlalchemy requests decorator dnspython ipaddress simpleeval
-sudo mysql_secure_installation
 
 git clone https://github.com/Phype/telnet-iot-honeypot.git
 ```
 
-Create a mysql database. Default mysql max key length is 767 bytes,
+If you watn to use mysql, create a mysql database. Default mysql max key length is 767 bytes,
 so it is recommended to use latin1 charset, else the db setup will fail.
 
 ```
+apt-get install mysql-server mysql-client
+sudo mysql_secure_installation
+
+mysql
 CREATE DATABASE telhoney CHARACTER SET latin1 COLLATE latin1_swedish_ci;
 grant all privileges on telhoney.* to telhoney@localhost identified by "YOUR_PASSWORD";
 flush privileges;
@@ -22,7 +24,7 @@ flush privileges;
 
 ## Configuration
 
-The honeypot can run in two modes: local db and backend operated db.
+The honeypot can run in two modes: local db and backend operated db (default in config.json).
 If you want to use the frontend seen in the screenshots, you have to use the backend operated db mode.
 The mode is set in the `config.json` file using the option `use_local_db`.
 
@@ -71,11 +73,15 @@ run (may have to restart because of db locks)
 
 ## Run
 
-Start the honeypotl like so:
+Start the honeypot like so:
 
 	python honeypot.py
 	
 If you have set `use_local_db = false` in your config, start the backend:
 
 	python backend.py
+
+Now you can test the honeypot
+
+    telnet 127.0.0.1 2222
 

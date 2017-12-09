@@ -1,16 +1,16 @@
 {
-	"use_local_db": false,
+    "use_local_db": false,
 
-	"user": "testuser",
-	"backend": "http://localhost:5000",
+    "user": "testuser",
+    "backend": "http://localhost:5000",
 
-	"sql": "mysql+mysqldb://telhoney:xTAqFLqJ2AxAGDgV@localhost/telhoney",
-	"max_db_conn": 1,
-	"sample_dir": "samples",
+    "sql": "sqlite:///database.db",
+    "max_db_conn": 1,
+    "sample_dir": "samples",
 
-	"save_samples": false,
-	"vt_key": "GET_YOUR_OWN",
-	"submit_to_vt": false,
+    "save_samples": false,
+    "vt_key": "GET_YOUR_OWN",
+    "submit_to_vt": false,
 
     "cuckoo_enabled": false,
     "cuckoo_url_base": "http://127.0.0.1:8090",
