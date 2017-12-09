@@ -29,7 +29,7 @@
     <tr ng-show="connection.tags.length > 0">
 		<td>Tags</td>
 		<td>
-            <a class="btn btn-default btn-xs" ng-repeat="tag in connection.tags" style="margin-right: 1em;" href="#/tag/{{ tag.name }}">{{ tag.name }}</a>
+            <a class="btn btn-default btn-xs" ng-repeat="tag in connection.tags" style="margin-right: 1em;" href="#/tag/{{ tag.name }}" data-toggle="tooltip" title="{{ tag.code }}">{{ tag.name }}</a>
 		</td>
 	</tr>
     
