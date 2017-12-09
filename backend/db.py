@@ -17,12 +17,22 @@ print("Creating/Connecting to DB")
 def now():
 	return int(time.time())
 
+def filter_ascii(string):
+	string = ''.join(char for char in string if ord(char) < 128 and ord(char) > 32 or char in "\r\n ")
+	return string
+
 Base = declarative_base()
 
-# n tom relation connection <-> url
+# n to m relation connection <-> url
 conns_urls = Table('conns_urls', Base.metadata,
 	Column('id_conn', None, ForeignKey('conns.id'), primary_key=True),
 	Column('id_url', None, ForeignKey('urls.id'), primary_key=True),
+)
+
+# n to m relation connection <-> tag
+conns_tags = Table('conns_tags', Base.metadata,
+	Column('id_conn', None, ForeignKey('conns.id'), primary_key=True),
+	Column('id_tag', None, ForeignKey('tags.id'), primary_key=True),
 )
 
 class ASN(Base):
@@ -94,6 +104,7 @@ class Connection(Base):
 	country = Column('country', String(3))
 	
 	urls = relationship("Url", secondary=conns_urls, back_populates="connections")
+	tags = relationship("Tag", secondary=conns_tags, back_populates="connections")
 	
 	def json(self, depth=0):
 		return {
@@ -102,7 +113,7 @@ class Connection(Base):
 			"date": self.date,
 			"user": self.user,
 			"password": self.password,
-			"text_combined": self.text_combined,
+			"text_combined": filter_ascii(self.text_combined),
 			
 			"asn": None if self.asn == None else self.asn.json(0),
 			
@@ -110,14 +121,17 @@ class Connection(Base):
 			"country": self.country,
 			
 			"urls": map(lambda url : url.url if depth == 0
-			   else url.json(depth - 1), self.urls)
+			   else url.json(depth - 1), self.urls),
+
+			"tags": map(lambda tag : tag.name if depth == 0
+			   else tag.json(depth - 1), self.tags),
 		}
 	
 class Url(Base):
 	__tablename__ = 'urls'
 	
-	id = Column('id', Integer, primary_key=True)
-	url = Column('url', String(256), unique=True)
+	id   = Column('id', Integer, primary_key=True)
+	url  = Column('url', String(256), unique=True)
 	date = Column('date', Integer)
 	
 	sample_id = Column('sample', None, ForeignKey('samples.id'))
@@ -149,10 +163,30 @@ class Url(Base):
 			"ip": self.ip,
 			"country": self.country,
 		}
+
+class Tag(Base):
+	__tablename__ = 'tags'
+	
+	id   = Column('id', Integer, primary_key=True)
+	name = Column('name', String(32), unique=True)
+	code = Column('code', String(256))
+
+	connections = relationship("Connection", secondary=conns_tags, back_populates="tags")
+	
+	def json(self, depth=0):
+		return {
+			"name": self.name,
+			"code": self.code,
+				
+			"connections": map(lambda connection : connection.id if depth == 0
+					  else connection.json(depth - 1), self.connections)
+		}
+	
 	
 samples = Sample.__table__ 
-conns = Connection.__table__ 
-urls = Url.__table__ 
+conns   = Connection.__table__
+urls    = Url.__table__
+tags    = Tag.__table__
 
 eng = None
 
@@ -223,6 +257,9 @@ class DB:
 
 	def link_url_sample(self, id_url, id_sample):
 		self.sess.execute(urls.update().where(urls.c.id == id_url).values(sample=id_sample))
+
+	def link_conn_tag(self, id_conn, id_tag):
+		self.sess.execute(conns_tags.insert().values(id_conn=id_conn, id_tag=id_tag))
 
 	# OUTPUT
 	

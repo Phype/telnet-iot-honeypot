@@ -5,9 +5,10 @@ import traceback
 from sqlalchemy import desc, func
 from decorator import decorator
 from functools import wraps
+from simpleeval import simple_eval
 
 from additionalinfo import get_ip_info, get_url_info, get_asn_info
-from db import get_db, Sample, Connection, Url, ASN
+from db import get_db, filter_ascii, Sample, Connection, Url, ASN, Tag
 from virustotal import Virustotal
 
 from cuckoo import Cuckoo
@@ -100,6 +101,18 @@ class WebController:
 	##
 
 	@db_wrapper
+	def get_tag(self, name):
+		tag = self.session.query(Tag).filter(Tag.name == name).first()
+		return tag.json(depth=1) if tag else None
+
+	@db_wrapper
+	def get_tags(self):
+		tags = self.session.query(Tag).all()
+		return map(lambda tag : tag.json(), tags)
+
+	##
+
+	@db_wrapper
 	def get_country_stats(self):
 		stats = self.session.query(func.count(Connection.country), Connection.country).group_by(Connection.country).all()
 		return stats
@@ -179,6 +192,15 @@ class ClientController:
 				url_id = db_url["id"]
 
 			self.db.link_conn_url(s_id, url_id)
+
+		# Check connection against all tags
+		tags = self.session.query(Tag).all()
+		conn = self.session.query(Connection).filter(Connection.id == s_id).first()
+		for tag in tags:
+			json_obj = conn.json(depth = 0)
+			json_obj["text_combined"] = filter_ascii(json_obj["text_combined"])
+			if simple_eval(tag.code, names=json_obj) == True:
+				self.db.link_conn_tag(conn.id, tag.id)
 
 		return req_urls
 

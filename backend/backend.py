@@ -149,6 +149,21 @@ def get_newest_connections():
 	connections = web.get_newest_connections()
 	return json.dumps(connections)
 
+### Tags
+
+@app.route("/tag/<name>")
+def get_tag(name):
+	tag = web.get_tag(name)
+	if tag:
+		return json.dumps(tag)
+	else:
+		return "", 404
+
+@app.route("/tags")
+def get_tags():
+	tags = web.get_tags()
+	return json.dumps(tags)
+
 ### Hist
 
 def hist_fill(start, end, delta, db_result):

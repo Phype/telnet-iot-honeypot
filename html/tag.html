@@ -1,0 +1,13 @@
+<h1>Tag Info</h1>
+
+<table class="table">
+
+	<tr><td>Name</td><td>{{ tag.name }}</td></tr>
+	<tr><td>Code</td><td><span style="font-family: monospace;">{{ tag.code }}</span></td></tr>
+	<tr><td>N° Hits</td><td>{{ tag.connections.length }}</td></tr>
+
+</table>
+
+<h2>Connections</h2>
+
+<div ng-include="'connectionlist-embed.html'"></div>

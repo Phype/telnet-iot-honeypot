@@ -1,0 +1,17 @@
+<h1>Tags</h1>
+
+<table class="table table-condensed">
+
+	<tr>
+		<th>Name</th>
+		<th>Code</th>
+		<th>N⁰ Hits</th>
+	</tr>
+	<tr ng-repeat="tag in tags">
+		<td><a href="{{ '#/tag/' + tag.name }}">{{ tag.name }}</a></td>
+		<td><span style="font-family: monospace;">{{ tag.code }}</span></td>
+		<td>{{ tag.connections.length }}</td>
+	</tr>
+
+</table>
+

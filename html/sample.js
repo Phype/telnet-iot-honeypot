@@ -19,6 +19,10 @@ app.config(function($routeProvider) {
 		templateUrl : "url.html",
 		controller : "url"
 	})
+	.when("/tag/:tag", {
+		templateUrl : "tag.html",
+		controller : "tag"
+	})
 	.when("/connection/:id", {
 		templateUrl : "connection.html",
 		controller : "connection"
@@ -30,6 +34,10 @@ app.config(function($routeProvider) {
 	.when("/connections", {
 		templateUrl : "connectionlist.html",
 		controller : "connectionlist"
+	})
+	.when("/tags", {
+		templateUrl : "tags.html",
+		controller : "tags"
 	})
 	.when("/", {
 		templateUrl : "overview.html",
@@ -136,6 +144,20 @@ app.controller('urls', function($scope, $http, $routeParams) {
 
 });
 
+app.controller('tags', function($scope, $http, $routeParams) {
+
+	$scope.formatDate = formatDateTime;
+	$scope.nicenull = nicenull;
+	$scope.short = short;
+	$scope.encurl = encurl;
+	$scope.decurl = decurl;
+
+	$http.get(api + "/tags").then(function (httpResult) {
+		$scope.tags = httpResult.data;
+	});
+
+});
+
 app.controller('url', function($scope, $http, $routeParams) {
 
 	$scope.url = null;
@@ -150,6 +172,24 @@ app.controller('url', function($scope, $http, $routeParams) {
 	$http.get(api + "/url/" + url).then(function (httpResult) {
 		$scope.url = httpResult.data;
 		$scope.url.countryname = COUNTRY_LIST[$scope.url.country];
+	});
+
+});
+
+app.controller('tag', function($scope, $http, $routeParams) {
+
+	$scope.tag = null;
+
+	$scope.formatDate = formatDateTime;
+	$scope.nicenull = nicenull;
+	$scope.short = short;
+	$scope.encurl = encurl;
+	$scope.decurl = decurl;
+
+	var tag = $routeParams.tag;
+	$http.get(api + "/tag/" + tag).then(function (httpResult) {
+		$scope.tag         = httpResult.data;
+        $scope.connections = $scope.tag.connections;
 	});
 
 });
