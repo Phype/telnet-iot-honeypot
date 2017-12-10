@@ -13,5 +13,5 @@ if not os.path.exists("samples"):
 
 signal.signal(signal.SIGINT, signal_handler)
 
-srv = Telnetd(2222)
+srv = Telnetd(2223)
 srv.run()

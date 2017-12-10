@@ -25,11 +25,12 @@ dd_regex      = re.compile(".*dd bs=52 count=1 if=.s.*")
 cat_regex     = re.compile(".*cat .s.*cp /bin/echo .s.*")
 mount_regex   = re.compile(".*cat /proc/mounts.*")
 elfcat_regex  = re.compile(".*cat (/bin/echo|/bin/busybox).*")
-token_regex   = re.compile(".*/bin/busybox ([A-Z]+).*")
+token_regex   = re.compile(".*/bin/busybox ([A-Z0-9][A-Za-z0-9]).*")
 downl_regex   = re.compile(".*wget (?:-[a-zA-Z] )?(http[^ ;><&]*).*")
 tftp_regex    = re.compile(".*tftp ([^;&<>]+).*")
 nc_dl_regex   = re.compile(".*nc ([^;&<>]+).*")
 ftp_dl_regex  = re.compile(".*ftpget ([^;&<>]+).*")
+echo_regex    = re.compile(".*echo -ne '([^;&<>]+)'.*")
 
 ELF_BINS = [ELF_BIN_ARM, ELF_BIN_X86, ELF_BIN_MIPS, ELF_BIN_M68K, ELF_BIN_MPSL, ELF_BIN_PPC, ELF_BIN_SH4, ELF_BIN_SPC]
 			
@@ -115,10 +116,11 @@ class Session:
 		if cat_regex.match(l):
 			self.send_string("cat: can't open '.s': No such file or directory\r\n")
 
-		m = token_regex.match(l)
+		m = echo_regex.match(l)
 		if m:
-			token = m.group(1)
-			self.send_string(token + ": applet not found\r\n")
+			bla = m.group(1).decode('string_escape')
+			print bla
+			self.send_string(bla)
 
 		m = downl_regex.match(l)
 		if m:
@@ -149,3 +151,9 @@ class Session:
 			port = opts["-p"] if "-p" in opts else "21"
 			f    = opts[1]
 			self.urls.append("ftp://" + ip + ":" + port + "/" + f)
+
+		m = token_regex.match(l)
+		if m:
+			token = m.group(1)
+			self.send_string(token + ": applet not found\r\n")
+
