@@ -30,7 +30,7 @@ downl_regex   = re.compile(".*wget (?:-[a-zA-Z] )?(http[^ ;><&]*).*")
 tftp_regex    = re.compile(".*tftp ([^;&<>]+).*")
 nc_dl_regex   = re.compile(".*nc ([^;&<>]+).*")
 ftp_dl_regex  = re.compile(".*ftpget ([^;&<>]+).*")
-echo_regex    = re.compile(".*echo -ne '([^;&<>]+)'.*")
+echo_regex    = re.compile(".*echo -n?e '([^;&<>]+)'.*")
 
 ELF_BINS = [ELF_BIN_ARM, ELF_BIN_X86, ELF_BIN_MIPS, ELF_BIN_M68K, ELF_BIN_MPSL, ELF_BIN_PPC, ELF_BIN_SH4, ELF_BIN_SPC]
 			
