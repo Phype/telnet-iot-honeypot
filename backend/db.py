@@ -56,8 +56,8 @@ class ASN(Base):
 			"urls": map(lambda url : url.url if depth == 0
 			   else url.json(depth - 1), self.urls),
 			
-			"connections": map(lambda connection : connection.id if depth == 0
-					  else connection.json(depth - 1), self.connections)
+			"connections": None if depth == 0 else map(lambda connection :
+                connection.json(depth - 1), self.connections)
 		}
 
 class Sample(Base):
@@ -82,8 +82,8 @@ class Sample(Base):
 			"length": self.length,
 			"result": self.result,
 			"info": self.info,
-			"urls": map(lambda url : url.url if depth == 0
-			   else url.json(depth - 1), self.urls)
+			"urls": None if depth == 0 else map(lambda url :
+                url.json(depth - 1), self.urls)
 		}
 	
 class Connection(Base):
@@ -120,11 +120,11 @@ class Connection(Base):
 			"ipblock": self.ipblock,
 			"country": self.country,
 			
-			"urls": map(lambda url : url.url if depth == 0
-			   else url.json(depth - 1), self.urls),
+			"urls": None if depth == 0 else map(lambda url :
+			   url.json(depth - 1), self.urls),
 
-			"tags": map(lambda tag : tag.name if depth == 0
-			   else tag.json(depth - 1), self.tags),
+			"tags": None if depth == 0 else map(lambda tag :
+			   tag.json(depth - 1), self.tags),
 		}
 	
 class Url(Base):
@@ -153,8 +153,8 @@ class Url(Base):
 				(self.sample.sha256 if depth == 0
 					else self.sample.json(depth - 1)),
 				
-			"connections": map(lambda connection : connection.id if depth == 0
-					  else connection.json(depth - 1), self.connections),
+			"connections": None if depth == 0 else map(lambda connection :
+					  connection.json(depth - 1), self.connections),
 			
 			"asn": None if self.asn == None else 
 				(self.asn.asn if depth == 0
@@ -178,8 +178,8 @@ class Tag(Base):
 			"name": self.name,
 			"code": self.code,
 				
-			"connections": map(lambda connection : connection.id if depth == 0
-					  else connection.json(depth - 1), self.connections)
+			"connections": None if depth == 0 else map(lambda connection :
+                connection.json(depth - 1), self.connections)
 		}
 	
 	

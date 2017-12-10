@@ -24,8 +24,10 @@
 <script src="../../apiurl.js"></script>
 <script type="text/javascript">
 
-var ips   = {};
-var conns = {};
+var ips     = {};
+var conns   = {};
+var urls    = {};
+var samples = {};
 
 function print(s)
 {
@@ -53,7 +55,7 @@ function getIPConns(ip, olderthan)
   });
 }
 
-function getIP(ip)
+function getIP(ip, type)
 {
   if (ip in ips)
   {
@@ -63,7 +65,8 @@ function getIP(ip)
     ips[ip] = {
       "ip":        ip,
       "conns":     {},
-      "neighbors": {}
+      "neighbors": {},
+      "type":      type
     }
 
     //getIPConns(ip, null);
@@ -76,20 +79,44 @@ function gotConn(conn)
 {
   print("Conn:  " + conn.id);
 
+  // Check if the connection has ANY edge
+  // associates/urls/samples
+  if (conn.urls.length == 0 && conn.associates.length == 0)
+  {
+    return;
+  }
+
   conns[conn.id] = conn;
-  ip = getIP(conn.ip);
+  ip = getIP(conn.ip, "ip");
   
   for (var i = 0; i < conn.associates.length; i++)
   {
     assoc_id = conn.associates[i]["id"];
-    assoc_ip = getIP(conn.associates[i]["ip"]);
+    assoc_ip = getIP(conn.associates[i]["ip"], "ip");
     print("Assoc: " + assoc_id);
 
+    // Connect Associates Connections
     ip.neighbors[assoc_ip.ip] = assoc_ip;
     assoc_ip.neighbors[ip.ip] = ip;
 
     ip.conns[conn.id] = conn;
     //getConn(assoc_id);
+  }
+
+  // Connect Urls (Resolved IP)
+  for (var u = 0; u < conn.urls.length; u++)
+  {
+    var url    = conn.urls[u];
+    var url_ip = getIP(url.ip, "url");
+
+    // Conn <-> URL
+    ip.neighbors[url_ip.ip] = url_ip;
+    url_ip.neighbors[ip.ip] = ip;
+
+    // URL <-> Sample
+    var sample_ip = getIP(url.sample, "sample");
+    url_ip.neighbors[sample_ip.ip] = sample_ip;
+    sample_ip.neighbors[url_ip.ip] = url_ip;
   }
 }
 
@@ -130,7 +157,16 @@ function draw()
     ip.counter = counter;
 
     nodes2ip[counter] = ip_id;
-    nodes.push({id: counter, label: ip_id});
+
+    var color = "#ccc";
+    if (ip.type == "url") color = "#77f";
+    if (ip.type == "sample") color = "#f77";
+
+    nodes.push({
+      "id": counter,
+      "label": ip_id.substr(0,16),
+      "color": color
+    });
     counter++;
   }
 
