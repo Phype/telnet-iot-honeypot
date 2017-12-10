@@ -95,6 +95,10 @@ class Session:
 		self.text_combined = self.text_combined + " # " + l + "\n"
 		self.text_in       = self.text_in + l + "\n"
 
+		for cmd in l.split(";"):
+			self.shell_sub(cmd)
+
+	def shell_sub(self, l):
 		if mount_regex.match(l):
 			self.send_string("/dev/root /rom squashfs ro,relatime 0 0\r\nproc /proc proc rw,nosuid,nodev,noexec,noatime 0 0\r\nsysfs /sys sysfs rw,nosuid,nodev,noexec,noatime 0 0\r\ntmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0\r\n/dev/mtdblock10 /overlay jffs2 rw,noatime 0 0\r\noverlayfs:/overlay / overlay rw,noatime,lowerdir=/,upperdir=/overlay/upper,workdir=/overlay/work 0 0\r\ntmpfs /dev tmpfs rw,nosuid,relatime,size=512k,mode=755 0 0\r\ndevpts /dev/pts devpts rw,nosuid,noexec,relatime,mode=600 0 0\r\ndebugfs /sys/kernel/debug debugfs rw,noatime 0 0\r\n")
 
