@@ -32,7 +32,7 @@ nc_dl_regex   = re.compile(".*nc ([^;&<>]+).*")
 ftp_dl_regex  = re.compile(".*ftpget ([^;&<>]+).*")
 echo_regex    = re.compile(".*echo -n?e '([^;&<>]+)'.*")
 
-ELF_BINS = [ELF_BIN_ARM, ELF_BIN_X86, ELF_BIN_MIPS, ELF_BIN_M68K, ELF_BIN_MPSL, ELF_BIN_PPC, ELF_BIN_SH4, ELF_BIN_SPC]
+ELF_BINS = [ELF_BIN_ARM, ELF_BIN_X86, ELF_BIN_MIPS, ELF_BIN_MPSL]
 			
 class Session:
 	def __init__(self, output, remote_addr):
@@ -120,7 +120,7 @@ class Session:
 		if m:
 			bla = m.group(1).decode('string_escape')
 			print bla
-			self.send_string(bla)
+			self.send_string(bla + "\r\n")
 
 		m = downl_regex.match(l)
 		if m:
