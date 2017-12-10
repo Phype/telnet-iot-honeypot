@@ -109,7 +109,7 @@ class Session:
 			self.send_string("\r\n\r\nBusyBox v1.24.2 () built-in shell (ash)\r\n\r\n")
 
 		if wget_regex.match(l):
-			self.send_string("Usage: wget [options] <URL>\r\nOptions:\r\n")
+			self.send_string("wget: missing URL\r\nUsage: wget [OPTION]... [URL]...\r\n\r\nTry `wget --help' for more options.\r\n")
 
 		if dd_regex.match(l) or elfcat_regex.match(l):
 			# Select random binary header, so we get multiple samples
