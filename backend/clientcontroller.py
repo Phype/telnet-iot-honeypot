@@ -2,7 +2,7 @@ import os
 import hashlib
 import traceback
 
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, and_, or_
 from decorator import decorator
 from functools import wraps
 from simpleeval import simple_eval
@@ -51,8 +51,8 @@ class WebController:
 			associates = (self.session.query(Connection).
 				filter(Connection.date > (connection.date-ts),
 				Connection.date < (connection.date+ts),
-				Connection.user == connection.user,
-				Connection.password == connection.password,
+				or_(and_(Connection.user == connection.user, Connection.password == connection.password), 
+				Connection.ip == connection.ip),
 				Connection.id != connection.id).all())
 
 			json = connection.json(depth=1)
