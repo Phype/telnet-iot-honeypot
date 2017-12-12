@@ -2,9 +2,26 @@ import shellgrammar
 import sys
 import traceback
 
-procs = {}
-
 ELF_BIN_ARM  = "\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00\x01\x00\x00\x00\xbc\x14\x01\x00\x34\x00\x00\x00\x54\x52\x00\x00\x02\x04\x00\x05\x34\x00\x20\x00\x09\x00\x28\x00\x1b\x00\x1a\x00"
+
+procs = {}
+globalfiles = {
+    "/proc/mounts": """/dev/root /rom squashfs ro,relatime 0 0
+proc /proc proc rw,nosuid,nodev,noexec,noatime 0 0
+sysfs /sys sysfs rw,nosuid,nodev,noexec,noatime 0 0
+tmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0
+/dev/mtdblock10 /overlay jffs2 rw,noatime 0 0
+overlayfs:/overlay / overlay rw,noatime,lowerdir=/,upperdir=/overlay/upper,workdir=/overlay/work 0 0
+tmpfs /dev tmpfs rw,nosuid,relatime,size=512k,mode=755 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,mode=600 0 0
+debugfs /sys/kernel/debug debugfs rw,noatime 0 0\n""",
+    "/bin/echo": ELF_BIN_ARM,
+    "/bin/busybox": ELF_BIN_ARM
+}
+
+def filter_ascii(string):
+	string = ''.join(char for char in string if ord(char) < 128 and ord(char) > 32 or char in " ")
+	return string
 
 class Env:
     def __init__(self, output=sys.stdout.write):
@@ -27,6 +44,8 @@ class Env:
     def readFile(self, path):
         if path in self.files:
             return self.files[path]
+        elif path in globalfiles:
+            return globalfiles[path]
         else:
             return None
 
@@ -110,20 +129,6 @@ class Cat(Proc):
         if string != None:
             env.write(string)
             return 0
-        elif fname == "/proc/mounts":
-            env.write("""/dev/root /rom squashfs ro,relatime 0 0
-proc /proc proc rw,nosuid,nodev,noexec,noatime 0 0
-sysfs /sys sysfs rw,nosuid,nodev,noexec,noatime 0 0
-tmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0
-/dev/mtdblock10 /overlay jffs2 rw,noatime 0 0
-overlayfs:/overlay / overlay rw,noatime,lowerdir=/,upperdir=/overlay/upper,workdir=/overlay/work 0 0
-tmpfs /dev tmpfs rw,nosuid,relatime,size=512k,mode=755 0 0
-devpts /dev/pts devpts rw,nosuid,noexec,relatime,mode=600 0 0
-debugfs /sys/kernel/debug debugfs rw,noatime 0 0\n""")
-            return 0
-        elif fname == "/bin/echo" or fname == "/bin/busybox":
-            env.write(ELF_BIN_ARM)
-            return 0
         else:
             env.write("cat: " + fname + ": No such file or directory\n")
             return 1
@@ -136,9 +141,12 @@ class Shell(Proc):
         if len(args) == 0:
             # env.write("Busybox built-in shell (ash)\n")
             return 0
-
-        name = args[0]
-        args = args[1:]
+        
+        if args[0][0] == ">":
+            name = "true"
+        else:
+            name = args[0]
+            args = args[1:]
 
         # $path = /bin/
         if name.startswith("/bin/"):
@@ -204,8 +212,12 @@ class Rm(Proc):
         Proc.__init__(self, "rm")
 
     def run(self, env, args):
-        env.deleteFile(args[0])
-        return 0
+        if args[0] in env.files:
+            env.deleteFile(args[0])
+            return 0
+        else:
+            env.write("rm: cannot remove '" + args[0] + "': No such file or directory\n")
+            return 1
 
 class Ls(Proc):
     def __init__(self):
@@ -216,6 +228,32 @@ class Ls(Proc):
             env.write(f + "\n")
         return 0
 
+class Dd(Proc):
+    def __init__(self):
+        Proc.__init__(self, "dd")
+
+    def run(self, env, args):
+        infile  = None
+        outfile = None
+        for a in args:
+            if a.startswith("if="):
+                infile = a[3:]
+            if a.startswith("of="):
+                outfile = a[3:]
+        
+        if infile != None:
+            data = env.readFile(infile)
+            if outfile:
+                env.deleteFile(infile)
+                env.writeFile(infile, data)
+            else:
+                env.write(data)
+
+        env.write("""0+0 records in
+0+0 records out
+0 bytes copied, 0 s, 0,0 kB/s\n""")
+        return 0
+
 shell = Shell()
 
 BusyBox()
@@ -224,8 +262,10 @@ Cat()
 Echo()
 Rm()
 Ls()
+Dd()
 StaticProc("cp", "")
 StaticProc("cd", "")
+StaticProc("true", "")
 StaticProc("chmod", "")
 StaticProc("uname", "Linux hostname 3.13.0-23-generic #12-Wub SMP Tue Mon 3 12:43:04 UTC 2014 x86 GNU/Linux\n")
 StaticProc(">", "")
@@ -298,7 +338,7 @@ class Actions(object):
         return elements[0]
 
 def parse(string):
-    return shellgrammar.parse(string, actions=Actions())
+    return shellgrammar.parse(filter_ascii(string).strip(), actions=Actions())
 
 if __name__ == "__main__":
     env = Env()
@@ -312,7 +352,7 @@ if __name__ == "__main__":
         if line == "\n":
             continue
         line = line[:-1] 
-        tree = shellgrammar.parse(line, actions=Actions())
+        tree = parse(line)
         tree.run(env)
         sys.stdout.flush()
 
