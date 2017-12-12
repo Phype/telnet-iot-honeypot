@@ -1,6 +1,6 @@
 grammar cmd
 
-cmd        <-  cmdbrace / cmdlist
+cmd        <-  cmdbrace / cmdlist / empty
 cmdbrace   <-  " "* "(" " "* cmd " "* ")" " "*               %make_cmdbrace
 cmdlist    <-  cmdop / basecmd
 cmdop      <-  basecmd ("||" / "&&" / "|" / ";") cmd         %make_cmdop
@@ -9,4 +9,5 @@ arg        <-  arg_quot1 / arg_quot2 / arg_noquot
 arg_quot1  <-  "'" [^']* "'"                                 %make_arg_quot
 arg_quot2  <-  '"' [^"]* '"'                                 %make_arg_quot
 arg_noquot <-  [^ ;|()"']+                                   %make_arg_noquot
+empty      <-  ""?
 

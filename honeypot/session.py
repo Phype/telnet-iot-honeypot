@@ -38,7 +38,7 @@ class Session:
 		url  = data["url"]
 		info = data["info"]
 
-		dbg("DOWNLOAD " + url + " to " + path)
+		dbg("Downloaded " + url + " to " + path)
 
 		data = self.env.readFile(path)
 		self.record.add_file(data, url=url, name=path, info=info)
@@ -51,6 +51,7 @@ class Session:
 			if path in self.files:
 				pass
 			else:
+				dbg("File created: " + path)
 				data = self.env.files[path]
 				if len(data) > MIN_FILE_SIZE:
 					self.record.add_file(data, name=path)

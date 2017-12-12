@@ -428,7 +428,6 @@ class Actions(object):
         return input[start:end]
 
     def make_arg_quot(self, input, start, end, elements):
-        print "jkljkljlkjlkj"
         return elements[1].text
 
     def make_basecmd(self, input, start, end, elements):
@@ -438,7 +437,10 @@ class Actions(object):
         return Command(l)
 
     def make_cmdop(self, input, start, end, elements):
-        return CommandList(elements[1].text, elements[0], elements[2])
+        if isinstance(elements[2], shellgrammar.TreeNode):
+            return elements[0]
+        else:
+            return CommandList(elements[1].text, elements[0], elements[2])
 
     def make_cmdbrace(self, input, start, end, elements):
         return elements[3]
@@ -448,6 +450,10 @@ class Actions(object):
             # Pipes not supported
             pass
         return elements[0]
+    
+    def make_empty(self, input, start, end, elements):
+        print "h98hn7zh09h087H"
+        return Command(["true"])
 
 def parse(string):
     return shellgrammar.parse(filter_ascii(string).strip(), actions=Actions())

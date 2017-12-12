@@ -63,6 +63,9 @@ class Grammar(object):
             address0 = self._read_cmdlist()
             if address0 is FAILURE:
                 self._offset = index1
+                address0 = self._read_empty()
+                if address0 is FAILURE:
+                    self._offset = index1
         self._cache['cmd'][index0] = (address0, self._offset)
         return address0
 
@@ -705,6 +708,32 @@ class Grammar(object):
         else:
             address0 = FAILURE
         self._cache['arg_noquot'][index0] = (address0, self._offset)
+        return address0
+
+    def _read_empty(self):
+        address0, index0 = FAILURE, self._offset
+        cached = self._cache['empty'].get(index0)
+        if cached:
+            self._offset = cached[1]
+            return cached[0]
+        index1 = self._offset
+        chunk0 = None
+        if self._offset < self._input_size:
+            chunk0 = self._input[self._offset:self._offset + 0]
+        if chunk0 == '':
+            address0 = TreeNode(self._input[self._offset:self._offset + 0], self._offset)
+            self._offset = self._offset + 0
+        else:
+            address0 = FAILURE
+            if self._offset > self._failure:
+                self._failure = self._offset
+                self._expected = []
+            if self._offset == self._failure:
+                self._expected.append('""')
+        if address0 is FAILURE:
+            address0 = TreeNode(self._input[index1:index1], index1)
+            self._offset = index1
+        self._cache['empty'][index0] = (address0, self._offset)
         return address0
 
 
