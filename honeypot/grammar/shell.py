@@ -123,6 +123,7 @@ debugfs /sys/kernel/debug debugfs rw,noatime 0 0\n""")
             return 0
         elif fname == "/bin/echo" or fname == "/bin/busybox":
             env.write(ELF_BIN_ARM)
+            return 0
         else:
             env.write("cat: " + fname + ": No such file or directory\n")
             return 1
@@ -196,12 +197,15 @@ class Echo(Proc):
         if not("n" in opts):
             env.write("\n")
 
+        return 0
+
 class Rm(Proc):
     def __init__(self):
         Proc.__init__(self, "rm")
 
     def run(self, env, args):
         env.deleteFile(args[0])
+        return 0
 
 class Ls(Proc):
     def __init__(self):
@@ -210,6 +214,7 @@ class Ls(Proc):
     def run(self, env, args):
         for f in env.files:
             env.write(f + "\n")
+        return 0
 
 shell = Shell()
 
@@ -237,7 +242,7 @@ class Command:
         self.args = args
 
     def run(self, env):
-        shell.run(env, self.args)
+        return shell.run(env, self.args)
 
     def __str__(self):
         return " ".join(self.args)
