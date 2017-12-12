@@ -140,9 +140,8 @@ function main()
   $.get(api + "/connections", null, function(data) {
     var myconns = JSON.parse(data);
     var max_id = myconns[1].id;
-    print(max_id);
 
-    for (var i = 0; i <= 1113; i++)
+    for (var i = 1; i <= max_id; i++)
     {
       getConn(i);
     }
