@@ -15,6 +15,19 @@ overlayfs:/overlay / overlay rw,noatime,lowerdir=/,upperdir=/overlay/upper,workd
 tmpfs /dev tmpfs rw,nosuid,relatime,size=512k,mode=755 0 0
 devpts /dev/pts devpts rw,nosuid,noexec,relatime,mode=600 0 0
 debugfs /sys/kernel/debug debugfs rw,noatime 0 0\n""",
+    "/proc/cpuinfo": """processor       : 0
+model name      : ARMv6-compatible processor rev 7 (v6l)
+BogoMIPS        : 697.95
+Features        : half thumb fastmult vfp edsp java tls 
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant     : 0x0
+CPU part        : 0xb76
+CPU revision    : 7
+
+Hardware        : BCM2835
+Revision        : 000e
+Serial          : 0000000000000000\n""",
     "/bin/echo": ELF_BIN_ARM,
     "/bin/busybox": ELF_BIN_ARM
 }
@@ -235,14 +248,22 @@ class Dd(Proc):
     def run(self, env, args):
         infile  = None
         outfile = None
+        count   = None
+        bs      = 512
         for a in args:
             if a.startswith("if="):
                 infile = a[3:]
             if a.startswith("of="):
                 outfile = a[3:]
+            if a.startswith("count="):
+                count = int(a[6:])
+            if a.startswith("bs="):
+                bs = int(a[3:])
         
         if infile != None:
             data = env.readFile(infile)
+            if count != None:
+                data = data[0:(count*bs)]
             if outfile:
                 env.deleteFile(infile)
                 env.writeFile(infile, data)
