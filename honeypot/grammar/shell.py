@@ -450,10 +450,6 @@ class Actions(object):
             # Pipes not supported
             pass
         return elements[0]
-    
-    def make_empty(self, input, start, end, elements):
-        print "h98hn7zh09h087H"
-        return Command(["true"])
 
 def parse(string):
     return shellgrammar.parse(filter_ascii(string).strip(), actions=Actions())
