@@ -12,94 +12,72 @@ is_local = config["use_local_db"]
 if is_local:
 	from backend.clientcontroller import ClientController
 
-def get_sample_db():
-	if is_local:
-		return Sampledb(ClientController())
-	else:
-		return Sampledb(client.Client())
+def sha256(data):
+    h = hashlib.sha256()
+    h.update(data)
+    return h.hexdigest()
 
-class Sampledb:
-	def __init__(self, back):
-		self.back = back
-				
-	def put_session(self, session):
-		session_obj = {
-			"ip"            : session.remote_addr,
-			"user"          : session.user,
-			"pass"          : session.password,
-			"date"          : session.date,
-			"urls"          : session.urls,
+class SessionRecord:
+	def __init__(self):
+		if is_local:
+			self.back = ClientController()
+		else:
+			self.back = client.Client()
 
-			"text_in"       : session.text_in.decode('ascii', 'ignore'),
-			"text_out"      : session.text_out.decode('ascii', 'ignore'),
-			"text_combined" : session.text_combined.decode('ascii', 'ignore')
+		self.session_obj = {
+			"ip"            : None,
+			"user"          : None,
+			"pass"          : None,
+			"date"          : None,
+			"urls"          : [],
+
+			"text_in"       : "",
+			"text_out"      : "",
+			"text_combined" : ""
 		}
+		self.urls = {}
+
+	def set_login(self, ip, user, password):
+		self.session_obj["ip"]   = ip
+		self.session_obj["user"] = user
+		self.session_obj["pass"] = password
+		self.session_obj["date"] = int(time.time())
 		
-		upload_req = self.back.put_session(session_obj)
+	def add_file(self, data, url=None, name=None, info=None):
+		shahash = sha256(data)
+
+		if url == None:
+		    # Hack, must be unique somehow, so just use the hash ..."
+		    url = "telnet://" + self.session_obj["ip"] + "/" + shahash[0:8]
+		if name == None:
+		    name = url.split("/")[-1].strip()
+
+		f = {
+		    "url":    url,
+		    "name":   name,
+		    "date":   int(time.time()),
+		    "length": len(data),
+		    "sha256": shahash,
+		    "info":   info,
+			"data":   data
+		}
+		self.urls[url] = f
+		self.session_obj["urls"].append(url)
+
+	def commit(self, text_in, text_out, text_combined):
+		self.session_obj["text_in"]       = text_in.decode('ascii', 'ignore')
+		self.session_obj["text_out"]      = text_out.decode('ascii', 'ignore')
+		self.session_obj["text_combined"] = text_combined.decode('ascii', 'ignore')
+		
+		upload_req = self.back.put_session(self.session_obj)
 		
 		for url in upload_req:
 			dbg("Upload requested: " + url)
-			self.get_sample(url)
-			
-	def get_sample(self, url):
-		f, data = self.download(url)
-		if f:
-			print(f)
-			if self.back.put_sample_info(f):
-				if config["save_samples"]:
-					self.back.put_sample(data)
-		
-	# DONWLOAD
-	
-	def download(self, url):
-		dbg("Downloading " + url)
-		
-		try:
-			if url.startswith("http://") or url.startswith("https://"):
-				f, data = self.download_http(url)
-			else:
-				return None
-		except requests.exceptions.ReadTimeout:
-			return None
-		except:
-			traceback.print_exc()
-			return None
-		
-		dbg("Downlod finished. length: " + str(f["length"]) + " sha256: " + f["sha256"])
-		return f, data
-		
-	def download_http(self, url):
-		url  = url.strip()
-		hdr  = { "User-Agent" : "Wget/1.15 (linux-gnu)" }
-		r    = requests.get(url, stream=True, timeout=5.0)
-		f    = {}
-		h    = hashlib.sha256()
-		info = ""
 
-		f["url"]  = url
-		f["name"] = url.split("/")[-1].strip()
-		f["date"] = int(time.time())
-		f["length"]  = 0
-		if len(f["name"]) < 1:
-			f["name"] = "index.html"
+			sample = self.urls[url]
+			data   = sample["data"]
+			del sample["data"]
 
-		for his in r.history:
-			info = info + "HTTP " + str(his.status_code) + "\n"
-			for k,v in his.headers.iteritems():
-				info = info + k + ": " + v + "\n"
-			info = info + "\n"
+			self.back.put_sample_info(sample)
+			self.back.put_sample(data)
 
-		info = info + "HTTP " + str(r.status_code) + "\n"
-		for k,v in r.headers.iteritems():
-			info = info + k + ": " + v + "\n"
-
-		data = ""
-		for chunk in r.iter_content(chunk_size = 4096):
-			f["length"] = f["length"] + len(chunk)
-			data = data + chunk
-			h.update(chunk)
-
-		f["sha256"] = h.hexdigest()
-		f["info"]   = info
-
-		return f, data

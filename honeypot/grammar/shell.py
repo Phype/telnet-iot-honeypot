@@ -1,6 +1,7 @@
 import shellgrammar
 import sys
 import traceback
+import requests
 
 ELF_BIN_ARM  = "\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00\x01\x00\x00\x00\xbc\x14\x01\x00\x34\x00\x00\x00\x54\x52\x00\x00\x02\x04\x00\x05\x34\x00\x20\x00\x09\x00\x28\x00\x1b\x00\x1a\x00"
 
@@ -39,6 +40,7 @@ def filter_ascii(string):
 class Env:
     def __init__(self, output=sys.stdout.write):
         self.files  = {}
+        self.events = {}
         self.output = output
 
     def write(self, string):
@@ -62,6 +64,15 @@ class Env:
         else:
             return None
 
+    def listen(self, event, handler):
+        self.events[event] = handler
+
+    def action(self, event, data):
+        if event in self.events:
+            self.events[event](data)
+        else:
+            print("WARNING: Event '" + event + "' not registered")
+
 class RedirEnv:
     def __init__(self, baseenv, redir):
         self.baseenv = baseenv
@@ -78,6 +89,12 @@ class RedirEnv:
 
     def readFile(self, path):
         self.baseenv.readFile(path)
+
+    def listen(self, event, handler):
+        self.baseenv.listen(event, handler)
+
+    def action(self, event, data):
+        self.baseenv.action(event, data)
 
 class Proc:
     def __init__(self, name):
@@ -122,6 +139,50 @@ class Wget(Proc):
     def __init__(self):
         Proc.__init__(self, "wget")
     
+    def dl(self, env, url, path=None):
+        host = "hostname.tld"
+        ip   = "127.0.0.1"
+        date = "2014-12-24 04:13:37"
+        env.write("--"+date+"--  " + url + "\n")
+        env.write("Resolving "+host+" ("+host+")... "+ip+"\n")
+        env.write("Connecting to  "+host+" ("+host+")|"+ip+"|:80...")
+
+        hdr = { "User-Agent" : "Wget/1.15 (linux-gnu)" }
+        r = requests.get(url, stream=True, timeout=5.0, headers=hdr)
+
+        if path == None:
+            path = url.split("/")[-1].strip()
+        if path == "":
+            path = "index.html"
+
+        env.write(" connected\nHTTP request sent, awaiting response... 200 OK\n")
+        env.write("Length: unspecified [text/html]\n")
+        env.write("Saving to: '"+path+"'\n\n")
+        env.write("     0K .......... 7,18M=0,001s\n\n")
+        env.write(date+" (7,18 MB/s) - '"+path+"' saved [11213]\n")
+
+        data = ""
+        for chunk in r.iter_content(chunk_size = 4096):
+            data = data + chunk
+
+        info = ""
+        for his in r.history:
+            info = info + "HTTP " + str(his.status_code) + "\n"
+            for k,v in his.headers.iteritems():
+                info = info + k + ": " + v + "\n"
+                info = info + "\n"
+
+        info = info + "HTTP " + str(r.status_code) + "\n"
+        for k,v in r.headers.iteritems():
+            info = info + k + ": " + v + "\n"
+
+        env.writeFile(path, data)
+        env.action("download", {
+            "url":  url,
+            "path": path,
+            "info": info
+        })
+
     def run(self, env, args):
         if len(args) == 0:
             env.write("""wget: missing URL
@@ -130,6 +191,9 @@ Usage: wget [OPTION]... [URL]...
 Try `wget --help' for more options.\n""")
             return 1
         else:
+            for url in args:
+                if url.startswith("http"):
+                    self.dl(env, url)
             return 0
 
 class Cat(Proc):
@@ -168,10 +232,19 @@ class Shell(Proc):
         # Emultae redir
         write_to  = None
         read_from = None
+        delete    = True
         i = len(args) - 1
         while i >= 0:
             if args[i] == ">":
                 write_to = args[i+1]
+                args = args[0:i]
+            elif args[i] == ">>":
+                delete = False
+                write_to = args[i+1]
+                args = args[0:i]
+            elif args[i].startswith(">>"):
+                delete = False
+                write_to = args[i][2:]
                 args = args[0:i]
             elif args[i].startswith(">"):
                 write_to = args[i][1:]
@@ -185,7 +258,8 @@ class Shell(Proc):
             i -= 1
 
         if write_to != None:
-            env.deleteFile(write_to)
+            if delete:
+                env.deleteFile(write_to)
             env = RedirEnv(env, write_to)
 
         if name in procs:
@@ -354,6 +428,7 @@ class Actions(object):
         return input[start:end]
 
     def make_arg_quot(self, input, start, end, elements):
+        print "jkljkljlkjlkj"
         return elements[1].text
 
     def make_basecmd(self, input, start, end, elements):

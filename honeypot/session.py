@@ -5,75 +5,59 @@ import time
 
 from util.dbg import dbg
 
-from sampledb_client import Sampledb
-from sampledb_client import get_sample_db
+from sampledb_client import SessionRecord
 
 from grammar.shell import Env, parse
 
-# Gonna catch em all
-ELF_BIN_ARM  = "\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00\x01\x00\x00\x00\xbc\x14\x01\x00\x34\x00\x00\x00\x54\x52\x00\x00\x02\x04\x00\x05\x34\x00\x20\x00\x09\x00\x28\x00\x1b\x00\x1a\x00"
-ELF_BIN_X86  = "\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x3e\x00\x01\x00\x00\x00\x8b\x18\x40\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x40\x73\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-ELF_BIN_MIPS = "\x7f\x45\x4c\x46\x01\x02\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x08\x00\x00\x00\x01\x00\x40\x38\x30\x00\x00\x00\x34\x00\x00\x00\x00\x74\x00\x10\x05\x00\x34\x00\x20\x00\x08\x00\x00\x00\x00\x00\x00"
-ELF_BIN_M68K = "\x7f\x45\x4c\x46\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x04\x00\x00\x00\x01\x80\x00\x03\x46\x00\x00\x00\x34\x00\x00\x04\x64\x00\x00\x00\x00\x00\x34\x00\x20\x00\x03\x00\x28\x00\x05\x00\x04"
-ELF_BIN_MPSL = "\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00\xe4\x04\x40\x00\x34\x00\x00\x00\xd8\x06\x00\x00\x07\x10\x00\x00\x34\x00\x20\x00\x03\x00\x28\x00\x07\x00\x06\x00"
-ELF_BIN_PPC  = "\x7f\x45\x4c\x46\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14\x00\x00\x00\x01\x10\x00\x03\xc8\x00\x00\x00\x34\x00\x00\x05\xa4\x00\x00\x00\x00\x00\x34\x00\x20\x00\x02\x00\x28\x00\x04\x00\x03"
-ELF_BIN_SH4  = "\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x2a\x00\x01\x00\x00\x00\x04\x03\x40\x00\x34\x00\x00\x00\xf4\x04\x00\x00\x18\x00\x00\x00\x34\x00\x20\x00\x02\x00\x28\x00\x04\x00\x03\x00"
-ELF_BIN_SPC  = "\x7f\x45\x4c\x46\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x02\x00\x00\x00\x01\x00\x01\x03\x68\x00\x00\x00\x34\x00\x00\x04\x40\x00\x00\x00\x00\x00\x34\x00\x20\x00\x03\x00\x28\x00\x05\x00\x04"
-
-ELF_BINS = [ELF_BIN_ARM, ELF_BIN_X86, ELF_BIN_MIPS, ELF_BIN_MPSL]
+MIN_FILE_SIZE = 0
 			
 class Session:
 	def __init__(self, output, remote_addr):
 		dbg("New Session")
 		self.output      = output
 		self.remote_addr = remote_addr
-		self.samples     = get_sample_db()
+		self.record      = SessionRecord()
 		self.env         = Env(self.send_string)
 
+		self.env.listen("download", self.download)
+
 		# Data gathered
-		self.urls          = []
-		self.date          = int(time.time())
 		self.text_in       = ""
 		self.text_out      = ""
 		self.text_combined = ""
-		self.user          = None
-		self.password      = None
+
+		# Files already commited
+		self.files = []
 
 	def login(self, user, password):
 		dbg("Session login: user=" + user + " password=" + password)
-		self.user        = user
-		self.password    = password
+		self.record.set_login(self.remote_addr, user, password)
+
+	def download(self, data):
+		path = data["path"]
+		url  = data["url"]
+		info = data["info"]
+
+		dbg("DOWNLOAD " + url + " to " + path)
+
+		data = self.env.readFile(path)
+		self.record.add_file(data, url=url, name=path, info=info)
+		self.files.append(path)
 
 	def end(self):
 		dbg("Session End")
-		
-		print(self.text_combined)
-		print("URLS GATHARED: " + repr(self.urls))
+
+		for path in self.env.files:
+			if path in self.files:
+				pass
+			else:
+				data = self.env.files[path]
+				if len(data) > MIN_FILE_SIZE:
+					self.record.add_file(data, name=path)
 		
 		# Do not report non-login connections
-		if self.user != None:
-			self.samples.put_session(self)
-	
-	def getopt(self, args, switches=[]):
-		res   = {}
-		opts  = args.split(" ")
-		i     = 0
-		p     = 0
-		named = None
-		while i < len(opts):
-			opt = opts[i]
-			if opt[0] == '-':
-				if not opt in switches:
-					named = opt
-				res[named] = True
-			elif named != None:
-				res[named] = opt
-				named = None
-			else:
-				res[p] = opt
-				p = p + 1
-			i = i + 1
-		return res
+		if self.text_combined != "":
+			self.record.commit(self.text_in, self.text_out, self.text_combined)
 
 	def send_string(self, text):
 		self.text_combined = self.text_combined + text
