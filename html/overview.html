@@ -23,7 +23,7 @@
 		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
 		<td>{{ formatDate(url.date) }}</td>
 		<td class="hidden-xs"><span ng-show="url.sample != null"><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></span></td>
-		<td class="hidden-xs">{{ url.connections.length }}</td>
+		<td class="hidden-xs">{{ url.connections }}</td>
 	</tr>
 
 </table>
@@ -44,7 +44,7 @@
 		<td><a href="{{ '#/sample/' + sample.sha256 }}">{{ sample.name }}</a></td>
 		<td>{{ sample.length }}</a></td>
 		<td>{{ formatDate(sample.date) }}</td>
-		<td class="hidden-xs">{{ sample.urls.length }}</td>
+		<td class="hidden-xs">{{ sample.urls }}</td>
 	</tr>
 
 </table>
@@ -71,7 +71,7 @@
 				<!-- <td>{{ connection.ip }}</td> -->
 				<td>{{ connection.user }}</a></td>
 				<td>{{ connection.password }}</td>
-				<td class="hidden-xs">{{ connection.urls.length }}</td>
+				<td class="hidden-xs">{{ connection.urls }}</td>
 			</tr>
 
 		</table>

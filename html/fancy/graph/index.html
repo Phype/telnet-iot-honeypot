@@ -81,7 +81,7 @@ function gotConn(conn)
 
   // Check if the connection has ANY edge
   // associates/urls/samples
-  if (conn.urls.length == 0 && conn.associates.length == 0)
+  if (conn.urls.length == 0 && conn.conns_before.length == 0 && conn.conns_after.length == 0)
   {
     return;
   }
@@ -89,10 +89,10 @@ function gotConn(conn)
   conns[conn.id] = conn;
   ip = getIP(conn.ip, "ip");
   
-  for (var i = 0; i < conn.associates.length; i++)
+  for (var i = 0; i < conn.conns_before.length; i++)
   {
-    assoc_id = conn.associates[i]["id"];
-    assoc_ip = getIP(conn.associates[i]["ip"], "ip");
+    assoc_id = conn.conns_before[i]["id"];
+    assoc_ip = getIP(conn.conns_before[i]["ip"], "ip");
     print("Assoc: " + assoc_id);
 
     // Connect Associates Connections

@@ -16,7 +16,7 @@
 		<td ng-show="!filter['country']"><img src="img/flags/{{ connection.country.toLowerCase() }}.png">  {{ connection.country }} <a href="#/connections?country={{ connection.country }}"><span class="glyphicon glyphicon-screenshot"></span></a></td>
 		<td>{{ connection.user }} <a href="#/connections?user={{ connection.user }}"><span class="glyphicon glyphicon-screenshot"></span></a></td>
 		<td>{{ connection.password }} <a href="#/connections?password={{ connection.password }}"><span class="glyphicon glyphicon-screenshot"></span></td>
-		<td>{{ connection.urls.length }}</td>
+		<td>{{ connection.urls }}</td>
 	</tr>
 
 </table>

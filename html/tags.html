@@ -10,7 +10,7 @@
 	<tr ng-repeat="tag in tags">
 		<td><a href="{{ '#/tag/' + tag.name }}">{{ tag.name }}</a></td>
 		<td><span style="font-family: monospace;">{{ tag.code }}</span></td>
-		<td>{{ tag.connections.length }}</td>
+		<td>{{ tag.connections }}</td>
 	</tr>
 
 </table>

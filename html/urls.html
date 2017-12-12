@@ -14,7 +14,7 @@
 		<td><a href="{{ '#/url/' + encurl(url.url) }}">{{ url.url }}</a></td>
 		<td>{{ formatDate(url.date) }}</td>
 		<td class="hidden-xs"><span ng-show="url.sample != null"><a href="{{ '#/sample/' + url.sample }}">{{ short(url.sample, 16) }}</a></span></td>
-		<td class="hidden-xs">{{ url.connections.length }}</td>
+		<td class="hidden-xs">{{ url.connections }}</td>
 	</tr>
 
 </table>
