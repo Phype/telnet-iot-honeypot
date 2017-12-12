@@ -1,5 +1,5 @@
 {
-    "use_local_db": false,
+    "use_local_db": true,
 
     "user": "testuser",
     "backend": "http://localhost:5000",
