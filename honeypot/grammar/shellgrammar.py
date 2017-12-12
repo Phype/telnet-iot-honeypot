@@ -48,7 +48,7 @@ FAILURE = object()
 class Grammar(object):
     REGEX_1 = re.compile('^[^\']')
     REGEX_2 = re.compile('^[^"]')
-    REGEX_3 = re.compile('^[^ ;|()"\']')
+    REGEX_3 = re.compile('^[^ ;|&()"\']')
 
     def _read_cmd(self):
         address0, index0 = FAILURE, self._offset
@@ -698,7 +698,7 @@ class Grammar(object):
                     self._failure = self._offset
                     self._expected = []
                 if self._offset == self._failure:
-                    self._expected.append('[^ ;|()"\']')
+                    self._expected.append('[^ ;|&()"\']')
             if address1 is not FAILURE:
                 elements0.append(address1)
                 remaining0 -= 1
