@@ -9,7 +9,7 @@ from sampledb_client import SessionRecord
 
 from grammar.shell import Env, parse
 
-MIN_FILE_SIZE = 0
+MIN_FILE_SIZE = 128
 			
 class Session:
 	def __init__(self, output, remote_addr):
