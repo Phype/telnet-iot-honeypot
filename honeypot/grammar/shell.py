@@ -254,6 +254,22 @@ class Dd(Proc):
 0 bytes copied, 0 s, 0,0 kB/s\n""")
         return 0
 
+class Cp(Proc):
+    def __init__(self):
+        Proc.__init__(self, "cp")
+
+    def run(self, env, args):
+        infile  = args[0]
+        outfile = args[1]
+        
+        data = env.readFile(infile)
+        if data != None:
+            env.writeFile(outfile, data)
+            return 0
+        else:
+            env.write("cp: cannot stat '" + infile + "': No such file or directory\n")
+            return 1
+
 shell = Shell()
 
 BusyBox()
@@ -263,7 +279,7 @@ Echo()
 Rm()
 Ls()
 Dd()
-StaticProc("cp", "")
+Cp()
 StaticProc("cd", "")
 StaticProc("true", "")
 StaticProc("chmod", "")
