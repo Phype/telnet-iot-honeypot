@@ -17,10 +17,19 @@
 	</tr>
 	<tr><td>Username</td><td>{{ connection.user }} <a href="#/connections?user={{ connection.user }}"><span class="glyphicon glyphicon-screenshot"></span></a></td></tr>
 	<tr><td>Password</td><td>{{ connection.password }} <a href="#/connections?password={{ connection.password }}"><span class="glyphicon glyphicon-screenshot"></span></a></td></tr>
-	<tr ng-show="connection.associates.length > 0">
-		<td>Associated Connections</td>
+	<tr ng-show="connection.conns_before.length > 0">
+		<td>Prior Connections</td>
 		<td>
-			<p ng-repeat="associate in connection.associates">
+			<p ng-repeat="associate in connection.conns_before">
+				<a href="{{ '#/connection/' + associate.id }}">{{ formatDate(associate.date) }}</a> from 
+				<img src="img/flags/{{ associate.country.toLowerCase() }}.png"> {{ associate.ip }}
+			</p>
+		</td>
+	</tr>
+    <tr ng-show="connection.conns_after.length > 0">
+		<td>Subsequent Connections</td>
+		<td>
+			<p ng-repeat="associate in connection.conns_after">
 				<a href="{{ '#/connection/' + associate.id }}">{{ formatDate(associate.date) }}</a> from 
 				<img src="img/flags/{{ associate.country.toLowerCase() }}.png"> {{ associate.ip }}
 			</p>

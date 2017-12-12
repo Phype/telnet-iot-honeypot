@@ -35,6 +35,12 @@ conns_tags = Table('conns_tags', Base.metadata,
 	Column('id_tag', None, ForeignKey('tags.id'), primary_key=True),
 )
 
+# n to m relationship connection <-> connection (associates)
+conns_conns = Table('conns_assocs', Base.metadata,
+	Column('id_first', None, ForeignKey('conns.id'), primary_key=True),
+	Column('id_last',  None, ForeignKey('conns.id'), primary_key=True),
+)
+
 class ASN(Base):
 	__tablename__ = 'asn'
 	
@@ -94,17 +100,27 @@ class Connection(Base):
 	date = Column('date', Integer)
 	user = Column('user', String(16))
 	password = Column('pass', String(16))
-	
+	connhash = Column('connhash', String(256))
+
 	text_combined = Column('text_combined', Text())
-	
+
 	asn_id = Column('asn', None, ForeignKey('asn.asn'))
 	asn = relationship("ASN", back_populates="connections")
-	
+
 	ipblock = Column('ipblock', String(32))
 	country = Column('country', String(3))
 	
 	urls = relationship("Url", secondary=conns_urls, back_populates="connections")
 	tags = relationship("Tag", secondary=conns_tags, back_populates="connections")
+
+	conns_before = relationship("Connection", secondary=conns_conns,
+			back_populates="conns_after", 
+            primaryjoin=(conns_conns.c.id_last==id),
+            secondaryjoin=(conns_conns.c.id_first==id))
+	conns_after  = relationship("Connection", secondary=conns_conns,
+			back_populates="conns_before", 
+            primaryjoin=(conns_conns.c.id_first==id),
+            secondaryjoin=(conns_conns.c.id_last==id))
 	
 	def json(self, depth=0):
 		return {
@@ -113,17 +129,23 @@ class Connection(Base):
 			"date": self.date,
 			"user": self.user,
 			"password": self.password,
+			"connhash": self.connhash,
 			"text_combined": filter_ascii(self.text_combined),
 			
 			"asn": None if self.asn == None else self.asn.json(0),
 			
 			"ipblock": self.ipblock,
 			"country": self.country,
+
+			"conns_before": len(self.conns_before) if depth == 0 else
+				map(lambda conn : conn.json(depth - 1), self.conns_before),
+			"conns_after": len(self.conns_after) if depth == 0 else
+				map(lambda conn : conn.json(depth - 1), self.conns_after),
 			
-			"urls": None if depth == 0 else map(lambda url :
+			"urls": len(self.urls) if depth == 0 else map(lambda url :
 			   url.json(depth - 1), self.urls),
 
-			"tags": None if depth == 0 else map(lambda tag :
+			"tags": len(self.tags) if depth == 0 else map(lambda tag :
 			   tag.json(depth - 1), self.tags),
 		}
 	
@@ -242,7 +264,7 @@ class DB:
 		else:
 			return self.sess.execute(urls.insert().values(url=url, date=date, sample=None, ip=url_ip, asn=url_asn, country=url_country)).inserted_primary_key[0]
 
-	def put_conn(self, ip, user, password, date, text_combined, asn, block, country):
+	def put_conn(self, ip, user, password, date, text_combined, asn, block, country, connhash):
 		return self.sess.execute(conns.insert().values((None, ip, date, user, password, text_combined, asn, block, country))).inserted_primary_key[0]
 
 	def put_sample(self, sha256, name, length, date, info, result):

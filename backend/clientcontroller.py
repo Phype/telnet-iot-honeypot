@@ -1,6 +1,7 @@
 import os
 import hashlib
 import traceback
+import struct
 
 from sqlalchemy import desc, func, and_, or_
 from decorator import decorator
@@ -40,25 +41,9 @@ class WebController:
 	@db_wrapper
 	def get_connection(self, id):
 		connection = self.session.query(Connection).filter(Connection.id == id).first()
-		date = connection.date
-		ts   = 120
 
 		if connection:
-
-			# Find associates == connections with same user/pass in the same timespan
-			# TODO: add filter by same honeypot, this requires honeypot accounts somehow
-			# TODO: maybe do this when creating the connection, may by adding event handlers
-			associates = (self.session.query(Connection).
-				filter(Connection.date > (connection.date-ts),
-				Connection.date < (connection.date+ts),
-				or_(and_(Connection.user == connection.user, Connection.password == connection.password), 
-				Connection.ip == connection.ip),
-				Connection.id != connection.id).all())
-
-			json = connection.json(depth=1)
-			json['associates'] = map(lambda connection : connection.json(), associates)
-
-			return json
+			return connection.json(depth=1)
 		else:
 			return None
 
@@ -162,7 +147,22 @@ class ClientController:
 			block   = ipinfo["ipblock"]
 			country = ipinfo["country"]
 
-		s_id = self.db.put_conn(session["ip"], session["user"], session["pass"], session["date"], session["text_combined"], asn, block, country)
+		# Calculate "hash"
+		connhash = ""
+		for line in session["text_in"].split("\n"):
+			line     = line.strip()
+			linehash = abs(hash(line)) % 0xFFFF
+			connhash += struct.pack("!H", linehash)
+		connhash = connhash.encode("hex")
+
+		conn = Connection(ip=session["ip"], user=session["user"],
+			date=session["date"], password=session["pass"],
+			text_combined=session["text_combined"], asn_id=asn, ipblock=block,
+			country=country, connhash=connhash)
+
+		self.session.add(conn)
+		self.session.flush()
+
 		req_urls = []
 
 		for url in session["urls"]:
@@ -191,11 +191,22 @@ class ClientController:
 				# TODO: Check url for oldness
 				url_id = db_url["id"]
 
-			self.db.link_conn_url(s_id, url_id)
+			self.db.link_conn_url(conn.id, url_id)
+
+		# Find previous connections
+		assoc_timediff = 120
+		previous_conns = (self.session.query(Connection).
+				filter(Connection.date > (conn.date - assoc_timediff),
+				or_(and_(Connection.user == conn.user, Connection.password == conn.password), 
+				Connection.ip == conn.ip),
+				Connection.id != conn.id).all())
+
+		for prev in previous_conns:
+			conn.conns_before.append(prev)
 
 		# Check connection against all tags
 		tags = self.session.query(Tag).all()
-		conn = self.session.query(Connection).filter(Connection.id == s_id).first()
+		conn = self.session.query(Connection).filter(Connection.id == conn.id).first()
 		for tag in tags:
 			json_obj = conn.json(depth = 0)
 			json_obj["text_combined"] = filter_ascii(json_obj["text_combined"])
