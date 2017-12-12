@@ -88,7 +88,7 @@ class Sample(Base):
 			"length": self.length,
 			"result": self.result,
 			"info": self.info,
-			"urls": None if depth == 0 else map(lambda url :
+			"urls": len(self.urls) if depth == 0 else map(lambda url :
                 url.json(depth - 1), self.urls)
 		}
 	
@@ -130,17 +130,17 @@ class Connection(Base):
 			"user": self.user,
 			"password": self.password,
 			"connhash": self.connhash,
-			"text_combined": filter_ascii(self.text_combined),
+			"text_combined": None if depth == 0 else filter_ascii(self.text_combined),
 			
 			"asn": None if self.asn == None else self.asn.json(0),
 			
 			"ipblock": self.ipblock,
 			"country": self.country,
 
-			"conns_before": len(self.conns_before) if depth == 0 else
-				map(lambda conn : conn.json(depth - 1), self.conns_before),
-			"conns_after": len(self.conns_after) if depth == 0 else
-				map(lambda conn : conn.json(depth - 1), self.conns_after),
+			"conns_before": map(lambda conn : conn.id if depth == 0
+				else conn.json(depth - 1), self.conns_before),
+			"conns_after": map(lambda conn : conn.id if depth == 0
+				else conn.json(depth - 1), self.conns_after),
 			
 			"urls": len(self.urls) if depth == 0 else map(lambda url :
 			   url.json(depth - 1), self.urls),
@@ -175,7 +175,7 @@ class Url(Base):
 				(self.sample.sha256 if depth == 0
 					else self.sample.json(depth - 1)),
 				
-			"connections": None if depth == 0 else map(lambda connection :
+			"connections": len(self.connections) if depth == 0 else map(lambda connection :
 					  connection.json(depth - 1), self.connections),
 			
 			"asn": None if self.asn == None else 

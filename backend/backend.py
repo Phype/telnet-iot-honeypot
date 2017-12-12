@@ -126,6 +126,14 @@ def get_connections():
 		return json.dumps(conn)
 	else:
 		return "", 404
+
+@app.route("/connections_fast")
+def get_connections_fast():
+	conn = web.get_connections_fast()
+	if conn:
+		return json.dumps(conn)
+	else:
+		return "", 404
 	
 @app.route("/connection/statistics/per_country")
 def get_country_stats():

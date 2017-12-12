@@ -56,8 +56,23 @@ class WebController:
 
 		query = query.order_by(desc(Connection.date))
 
-		connections = query.limit(16).all()
+		connections = query.limit(32).all()
 		return map(lambda connection : connection.json(), connections)
+
+	@db_wrapper
+	def get_connections_fast(self):
+		conns = self.session.query(Connection).all()
+
+		clist = []
+		for conn in conns:
+			clist.append({
+				"id": conn.id,
+				"ip": conn.ip,
+				"conns_before": map(lambda c: c.id, conn.conns_before),
+				"conns_after": map(lambda c: c.id, conn.conns_after)
+			})
+
+		return clist
 
 	##
 
