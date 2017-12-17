@@ -10,7 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from util.config import config
 
-is_sqlite = "sqlite://" in config["sql"]
+is_sqlite = "sqlite://" in config.get("sql")
 
 print("Creating/Connecting to DB")
 
@@ -213,16 +213,16 @@ tags    = Tag.__table__
 eng = None
 
 if is_sqlite:
-	eng = sqlalchemy.create_engine(config["sql"],
+	eng = sqlalchemy.create_engine(config.get("sql"),
 								poolclass=QueuePool,
 								pool_size=1,
 								max_overflow=1,
 								connect_args={'check_same_thread': False})
 else:
-	eng = sqlalchemy.create_engine(config["sql"],
+	eng = sqlalchemy.create_engine(config.get("sql"),
 								poolclass=QueuePool,
-								pool_size=config["max_db_conn"],
-								max_overflow=config["max_db_conn"])
+								pool_size=config.get("max_db_conn"),
+								max_overflow=config.get("max_db_conn"))
 
 Base.metadata.create_all(eng)
 
@@ -232,7 +232,7 @@ def get_db():
 class DB:
 	
 	def __init__(self, sess):
-		self.sample_dir    = config["sample_dir"]
+		self.sample_dir    = config.get("sample_dir")
 		self.limit_samples = 32
 		self.limit_urls    = 32
 		self.limit_conns   = 32

@@ -1,8 +1,9 @@
 {
-    "use_local_db": true,
+    "use_local_db": false,
 
-    "user": "testuser",
     "backend": "http://localhost:5000",
+    "backend_user": "CHANGEME",
+    "backend_pass": "CHANGEME",
 
     "sql": "sqlite:///database.db",
     "max_db_conn": 1,

@@ -1,4 +1,6 @@
 from flask import Flask, request, Response
+from flask_httpauth import HTTPBasicAuth
+auth = HTTPBasicAuth()
 
 from db import get_db
 from clientcontroller import ClientController, WebController
@@ -35,25 +37,37 @@ def add_cors(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
+@auth.verify_password
+def verify_password(username, password):
+	return ctrl.checkLogin(username, password)
+
 ###
 #
 # Upload API
 #
 ###
 
+@app.route("/login")
+@auth.login_required
+def test_login():
+	return "LOGIN OK"
+
 @app.route("/conns", methods = ["PUT"])
+@auth.login_required
 def put_conn():
 	session = request.json
 	
 	return json.dumps(ctrl.put_session(session))
 
 @app.route("/sample/<sha256>", methods = ["PUT"])
+@auth.login_required
 def put_sample_info(sha256):
 	sample = request.json
 	
 	return json.dumps(ctrl.put_sample_info(sample))
 
 @app.route("/file", methods = ["POST"])
+@auth.login_required
 def put_sample():
 	data   = request.get_data()
 	

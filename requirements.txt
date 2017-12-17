@@ -1,0 +1,9 @@
+setuptools
+flask
+flask-httpauth
+sqlalchemy
+requests
+decorator
+dnspython
+ipaddress
+simpleeval

@@ -4,7 +4,7 @@ Install all requirements:
 
 ```
 apt-get install python-pip libmysqlclient-dev python-mysqldb git
-pip install setuptools flask sqlalchemy requests decorator dnspython ipaddress simpleeval
+pip install -r requirements.txt
 
 git clone https://github.com/Phype/telnet-iot-honeypot.git
 ```

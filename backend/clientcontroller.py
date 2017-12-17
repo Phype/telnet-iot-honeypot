@@ -132,10 +132,18 @@ class WebController:
 class ClientController:
 
 	def __init__(self):
-		self.vt   = Virustotal(config["vt_key"])
+		self.vt   = Virustotal(config.get("vt_key"))
 		self.db   = None
 		self.sess = None
 		self.cuckoo = Cuckoo(config)
+		self.user     = config.get("backend_user")
+		self.password = config.get("backend_pass")
+
+		if self.user == "CHANGEME" or self.password == "CHANGEME":
+		    raise Exception("Please change default backend user/pass in config!")
+
+	def checkLogin(self, user, password):
+		return user == self.user and password == self.password
 
 	def get_asn(self, asn):
 		asn_obj = self.session.query(ASN).filter(ASN.asn == asn).first()
@@ -251,7 +259,7 @@ class ClientController:
 	def put_sample(self, data):
 		sha256 = hashlib.sha256(data).hexdigest()
 		self.db.put_sample_data(sha256, data)
-		if config["cuckoo_enabled"]:
-			self.cuckoo.upload(os.path.join(config["sample_dir"], sha256), sha256)
-		elif config["submit_to_vt"]:
-			self.vt.upload_file(os.path.join(config["sample_dir"], sha256), sha256)
+		if config.get("cuckoo_enabled"):
+			self.cuckoo.upload(os.path.join(config.get("sample_dir"), sha256), sha256)
+		elif config.get("submit_to_vt"):
+			self.vt.upload_file(os.path.join(config.get("sample_dir"), sha256), sha256)
