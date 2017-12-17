@@ -7,3 +7,5 @@ decorator
 dnspython
 ipaddress
 simpleeval
+yaml
+
