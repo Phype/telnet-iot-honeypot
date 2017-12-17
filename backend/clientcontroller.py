@@ -313,3 +313,14 @@ class ClientController:
 			self.cuckoo.upload(os.path.join(config.get("sample_dir"), sha256), sha256)
 		elif config.get("submit_to_vt"):
 			self.vt.upload_file(os.path.join(config.get("sample_dir"), sha256), sha256)
+
+	@db_wrapper
+	def update_vt_result(self, sample_sha):
+		sample = self.session.query(Sample).filter(Sample.sha256 == sample_sha).first()
+		if sample:
+			vtobj = self.vt.query_hash_sha256(sample_sha)
+			if vtobj:
+				sample.result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
+				return sample.json(depth=1)
+		return None
+

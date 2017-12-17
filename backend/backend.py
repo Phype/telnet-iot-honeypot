@@ -87,6 +87,11 @@ def put_sample_info(sha256):
 	
 	return json.dumps(ctrl.put_sample_info(sample))
 
+@app.route("/sample/<sha256>/update", methods = ["GET"])
+@auth.login_required
+def update_sample(sha256):
+	return json.dumps(ctrl.update_vt_result(sha256))
+
 @app.route("/file", methods = ["POST"])
 @auth.login_required
 def put_sample():
