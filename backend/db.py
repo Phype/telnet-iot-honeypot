@@ -46,7 +46,7 @@ class User(Base):
 
 	id       = Column('id', Integer, primary_key=True)
 	username = Column('username', String(32), unique=True)
-	password = Column('password', String(32))
+	password = Column('password', String(64))
 
 	connections = relationship("Connection", back_populates="backend_user")
 
