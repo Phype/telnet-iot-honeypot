@@ -21,17 +21,11 @@
 ##############################################
 # Honeypot configuration
 
-# Operate a database without a REST-based backend
-# useful if you only want to fill the db but not expose a REST-API
-use_local_db: false
-
-# URL to which honeypot will connect to to store data
-# used only when use_local_db == false
+# Backend URL to which honeypot will connect to to store data
 backend:      "http://localhost:5000"
 
 #############################################
 # Backend configuration
-# NOT used by honeypot in client mode (use_local_db == false)
 
 # sqlalchemy sql connect string
 # examples:

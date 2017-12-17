@@ -9,7 +9,7 @@ pip install -r requirements.txt
 git clone https://github.com/Phype/telnet-iot-honeypot.git
 ```
 
-If you watn to use mysql, create a mysql database. Default mysql max key length is 767 bytes,
+If you want to use mysql, create a mysql database. Default mysql max key length is 767 bytes,
 so it is recommended to use latin1 charset, else the db setup will fail.
 
 ```
@@ -24,17 +24,42 @@ flush privileges;
 
 ## Configuration
 
-The honeypot can run in two modes: local db and backend operated db (default in config.json).
-If you want to use the frontend seen in the screenshots, you have to use the backend operated db mode.
-The mode is set in the `config.json` file using the option `use_local_db`.
+This software consists of 2 components, a honeypot (client) and a backend (server).
+The honeypot will accept incoming telnet connections and may download samples
+which an adversary may try to download in the telnet session. When a session is
+closed, the honeypot will post all data about the connection to the backend using
+a REST-API.
 
-In local db mode, the honeypot will put all information into the database itself,
-however since no backend server is running no frontend will be available.
-If you have set `"use_local_db": true` and decide you want to use the backend,
-just set `"use_local_db": false` (re-)start both backend and honeypot and the data
-should now be available in the frontend.
+The configuration for both honeypot and backend is in the files
+`config.dist.yaml` and `config.yaml`. The `config.dist.yaml` contains the default
+config. If you want to change anything, change or create overriding entries in
+`config.yaml`. If you need documentation about the configuration,
+the file `config.dist.yaml` contains some comments.
 
-## Frontend
+The REST-API requires authentification (HTTP Basic Auth).
+When the backend is started for the first time,
+it will create a "users" table in the database containing an "admin" user.
+The admin users password is read from the configuration file.
+If this file is empty, it will be created with random credentials.
+
+*TL;DR*: The default config should just work, if you need the credentials for the
+admin user, see the file `config.yaml`.
+
+## Running
+
+Start the backend:
+
+	python backend.py
+
+Now, start the honeypot:
+
+	python honeypot.py
+
+Now, you can test the honeypot
+
+    telnet 127.0.0.1 2223
+
+## HTML Frontend
 
 You can use the frontend by just opening the file html/index.html in your browser.
 If you want to make the frontend publically available, deploy the html/ folder to you webserver,
@@ -47,14 +72,6 @@ cp -R html /var/www
 sudo chown www-data:www-data /var/www -R
 ```
 
-You can also post the data to the test-backend running at http://phype.pythonanywhere.com/.
-To do set the following options in `config.json`:
-
-```
-        "use_local_db": false,
-        "backend": "https://phype.pythonanywhere.com/",
-```
-
 ## Virustotal integration
 
 Please get yout own virustotal key,
@@ -62,26 +79,13 @@ since mine only allows for 4 API Req/min.
 
 For how to do this, see https://www.virustotal.com/de/faq/#virustotal-api
 
-When you got one, replace the Key in virustotal.py
+When you got one, put it in your config.yamland enable virustotal integration:
 
-	self.api_key    = "YOUR_KEY_HERE"
+	vt_key: "GET_YOUR_OWN"
+    submit_to_vt: true
 
 If you want to import virustotal reports of the collected samples,
-run (may have to restart because of db locks)
+run (may have to restart because of db locks). *TODO*: test if this still works
 
 	python virustotal_fill_db.php
-
-## Run
-
-Start the honeypot like so:
-
-	python honeypot.py
-	
-If you have set `use_local_db = false` in your config, start the backend:
-
-	python backend.py
-
-Now you can test the honeypot
-
-    telnet 127.0.0.1 2222
 

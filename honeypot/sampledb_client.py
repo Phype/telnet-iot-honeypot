@@ -8,14 +8,7 @@ import hashlib
 from util.dbg import dbg
 from util.config import config
 
-BACKEND = None
-
-is_local = config.get("use_local_db")
-if is_local:
-	from backend.clientcontroller import ClientController
-	BACKEND = ClientController()
-else:
-	BACKEND = client.Client()
+BACKEND = client.Client()
 
 def sha256(data):
     h = hashlib.sha256()
