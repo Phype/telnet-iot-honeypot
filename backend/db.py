@@ -41,6 +41,20 @@ conns_conns = Table('conns_assocs', Base.metadata,
 	Column('id_last',  None, ForeignKey('conns.id'), primary_key=True),
 )
 
+class User(Base):
+	__tablename__ = 'users'
+
+	id       = Column('id', Integer, primary_key=True)
+	username = Column('username', String(32), unique=True)
+	password = Column('password', String(32))
+
+	connections = relationship("Connection", back_populates="backend_user")
+
+	def json(self, depth=0):
+		return {
+			"username": self.username
+		}
+
 class ASN(Base):
 	__tablename__ = 'asn'
 	
@@ -107,6 +121,9 @@ class Connection(Base):
 	asn_id = Column('asn', None, ForeignKey('asn.asn'))
 	asn = relationship("ASN", back_populates="connections")
 
+	backend_user_id = Column('backend_user_id', None, ForeignKey('users.id'))
+	backend_user = relationship("User", back_populates="connections")
+
 	ipblock = Column('ipblock', String(32))
 	country = Column('country', String(3))
 	
@@ -141,6 +158,8 @@ class Connection(Base):
 				else conn.json(depth - 1), self.conns_before),
 			"conns_after": map(lambda conn : conn.id if depth == 0
 				else conn.json(depth - 1), self.conns_after),
+
+			"backend_user": self.backend_user.username,
 			
 			"urls": len(self.urls) if depth == 0 else map(lambda url :
 			   url.json(depth - 1), self.urls),

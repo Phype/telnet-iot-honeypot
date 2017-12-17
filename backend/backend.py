@@ -3,7 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
 from db import get_db
-from clientcontroller import ClientController, WebController
+from clientcontroller import ClientController, WebController, AuthController
 
 from util.config import config
 
@@ -12,8 +12,10 @@ import base64
 import time
 
 app  = Flask(__name__)
-ctrl = ClientController()
-web  = WebController()
+
+ctrl     = ClientController()
+web      = WebController()
+authctrl = AuthController()
 
 app.debug = True
 
@@ -39,7 +41,24 @@ def add_cors(response):
 
 @auth.verify_password
 def verify_password(username, password):
-	return ctrl.checkLogin(username, password)
+	return authctrl.checkLogin(username, password)
+
+###
+#
+# Admin API
+#
+###
+
+@app.route("/user/<username>", methods = ["PUT"])
+@auth.login_required
+def add_user(username):
+	if authctrl.checkAdmin(auth.username()):
+		user = request.json
+		if user["username"] != username:
+			return "username mismatch in url/data", 500
+		return json.dumps(authctrl.addUser(user["username"], user["password"]))
+	else:
+		return "Authorization required", 401
 
 ###
 #
@@ -56,7 +75,7 @@ def test_login():
 @auth.login_required
 def put_conn():
 	session = request.json
-	
+	session["backend_username"] = auth.username()	
 	return json.dumps(ctrl.put_session(session))
 
 @app.route("/sample/<sha256>", methods = ["PUT"])
