@@ -7,5 +7,5 @@ decorator
 dnspython
 ipaddress
 simpleeval
-yaml
+pyyaml
 argon2
