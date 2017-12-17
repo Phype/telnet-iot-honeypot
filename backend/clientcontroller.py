@@ -42,7 +42,7 @@ class AuthController:
 		self.checkInitializeDB()
 
 	def pwhash(self, username, password):
-		return argon2_hash(password, self.salt + username, buflen=32).encode("hex")
+		return argon2_hash(str(password), self.salt + str(username), buflen=32).encode("hex")
 
 	@db_wrapper
 	def checkInitializeDB(self):
@@ -262,11 +262,16 @@ class ClientController:
 			self.db.link_conn_url(conn.id, url_id)
 
 		# Find previous connections
+		# A connection is associated when:
+		#  - same honeypot/user
+		#  - connection happened as long as 120s before
+		#  - same client ip OR same username/password combo
 		assoc_timediff = 120
 		previous_conns = (self.session.query(Connection).
 				filter(Connection.date > (conn.date - assoc_timediff),
 				or_(and_(Connection.user == conn.user, Connection.password == conn.password), 
 				Connection.ip == conn.ip),
+				Connection.backend_user_id == conn.backend_user_id,
 				Connection.id != conn.id).all())
 
 		for prev in previous_conns:

@@ -39,6 +39,10 @@ app.config(function($routeProvider) {
 		templateUrl : "tags.html",
 		controller : "tags"
 	})
+	.when("/admin", {
+		templateUrl : "admin.html",
+		controller : "admin"
+	})
 	.when("/", {
 		templateUrl : "overview.html",
 		controller : "overview"
@@ -298,5 +302,54 @@ app.controller('asn', function($scope, $http, $routeParams, $location) {
 		$scope.connections = $scope.asn.connections.sort(function(x, y) {return y.date - x.date} ).slice(0,8);
 		$scope.urls = $scope.asn.urls.sort(function(x, y) {return y.date - x.date} ).slice(0,8);
 	});
+
+});
+
+app.controller('admin', function($scope, $http, $routeParams, $location) {
+
+    $scope.loggedin = false;
+    $scope.errormsg = null;
+
+    $scope.username = null;
+    $scope.password = null;
+
+    $scope.new_username = null;
+    $scope.new_password = null;
+
+	$scope.login = function() {
+        var auth = btoa($scope.username + ":" + $scope.password);
+        $http.defaults.headers.common['Authorization'] = 'Basic ' + auth;
+        $http.get(api + "/login").then(function (httpResult) {
+            $scope.errormsg = "Logged in as " + $scope.username;
+            $scope.loggedin = true;
+        }, function (httpError) {
+            $scope.errormsg = "Bad credentials";
+        });
+        $scope.password = null;
+    };
+
+	$scope.logout = function() {
+        delete $http.defaults.headers.common['Authorization'];
+        $scope.errormsg = null;
+        $scope.loggedin = false;
+        $scope.username = null;
+        $scope.password = null;
+    };
+
+    $scope.addUser = function() {
+        var newuser = {
+            "username": $scope.new_username,
+            "password": $scope.new_password
+        };
+        $http.put(api + "/user/" + newuser.username, newuser).then(function (httpResult) {
+            $scope.errormsg     = "Created new user " + $scope.new_username;
+            $scope.new_username = null;
+            $scope.new_password = null;
+        }, function (httpError) {
+            $scope.errormsg     = "Error creating new user \"" + $scope.new_username + "\" :(";
+            $scope.new_username = null;
+            $scope.new_password = null;
+        });
+    };
 
 });

@@ -1,0 +1,41 @@
+<img src="img/icon.svg" style="height: 10em; margin-top: -4em; padding: 1em; background: white;" class="pull-right">
+
+<div class="page-header">
+	<h1>Administration Area</h1>
+</div>
+
+<div class="alert alert-info" role="alert" ng-show="errormsg">{{ errormsg }}</div>
+<div ng-show="!loggedin">
+  <h2>Login</h2>
+  <form>
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" class="form-control" ng-model="username" placeholder="Username" id="username">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" class="form-control" ng-model="password" placeholder="Password" id="password">
+    </div>
+    <button type="submit" class="btn btn-default" ng-click="login()">Login</button>
+  </form>
+</div>
+
+<div ng-show="loggedin">
+  <h2>Add a new user</h2>
+  <form>
+    <div class="form-group">
+      <label for="new_username">New users name</label>
+      <input type="text" class="form-control" ng-model="new_username" placeholder="Username" id="new_username">
+    </div>
+    <div class="form-group">
+      <label for="new_password">New users password</label>
+      <input type="password" class="form-control" ng-model="new_password" placeholder="Password" id="new_password">
+    </div>
+    <button type="submit" class="btn btn-default" ng-click="addUser()">Add User</button>
+  </form>
+  <hr>
+  <form>
+    <button type="submit" class="btn btn-default btn-danger" ng-click="logout()">Logout</button>
+  </form>
+</div>
+
