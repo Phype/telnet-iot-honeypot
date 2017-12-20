@@ -7,9 +7,10 @@ from sqlalchemy import desc, func, and_, or_
 from decorator import decorator
 from functools import wraps
 from simpleeval import simple_eval
+from argon2 import argon2_hash
 
 from additionalinfo import get_ip_info, get_url_info, get_asn_info
-from db import get_db, filter_ascii, Sample, Connection, Url, ASN, Tag
+from db import get_db, filter_ascii, Sample, Connection, Url, ASN, Tag, User
 from virustotal import Virustotal
 
 from cuckoo import Cuckoo
@@ -20,23 +21,73 @@ from util.config import config
 @decorator
 def db_wrapper(func, *args, **kwargs):
 	self = args[0]
-
-	self.db      = get_db()
-	self.session = self.db.sess
-
-	try:
+	if self.session:
 		return func(*args, **kwargs)
-	finally:
-		self.db.end()
-		self.db = None
-		self.sess = None
+	else:
+		self.db      = get_db()
+		self.session = self.db.sess
+
+		try:
+			return func(*args, **kwargs)
+		finally:
+			self.db.end()
+			self.db = None
+			self.session = None
+
+class AuthController:
+
+	def __init__(self):
+		self.session = None
+		self.salt    = config.get("backend_salt")
+		self.checkInitializeDB()
+
+	def pwhash(self, username, password):
+		return argon2_hash(str(password), self.salt + str(username), buflen=32).encode("hex")
+
+	@db_wrapper
+	def checkInitializeDB(self):
+		user = self.session.query(User).filter(User.id == 1).first()
+		if user == None:
+			admin_name = config.get("backend_user")
+			admin_pass = config.get("backend_pass")
+
+			print 'Creating admin user "' + admin_name + '" see config for password'
+			self.addUser(admin_name, admin_pass, 1)
+
+	@db_wrapper
+	def getUser(self, username):
+		user = self.session.query(User).filter(User.username == username).first()
+		return user.json(depth=1) if user else None
+
+	@db_wrapper
+	def addUser(self, username, password, id=None):
+		user = User(username=username, password=self.pwhash(username, password))
+		if id != None:
+			user.id = id
+		self.session.add(user)
+		return user.json()
+
+	@db_wrapper
+	def checkAdmin(self, user):
+		user = self.session.query(User).filter(User.username == user).first()
+		if user == None:
+			return False
+		return user.id == 1
+
+	@db_wrapper
+	def checkLogin(self, username, password):
+		user = self.session.query(User).filter(User.username == username).first()
+		if user == None:
+			return False
+		if self.pwhash(username, password) == user.password:
+			return True
+		else:
+			return False
 
 class WebController:
 
 	def __init__(self):
-		self.db   = None
-		self.sess = None
-		pass
+		self.session  = None
 
 	@db_wrapper
 	def get_connection(self, id):
@@ -132,10 +183,9 @@ class WebController:
 class ClientController:
 
 	def __init__(self):
-		self.vt   = Virustotal(config["vt_key"])
-		self.db   = None
-		self.sess = None
-		self.cuckoo = Cuckoo(config)
+		self.session  = None
+		self.vt       = Virustotal(config.get("vt_key"))
+		self.cuckoo   = Cuckoo(config)
 
 	def get_asn(self, asn):
 		asn_obj = self.session.query(ASN).filter(ASN.asn == asn).first()
@@ -170,10 +220,13 @@ class ClientController:
 			connhash += struct.pack("!H", linehash)
 		connhash = connhash.encode("hex")
 
+		backend_user = self.session.query(User).filter(
+			User.username == session["backend_username"]).first()
+
 		conn = Connection(ip=session["ip"], user=session["user"],
 			date=session["date"], password=session["pass"],
 			text_combined=session["text_combined"], asn_id=asn, ipblock=block,
-			country=country, connhash=connhash)
+			country=country, connhash=connhash, backend_user_id=backend_user.id)
 
 		self.session.add(conn)
 		self.session.flush()
@@ -209,11 +262,16 @@ class ClientController:
 			self.db.link_conn_url(conn.id, url_id)
 
 		# Find previous connections
+		# A connection is associated when:
+		#  - same honeypot/user
+		#  - connection happened as long as 120s before
+		#  - same client ip OR same username/password combo
 		assoc_timediff = 120
 		previous_conns = (self.session.query(Connection).
 				filter(Connection.date > (conn.date - assoc_timediff),
 				or_(and_(Connection.user == conn.user, Connection.password == conn.password), 
 				Connection.ip == conn.ip),
+				Connection.backend_user_id == conn.backend_user_id,
 				Connection.id != conn.id).all())
 
 		for prev in previous_conns:
@@ -251,7 +309,18 @@ class ClientController:
 	def put_sample(self, data):
 		sha256 = hashlib.sha256(data).hexdigest()
 		self.db.put_sample_data(sha256, data)
-		if config["cuckoo_enabled"]:
-			self.cuckoo.upload(os.path.join(config["sample_dir"], sha256), sha256)
-		elif config["submit_to_vt"]:
-			self.vt.upload_file(os.path.join(config["sample_dir"], sha256), sha256)
+		if config.get("cuckoo_enabled"):
+			self.cuckoo.upload(os.path.join(config.get("sample_dir"), sha256), sha256)
+		elif config.get("submit_to_vt"):
+			self.vt.upload_file(os.path.join(config.get("sample_dir"), sha256), sha256)
+
+	@db_wrapper
+	def update_vt_result(self, sample_sha):
+		sample = self.session.query(Sample).filter(Sample.sha256 == sample_sha).first()
+		if sample:
+			vtobj = self.vt.query_hash_sha256(sample_sha)
+			if vtobj:
+				sample.result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
+				return sample.json(depth=1)
+		return None
+

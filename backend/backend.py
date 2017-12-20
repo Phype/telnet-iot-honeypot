@@ -1,7 +1,9 @@
 from flask import Flask, request, Response
+from flask_httpauth import HTTPBasicAuth
+auth = HTTPBasicAuth()
 
 from db import get_db
-from clientcontroller import ClientController, WebController
+from clientcontroller import ClientController, WebController, AuthController
 
 from util.config import config
 
@@ -10,8 +12,10 @@ import base64
 import time
 
 app  = Flask(__name__)
-ctrl = ClientController()
-web  = WebController()
+
+ctrl     = ClientController()
+web      = WebController()
+authctrl = AuthController()
 
 app.debug = True
 
@@ -33,7 +37,30 @@ def red(obj, attributes):
 @app.after_request
 def add_cors(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-type"
     return response
+
+@auth.verify_password
+def verify_password(username, password):
+	return authctrl.checkLogin(username, password)
+
+###
+#
+# Admin API
+#
+###
+
+@app.route("/user/<username>", methods = ["PUT"])
+@auth.login_required
+def add_user(username):
+	if authctrl.checkAdmin(auth.username()):
+		user = request.json
+		if user["username"] != username:
+			return "username mismatch in url/data", 500
+		return json.dumps(authctrl.addUser(user["username"], user["password"]))
+	else:
+		return "Authorization required", 401
 
 ###
 #
@@ -41,19 +68,32 @@ def add_cors(response):
 #
 ###
 
+@app.route("/login")
+@auth.login_required
+def test_login():
+	return "LOGIN OK"
+
 @app.route("/conns", methods = ["PUT"])
+@auth.login_required
 def put_conn():
 	session = request.json
-	
+	session["backend_username"] = auth.username()	
 	return json.dumps(ctrl.put_session(session))
 
 @app.route("/sample/<sha256>", methods = ["PUT"])
+@auth.login_required
 def put_sample_info(sha256):
 	sample = request.json
 	
 	return json.dumps(ctrl.put_sample_info(sample))
 
+@app.route("/sample/<sha256>/update", methods = ["GET"])
+@auth.login_required
+def update_sample(sha256):
+	return json.dumps(ctrl.update_vt_result(sha256))
+
 @app.route("/file", methods = ["POST"])
+@auth.login_required
 def put_sample():
 	data   = request.get_data()
 	

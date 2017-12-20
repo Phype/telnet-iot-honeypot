@@ -18,10 +18,10 @@ except (AttributeError, ImportError):
 class Cuckoo():
 
     def __init__(self, config):
-        self.url_base = config["cuckoo_url_base"]
-        self.api_user = config["cuckoo_user"]
-        self.api_passwd = config["cuckoo_passwd"]
-        self.cuckoo_force = config["cuckoo_force"]
+        self.url_base = config.get("cuckoo_url_base")
+        self.api_user = config.get("cuckoo_user")
+        self.api_passwd = config.get("cuckoo_passwd")
+        self.cuckoo_force = config.get("cuckoo_force")
 
     def upload(self, path, name):
 

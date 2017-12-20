@@ -10,7 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from util.config import config
 
-is_sqlite = "sqlite://" in config["sql"]
+is_sqlite = "sqlite://" in config.get("sql")
 
 print("Creating/Connecting to DB")
 
@@ -40,6 +40,20 @@ conns_conns = Table('conns_assocs', Base.metadata,
 	Column('id_first', None, ForeignKey('conns.id'), primary_key=True),
 	Column('id_last',  None, ForeignKey('conns.id'), primary_key=True),
 )
+
+class User(Base):
+	__tablename__ = 'users'
+
+	id       = Column('id', Integer, primary_key=True)
+	username = Column('username', String(32), unique=True)
+	password = Column('password', String(64))
+
+	connections = relationship("Connection", back_populates="backend_user")
+
+	def json(self, depth=0):
+		return {
+			"username": self.username
+		}
 
 class ASN(Base):
 	__tablename__ = 'asn'
@@ -107,6 +121,9 @@ class Connection(Base):
 	asn_id = Column('asn', None, ForeignKey('asn.asn'))
 	asn = relationship("ASN", back_populates="connections")
 
+	backend_user_id = Column('backend_user_id', None, ForeignKey('users.id'))
+	backend_user = relationship("User", back_populates="connections")
+
 	ipblock = Column('ipblock', String(32))
 	country = Column('country', String(3))
 	
@@ -141,6 +158,8 @@ class Connection(Base):
 				else conn.json(depth - 1), self.conns_before),
 			"conns_after": map(lambda conn : conn.id if depth == 0
 				else conn.json(depth - 1), self.conns_after),
+
+			"backend_user": self.backend_user.username,
 			
 			"urls": len(self.urls) if depth == 0 else map(lambda url :
 			   url.json(depth - 1), self.urls),
@@ -213,16 +232,16 @@ tags    = Tag.__table__
 eng = None
 
 if is_sqlite:
-	eng = sqlalchemy.create_engine(config["sql"],
+	eng = sqlalchemy.create_engine(config.get("sql"),
 								poolclass=QueuePool,
 								pool_size=1,
 								max_overflow=1,
 								connect_args={'check_same_thread': False})
 else:
-	eng = sqlalchemy.create_engine(config["sql"],
+	eng = sqlalchemy.create_engine(config.get("sql"),
 								poolclass=QueuePool,
-								pool_size=config["max_db_conn"],
-								max_overflow=config["max_db_conn"])
+								pool_size=config.get("max_db_conn"),
+								max_overflow=config.get("max_db_conn"))
 
 Base.metadata.create_all(eng)
 
@@ -232,7 +251,7 @@ def get_db():
 class DB:
 	
 	def __init__(self, sess):
-		self.sample_dir    = config["sample_dir"]
+		self.sample_dir    = config.get("sample_dir")
 		self.limit_samples = 32
 		self.limit_urls    = 32
 		self.limit_conns   = 32

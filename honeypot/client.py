@@ -1,5 +1,6 @@
 import requests
 import requests.exceptions
+import requests.auth
 
 import json
 
@@ -7,14 +8,31 @@ from util.dbg import dbg
 from util.config import config
 
 class Client:
-	user    = config.get("user")
-	url     = config.get("backend")
 
-	next_id = 0
+	def __init__(self):
+		self.user     = config.get("backend_user")
+		self.password = config.get("backend_pass")
+		self.url      = config.get("backend")
+		self.auth     = requests.auth.HTTPBasicAuth(self.user, self.password)
+
+		self.test_login()
+	
+	def test_login(self):
+		try:
+			r = requests.get(self.url + "/connections", auth=self.auth, timeout=20.0)
+		except:
+			raise IOError("Cannot connect to backend")
+		try:
+			r = requests.get(self.url + "/login", auth=self.auth, timeout=20.0)
+			if r.status_code != 200:
+				raise IOError()
+		except:
+			raise IOError("Backend authentification test failed, check config.json")
+
 	def put_session(self, session, retry=True):
 		
 		try:
-			r = requests.put(self.url + "/conns", json=session, timeout=20.0)
+			r = requests.put(self.url + "/conns", auth=self.auth, json=session, timeout=20.0)
 		except requests.exceptions.RequestException:
 			dbg("Cannot connect to backend")
 			return []
@@ -32,7 +50,7 @@ class Client:
 	def put_sample_info(self, f, retry=True):
 		try:
 			sha256 = f["sha256"]
-			r = requests.put(self.url + "/sample/" + sha256, json=f, timeout=20.0)
+			r = requests.put(self.url + "/sample/" + sha256, auth=self.auth, json=f, timeout=20.0)
 		except requests.exceptions.RequestException:
 			dbg("Cannot connect to backend")
 			return
@@ -50,7 +68,7 @@ class Client:
 	def put_sample(self, data, retry=True):
 		
 		try:
-			r = requests.post(self.url + "/file", data=data, timeout=20.0)
+			r = requests.post(self.url + "/file", auth=self.auth, data=data, timeout=20.0)
 		except requests.exceptions.RequestException:
 			dbg("Cannot connect to backend")
 			return

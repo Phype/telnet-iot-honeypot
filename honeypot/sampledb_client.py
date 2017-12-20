@@ -8,9 +8,7 @@ import hashlib
 from util.dbg import dbg
 from util.config import config
 
-is_local = config["use_local_db"]
-if is_local:
-	from backend.clientcontroller import ClientController
+BACKEND = client.Client()
 
 def sha256(data):
     h = hashlib.sha256()
@@ -18,12 +16,9 @@ def sha256(data):
     return h.hexdigest()
 
 class SessionRecord:
-	def __init__(self):
-		if is_local:
-			self.back = ClientController()
-		else:
-			self.back = client.Client()
 
+	def __init__(self):
+		self.back = BACKEND
 		self.session_obj = {
 			"ip"            : None,
 			"user"          : None,
