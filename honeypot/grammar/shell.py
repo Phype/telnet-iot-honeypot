@@ -372,7 +372,6 @@ class Command:
 
     def run(self, env):
         if self.redirect_to != None:
-            print "Redirect to: " + self.redirect_to + " , append=" + str(self.redirect_append)
             if not(self.redirect_append):
                 env.deleteFile(self.redirect_to)
             env = RedirEnv(env, self.redirect_to)
@@ -426,8 +425,6 @@ class Actions(object):
                 
         # redirects
         for r in elements[4]:
-            print r
-        
             if r[0] == ">":
                 cmd.redirect_to = r[1]
                 cmd.redirect_append = False

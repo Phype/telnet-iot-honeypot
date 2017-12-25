@@ -185,7 +185,10 @@ class ClientController:
 
 	def __init__(self):
 		self.session  = None
-		self.vt       = Virustotal(config.get("vt_key"))
+		if config.get("submit_to_vt"):
+			self.vt = Virustotal(config.get("vt_key", optional=True))
+		else:
+			self.vt = None
 		self.cuckoo   = Cuckoo(config)
 
 	def get_asn(self, asn):
@@ -202,8 +205,6 @@ class ClientController:
 
 	@db_wrapper
 	def put_session(self, session):
-		print repr(session)
-	
 		ipinfo  = get_ip_info(session["ip"])
 		asn     = None
 		block   = None
@@ -300,9 +301,10 @@ class ClientController:
 
 		result = None
 		try:
-			vtobj  = self.vt.query_hash_sha256(f["sha256"])
-			if vtobj:
-				result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
+			if self.vt != None:
+				vtobj  = self.vt.query_hash_sha256(f["sha256"])
+				if vtobj:
+					result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
 		except:
 			pass
 

@@ -44,21 +44,27 @@ class Session:
 		data = self.env.readFile(path)
 		self.record.add_file(data, url=url, name=path, info=info)
 		self.files.append(path)
+	
+	def found_file(self, path, data):
+		if path in self.files:
+			pass
+		else:
+			if len(data) > MIN_FILE_SIZE:
+				dbg("File created: " + path)
+				self.record.add_file(data, name=path)
+			else:
+				dbg("Ignore small file: " + path + " (" + str(len(data)) + ") bytes")
+		
 
 	def end(self):
 		dbg("Session End")
-		
+	
 		for path in self.env.files:
-			if path in self.files:
-				pass
-			else:
-				data = self.env.files[path]
-				if len(data) > MIN_FILE_SIZE:
-					dbg("File created: " + path)
-					self.record.add_file(data, name=path)
-				else:
-					dbg("Ignore small file: " + path + " (" + len(data) + ") bytes")
-		
+			self.found_file(path, self.env.files[path])
+			
+		for (path, data) in self.env.deleted:
+			self.found_file(path, data)
+	
 		self.record.commit()
 
 	def send_string(self, text):

@@ -5,6 +5,10 @@ import re
 
 import traceback
 
+def filter_ascii(string):
+        string = ''.join(char for char in string if ord(char) < 128 and ord(char) > 32 or char in "\r\n ")
+        return string
+
 def query_txt(cname):
 	try:
 		answer = dns.resolver.query(cname, "TXT")
@@ -32,22 +36,22 @@ def txt_to_ipinfo(txt):
 	parts = txt.split("|")
 	
 	return {
-		"asn":     parts[0].strip(),
-		"ipblock": parts[1].strip(),
-		"country": parts[2].strip(),
-		"reg":     parts[3].strip(),
-		"updated": parts[4].strip()
+		"asn":     filter_ascii(parts[0].strip()),
+		"ipblock": filter_ascii(parts[1].strip()),
+		"country": filter_ascii(parts[2].strip()),
+		"reg":     filter_ascii(parts[3].strip()),
+		"updated": filter_ascii(parts[4].strip())
 	}
 
 def txt_to_asinfo(txt):
 	parts = txt.split("|")
 	
 	return {
-		"asn":     parts[0].strip(),
-		"country": parts[1].strip(),
-		"reg":     parts[2].strip(),
-		"updated": parts[3].strip(),
-		"name":    parts[4].strip()
+		"asn":     filter_ascii(parts[0].strip()),
+		"country": filter_ascii(parts[1].strip()),
+		"reg":     filter_ascii(parts[2].strip()),
+		"updated": filter_ascii(parts[3].strip()),
+		"name":    filter_ascii(parts[4].strip())
 	}
 
 def get_ip4_info(ip):
