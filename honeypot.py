@@ -3,8 +3,9 @@ import sys
 import signal
 import json
 
-from honeypot.telnet import Telnetd
-from honeypot.client import Client
+from honeypot.telnet  import Telnetd
+from honeypot.client  import Client
+from honeypot.session import Session
 from util.dbg import dbg
 
 srv = None
@@ -22,6 +23,21 @@ def import_file(fname):
 			if obj["type"] == "sample":
 				print "sample " + obj["sha256"]
 				client.put_sample_info(obj)
+				
+def rerun_file(fname):
+	with open(fname, "rb") as fp:
+		for line in fp:
+			line = line.strip()
+			obj  = json.loads(line)
+			if obj["type"] == "connection":
+				if obj["ip"] == None: continue
+				session = Session(sys.stdout.write, obj["ip"])
+				session.login(obj["user"], obj["pass"])
+				for event in obj["stream"]:
+					if not(event["in"]): continue
+					sys.stdout.write(event["data"])		
+					session.shell(event["data"].strip())
+				session.end()
 
 
 def signal_handler(signal, frame):
@@ -44,6 +60,9 @@ if __name__ == "__main__":
 	elif action == "import":
 		fname = sys.argv[2]
 		import_file(fname)
+	elif action == "rerun":
+		fname = sys.argv[2]
+		rerun_file(fname)
 	else:
 		print "Command " + action + " unknown."
 
