@@ -9,7 +9,10 @@ import json
 from util.dbg import dbg
 from util.config import config
 
-BACKEND = client.Client()
+if config.get("backend", optional=True) != None:
+	BACKEND = client.Client()
+else:
+	BACKEND = None
 
 def sha256(data):
     h = hashlib.sha256()
@@ -106,7 +109,7 @@ class SessionRecord:
 			self.log_raw(self.urlset[url].json())
 	
 		# Ignore connections without any input
-		if len(self.stream) > 1:
+		if len(self.stream) > 1 and self.back != None:
 			upload_req = self.back.put_session(self.json())
 	
 			for url in upload_req:

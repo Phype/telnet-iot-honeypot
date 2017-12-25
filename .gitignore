@@ -8,4 +8,5 @@ import-length.py
 review-sampels.py
 *.kate-swp
 *.sql
+*.log
 config.yaml
