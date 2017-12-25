@@ -235,39 +235,6 @@ class Shell(Proc):
         if name.startswith("/bin/"):
             name = name[5:]
 
-        # Emultae redir
-        write_to  = None
-        read_from = None
-        delete    = True
-        i = len(args) - 1
-        while i >= 0:
-            if args[i] == ">":
-                write_to = args[i+1]
-                args = args[0:i]
-            elif args[i] == ">>":
-                delete = False
-                write_to = args[i+1]
-                args = args[0:i]
-            elif args[i].startswith(">>"):
-                delete = False
-                write_to = args[i][2:]
-                args = args[0:i]
-            elif args[i].startswith(">"):
-                write_to = args[i][1:]
-                args = args[0:i]
-            elif args[i] == "<":
-                read_from = args[i+1]
-                args = args[0:i]
-            elif args[i].startswith("<"):
-                read_from = args[i][1:]
-                args = args[0:i]
-            i -= 1
-
-        if write_to != None:
-            if delete:
-                env.deleteFile(write_to)
-            env = RedirEnv(env, write_to)
-
         if name in procs:
             try:
                 return procs[name].run(env, args)
@@ -396,9 +363,16 @@ StaticProc("ps",
 
 class Command:
     def __init__(self, args):
-        self.args = args
+        self.args          = args
+        self.redirect_from   = None
+        self.redirect_to     = None
+        self.redirect_append = False
 
     def run(self, env):
+        if self.redirect_to != None:
+            if not(self.redirect_append):
+                env.deleteFile(self.redirect_to)
+            env = RedirEnv(env, self.redirect_to)
         return shell.run(env, self.args)
 
     def __str__(self):
@@ -431,16 +405,33 @@ class CommandList:
 
 class Actions(object):
     def make_arg_noquot(self, input, start, end, elements):
-        return input[start:end]
+	    return input[start:end]
 
     def make_arg_quot(self, input, start, end, elements):
         return elements[1].text
 
     def make_basecmd(self, input, start, end, elements):
-        l = [ elements[1] ]
+        if isinstance(elements[1], shellgrammar.TreeNode):
+            l = []    
+        else:
+            l = [ elements[1] ]
         for e in elements[2].elements:
-            l.append(e.elements[1])
-        return Command(l)
+            if not(isinstance(e.elements[1], shellgrammar.TreeNode)):
+                l.append(e.elements[1])
+                
+        cmd = Command(l)
+                
+        # redirects
+        for r in elements[4]:
+            if r[0] == ">":
+                cmd.redirect_to = r[1]
+            if r[0] == ">>":
+                cmd.redirect_to = r[1]
+                cmd.redirect_append = True
+            if r[0] == "<":
+                cmd.redirect_from = r[2]
+        
+        return cmd 
 
     def make_cmdop(self, input, start, end, elements):
         if isinstance(elements[2], shellgrammar.TreeNode):
@@ -456,6 +447,14 @@ class Actions(object):
             # Pipes not supported
             pass
         return elements[0]
+        
+    def make_redirect(self, input, start, end, elements):
+        op  = elements[3].text
+        arg = elements[7]
+        return (op, arg)
+        
+    def make_redirects(self, input, start, end, elements):
+        return elements
 
 def parse(string):
     return shellgrammar.parse(filter_ascii(string).strip(), actions=Actions())

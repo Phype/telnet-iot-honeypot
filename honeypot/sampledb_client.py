@@ -94,8 +94,9 @@ class SessionRecord:
 	
 	def add_file(self, data, url=None, name=None, info=None):
 		if url == None:
+			shahash = sha256(data)
 			# Hack, must be unique somehow, so just use the hash ..."
-			url = "telnet://" + self.session_obj["ip"] + "/" + shahash[0:8]
+			url = "telnet://" + self.ip + "/" + shahash[0:8]
 		if name == None:
 			name = url.split("/")[-1].strip()
 
