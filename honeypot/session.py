@@ -52,10 +52,12 @@ class Session:
 			if path in self.files:
 				pass
 			else:
-				dbg("File created: " + path)
 				data = self.env.files[path]
 				if len(data) > MIN_FILE_SIZE:
+					dbg("File created: " + path)
 					self.record.add_file(data, name=path)
+				else:
+					dbg("Ignore small file: " + path + " (" + len(data) + ") bytes")
 		
 		self.record.commit()
 
