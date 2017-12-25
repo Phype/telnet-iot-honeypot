@@ -3,21 +3,20 @@
 <table class="table">
 
 	<tr><td>Date</td><td>{{ formatDate(connection.date) }}</td></tr>
-	<tr><td>ID</td><td>{{ connection.id }}</td></tr>
-	<tr><td>Honeypot name</td><td>{{ connection.backend_user }}</td></tr>
+	<tr><td>Duration</td><td>{{ connection.duration }} seconds</td></tr>
+	<!-- <tr><td>ID</td><td>{{ connection.id }}</td></tr> -->
+	<!-- <tr><td>Honeypot name</td><td>{{ connection.backend_user }}</td></tr> -->
 	<tr>
 		<td>IP</td>
 		<td>
-			<span ng-show="connection.asn"><img src="img/flags/{{ connection.country.toLowerCase() }}.png"> {{ connection.countryname }} <a href="#/connections?country={{ connection.country }}"><span class="glyphicon glyphicon-screenshot"></span></a><br></span>
-			<span>{{ connection.ip }} <a href="#/connections?ip={{ connection.ip }}"><span class="glyphicon glyphicon-screenshot"></span></a></span><br>
-			<span ng-show="connection.asn">AS{{ connection.asn.asn }} <b>{{ connection.asn.name }}</b>
-				<a href="#/asn/{{ connection.asn.asn }}"><span class="glyphicon glyphicon-screenshot"></span></a>
+			<span ng-show="connection.asn"><a href="#/connections?country={{ connection.country }}"><span class="glyphicon glyphicon-screenshot"></span></a> <img src="img/flags/{{ connection.country.toLowerCase() }}.png"> {{ connection.countryname }} <br></span>
+			<span><a href="#/connections?ip={{ connection.ip }}"><span class="glyphicon glyphicon-screenshot"></span></a></span> {{ connection.ip }}<br>
+			<span ng-show="connection.asn"><a href="#/asn/{{ connection.asn.asn }}"><span class="glyphicon glyphicon-screenshot"></span></a> AS{{ connection.asn.asn }} <b>{{ connection.asn.name }}</b>
 			</span><br>
 			<span ng-show="connection.asn">{{ connection.ipblock }}</span>
 		</td>
 	</tr>
-	<tr><td>Username</td><td>{{ connection.user }} <a href="#/connections?user={{ connection.user }}"><span class="glyphicon glyphicon-screenshot"></span></a></td></tr>
-	<tr><td>Password</td><td>{{ connection.password }} <a href="#/connections?password={{ connection.password }}"><span class="glyphicon glyphicon-screenshot"></span></a></td></tr>
+	<tr><td>User : Password</td><td><a href="#/connections?user={{ connection.user }}"><span class="glyphicon glyphicon-screenshot"></span> "{{ connection.user }}"</a> : <a href="#/connections?password={{ connection.password }}">"{{ connection.password }}" <span class="glyphicon glyphicon-screenshot"></span></a></td></tr>
 	<tr ng-show="connection.conns_before.length > 0">
 		<td>Prior Connections</td>
 		<td>
@@ -66,10 +65,10 @@
 </div>
 
 <div ng-show="connection.text_combined != ''">
-	<h2>Session text</h2>
+	<h2>Session text <small> show output <input type="checkbox" ng-model="displayoutput"></small></h2>
 
 	<div class="well well-sm code">
 		<div style="font-size: 0.7em;">Session Text does not include non-ascii characters</div>
-		<div class="code-line" ng-class="{ isinput: l.is_input }" ng-repeat="l in lines track by $index">{{ l.text }}</div>
+		<span class="code-line" ng-show="displayoutput || event.in" ng-class="{ isinput: event.in }" ng-repeat="event in connection.stream" title="after {{ event.ts }} s">{{ event.data }}</span>
 	</div>
 </div>

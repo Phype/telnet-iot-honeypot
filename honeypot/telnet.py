@@ -114,7 +114,6 @@ class TelnetSess:
 			self.session.login(u, p)
 
 			while True:
-				self.send_string(" # ")
 				l = self.recv_line()
 
 				try:

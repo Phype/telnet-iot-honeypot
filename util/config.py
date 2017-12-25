@@ -27,13 +27,15 @@ class Config:
 				'backend_pass: "' + rand() + '"\n' + 
 				'backend_salt: "' + rand() + '"\n')
 
-	def get(self, key):
+	def get(self, key, optional=False, default=None):
 		if key in self.userconfig:
 			return self.userconfig[key]
-		if key in self.distconfig:
+		elif key in self.distconfig:
 			return self.distconfig[key]
-		else:
+		elif not(optional):
 			raise Exception("Option \""+ key +"\" not found in config")
+		else:
+			return default
 
 config = Config()
 

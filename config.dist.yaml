@@ -22,7 +22,11 @@
 # Honeypot configuration
 
 # Backend URL to which honeypot will connect to to store data
-backend:      "http://localhost:5000"
+backend: "http://localhost:5000"
+
+# Write raw data to logfile, can be imported into backend db later
+#   does include everything EXCEPT sample contents
+log_raw: null
 
 #############################################
 # Backend configuration

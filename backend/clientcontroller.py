@@ -2,6 +2,7 @@ import os
 import hashlib
 import traceback
 import struct
+import json
 
 from sqlalchemy import desc, func, and_, or_
 from decorator import decorator
@@ -201,6 +202,8 @@ class ClientController:
 
 	@db_wrapper
 	def put_session(self, session):
+		print repr(session)
+	
 		ipinfo  = get_ip_info(session["ip"])
 		asn     = None
 		block   = None
@@ -214,10 +217,12 @@ class ClientController:
 
 		# Calculate "hash"
 		connhash = ""
-		for line in session["text_in"].split("\n"):
-			line     = line.strip()
-			linehash = abs(hash(line)) % 0xFFFF
-			connhash += struct.pack("!H", linehash)
+		for event in session["stream"]:
+			if event["in"]:
+				line = event["data"]
+				line     = line.strip()
+				linehash = abs(hash(line)) % 0xFFFF
+				connhash += struct.pack("!H", linehash)
 		connhash = connhash.encode("hex")
 
 		backend_user = self.session.query(User).filter(
@@ -225,7 +230,7 @@ class ClientController:
 
 		conn = Connection(ip=session["ip"], user=session["user"],
 			date=session["date"], password=session["pass"],
-			text_combined=session["text_combined"], asn_id=asn, ipblock=block,
+			stream=json.dumps(session["stream"]), asn_id=asn, ipblock=block,
 			country=country, connhash=connhash, backend_user_id=backend_user.id)
 
 		self.session.add(conn)

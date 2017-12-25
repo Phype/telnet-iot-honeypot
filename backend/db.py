@@ -1,4 +1,5 @@
 import time
+import json
 import sqlalchemy
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Text
@@ -116,7 +117,7 @@ class Connection(Base):
 	password = Column('pass', String(16))
 	connhash = Column('connhash', String(256))
 
-	text_combined = Column('text_combined', Text())
+	stream = Column('text_combined', Text())
 
 	asn_id = Column('asn', None, ForeignKey('asn.asn'))
 	asn = relationship("ASN", back_populates="connections")
@@ -147,7 +148,7 @@ class Connection(Base):
 			"user": self.user,
 			"password": self.password,
 			"connhash": self.connhash,
-			"text_combined": None if depth == 0 else filter_ascii(self.text_combined),
+			"stream": None if depth == 0 else json.loads(self.stream),
 			
 			"asn": None if self.asn == None else self.asn.json(0),
 			

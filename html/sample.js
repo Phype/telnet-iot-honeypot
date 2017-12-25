@@ -216,24 +216,16 @@ app.controller('connection', function($scope, $http, $routeParams) {
 	$scope.short = short;
 	$scope.encurl = encurl;
 	$scope.decurl = decurl;
+	$scope.displayoutput = true;
 
 	var id = $routeParams.id;
 	$http.get(api + "/connection/" + id).then(function (httpResult) {
 		$scope.connection = httpResult.data;
 
 		$scope.connection.countryname = COUNTRY_LIST[$scope.connection.country];
-
-		var lines = $scope.connection.text_combined.split("\n");
-		var newl  = [];
-		for (var i = 0; i < lines.length; i++)
-		{
-			newl.push({
-				text: lines[i],
-				is_input: lines[i].startsWith(" #")
-			});
-		}
-
-		$scope.lines = newl;
+		
+		var last_i = $scope.connection.stream.length - 1;
+		$scope.connection.duration    = $scope.connection.stream[last_i].ts;
 
 	});
 

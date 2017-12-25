@@ -4,6 +4,7 @@ import traceback
 import os
 import requests
 import hashlib
+import json
 
 from util.dbg import dbg
 from util.config import config
@@ -14,65 +15,104 @@ def sha256(data):
     h = hashlib.sha256()
     h.update(data)
     return h.hexdigest()
+    
+class SampleRecord:
+
+	def __init__(self, url, name, info, data):
+		self.url    = url
+		self.name   = name
+		self.date   = int(time.time())
+		self.info   = info
+		self.data   = data
+		self.sha256 = sha256(data)
+	
+	def json(self):
+		return {
+			"type":   "sample",
+			"url":    self.url,
+			"name":   self.name,
+			"date":   self.date,
+			"sha256": self.sha256,
+			"info":   self.info,
+			"length": len(self.data)
+		}
 
 class SessionRecord:
 
 	def __init__(self):
-		self.back = BACKEND
-		self.session_obj = {
-			"ip"            : None,
-			"user"          : None,
-			"pass"          : None,
-			"date"          : None,
-			"urls"          : [],
-
-			"text_in"       : "",
-			"text_out"      : "",
-			"text_combined" : ""
+		self.back    = BACKEND
+		self.logfile = config.get("log_raw", optional=True)
+	
+		self.urlset = {}
+		
+		self.ip = None
+		self.user = None
+		self.password = None
+		self.date = None
+		self.urls = []
+		self.stream = []
+		
+	def log_raw(self, obj):
+		if self.logfile != None:
+			with open(self.logfile, "ab") as fp:
+				fp.write(json.dumps(obj).replace("\n", "") + "\n")
+		
+		
+	def json(self):
+		return {
+			"type"          : "connection",
+			"ip"            : self.ip,
+			"user"          : self.user,
+			"pass"          : self.password,
+			"date"          : self.date,
+			"urls"          : self.urls,
+			"stream"        : self.stream,
 		}
-		self.urls = {}
+
+	def addInput(self, text):
+		self.stream.append({
+			"in":   True,
+			"ts":   round((time.time() - self.date) * 1000) / 1000,
+			"data": text.decode('ascii', 'ignore')
+		})
+
+	def addOutput(self, text):
+		self.stream.append({
+			"in":   False,
+			"ts":   round((time.time() - self.date) * 1000) / 1000,
+			"data": text.decode('ascii', 'ignore')
+		})
 
 	def set_login(self, ip, user, password):
-		self.session_obj["ip"]   = ip
-		self.session_obj["user"] = user
-		self.session_obj["pass"] = password
-		self.session_obj["date"] = int(time.time())
-		
+		self.ip       = ip
+		self.user     = user
+		self.password = password
+		self.date     = int(time.time())
+	
 	def add_file(self, data, url=None, name=None, info=None):
-		shahash = sha256(data)
-
 		if url == None:
-		    # Hack, must be unique somehow, so just use the hash ..."
-		    url = "telnet://" + self.session_obj["ip"] + "/" + shahash[0:8]
+			# Hack, must be unique somehow, so just use the hash ..."
+			url = "telnet://" + self.session_obj["ip"] + "/" + shahash[0:8]
 		if name == None:
-		    name = url.split("/")[-1].strip()
+			name = url.split("/")[-1].strip()
 
-		f = {
-		    "url":    url,
-		    "name":   name,
-		    "date":   int(time.time()),
-		    "length": len(data),
-		    "sha256": shahash,
-		    "info":   info,
-			"data":   data
-		}
-		self.urls[url] = f
-		self.session_obj["urls"].append(url)
+		self.urlset[url] = SampleRecord(url, name, info, data)
+		self.urls.append(url)
 
-	def commit(self, text_in, text_out, text_combined):
-		self.session_obj["text_in"]       = text_in.decode('ascii', 'ignore')
-		self.session_obj["text_out"]      = text_out.decode('ascii', 'ignore')
-		self.session_obj["text_combined"] = text_combined.decode('ascii', 'ignore')
+	def commit(self):
+		self.log_raw(self.json())
 		
-		upload_req = self.back.put_session(self.session_obj)
-		
-		for url in upload_req:
-			dbg("Upload requested: " + url)
+		for url in self.urls:
+			self.log_raw(self.urlset[url].json())
+	
+		# Ignore connections without any input
+		if len(self.stream) > 1:
+			upload_req = self.back.put_session(self.json())
+	
+			for url in upload_req:
+				dbg("Upload requested: " + url)
 
-			sample = self.urls[url]
-			data   = sample["data"]
-			del sample["data"]
-
-			self.back.put_sample_info(sample)
-			self.back.put_sample(data)
+				sample = self.urlset[url]
+				self.back.put_sample_info(sample.json())
+				self.back.put_sample(sample.data)
 
