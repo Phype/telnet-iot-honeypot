@@ -1,4 +1,5 @@
 setuptools
+werkzeug
 flask
 flask-httpauth
 sqlalchemy
