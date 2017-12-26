@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, redirect, send_from_directory
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
@@ -7,6 +7,7 @@ from clientcontroller import ClientController, WebController, AuthController
 
 from util.config import config
 
+import os
 import json
 import base64
 import time
@@ -44,6 +45,21 @@ def add_cors(response):
 @auth.verify_password
 def verify_password(username, password):
 	return authctrl.checkLogin(username, password)
+
+###
+#
+# Index
+#
+###
+
+@app.route('/')
+def send_index():
+	return redirect('/html/index.html')
+
+@app.route('/html/<path:filename>')
+def serve_static(filename):
+	root_dir = os.getcwd()
+	return send_from_directory(os.path.join(root_dir, 'html'), filename)
 
 ###
 #
