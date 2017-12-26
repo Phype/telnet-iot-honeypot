@@ -1,13 +1,36 @@
-# INSTALL
+# Installation
+
+For installation instructions, go to section Manual installation.
+However, if you just want to get everythig running, there is
+also a Vagrantfile. See Section Vagrent for that.
+
+# Vagrant
+
+There is a Vagrantfile in the folder vagrant/ you can use to just make
+a basic deployment with honeypot + backend + sqlite running.
+
+Install vagrant and vagrant virtualbox porvider,
+then go to vagrant folder and type `vagrant up`.
+After a while the box should run a honeypot + backend available
+via port-forwarding at `http://localhost:5000/` and `telnet://localhost:2223`.
+
+# Manual installation
+confirmed to work with Ubuntu 16.04.2 LTS
 
 Install all requirements:
 
 ```
-apt-get install python-pip libmysqlclient-dev python-mysqldb git
-pip install -r requirements.txt
+apt-get install -y python-pip libmysqlclient-dev python-mysqldb git sqlite3
 
 git clone https://github.com/Phype/telnet-iot-honeypot.git
+cd telnet-iot-honeypot
+pip install -r requirements.txt
 ```
+
+	sudo apt-get install python-setuptools python-werkzeug \
+		python-flask python-flask-httpauth python-sqlalchemy \
+		python-requests python-decorator python-dnspython \
+		python-ipaddress python-simpleeval python-yaml
 
 If you want to use mysql, create a mysql database. Default mysql max key length is 767 bytes,
 so it is recommended to use latin1 charset, else the db setup will fail.
