@@ -238,8 +238,8 @@ class ClientController:
 		self.session.flush()
 
 		req_urls = []
-
-		for url in session["urls"]:
+		set_urls = set(session["urls"])
+		for url in set_urls:
 			db_url = self.db.get_url(url).fetchone()
 			url_id = 0
 
