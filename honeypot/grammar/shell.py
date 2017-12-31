@@ -189,10 +189,23 @@ class Wget(Proc):
 
     def run(self, env, args):
         if len(args) == 0:
-            env.write("""wget: missing URL
-Usage: wget [OPTION]... [URL]...
+            env.write("""BusyBox v1.22.1 (Ubuntu 1:1.22.0-19ubuntu2) multi-call binary.
 
-Try `wget --help' for more options.\n""")
+Usage: wget [-c|--continue] [-s|--spider] [-q|--quiet] [-O|--output-document FILE]
+	[--header 'header: value'] [-Y|--proxy on/off] [-P DIR]
+	[-U|--user-agent AGENT] URL...
+
+Retrieve files via HTTP or FTP
+
+	-s	Spider mode - only check file existence
+	-c	Continue retrieval of aborted transfer
+	-q	Quiet
+	-P DIR	Save to DIR (default .)
+	-O FILE	Save to FILE ('-' for stdout)
+	-U STR	Use STR for User-Agent header
+	-Y	Use proxy ('on' or 'off')
+
+""")
             return 1
         else:
             echo = True
