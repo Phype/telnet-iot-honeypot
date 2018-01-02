@@ -47,6 +47,10 @@ sample_dir: "samples"
 vt_key:       "GET_YOUR_OWN"
 submit_to_vt: false
 
+# Enable or Disable IP to ASN resolution
+# Disabling will fasten up importing big amounts of data
+do_ip_to_asn_resolution: true
+
 cuckoo_enabled:  false,
 cuckoo_url_base: "http://127.0.0.1:8090"
 cuckoo_user:     "user"

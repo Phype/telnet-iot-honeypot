@@ -180,6 +180,56 @@ class WebController:
 		else:
 			return null
 
+	##
+	
+	@db_wrapper
+	def connhash_tree_lines(self, lines, mincount):
+		length     = 1 + lines * 4
+		othercount = 0
+		
+		ret   = {}
+		dbres = self.session.query(func.count(Connection.id),
+			func.substr(Connection.connhash, 0, length).label("c"),
+			Connection.stream, Connection.id).group_by("c").all()
+
+		for c in dbres:
+			count    = c[0]
+			connhash = c[1]
+			if count > mincount:
+				ev_in = filter(lambda ev : ev["in"], json.loads(c[2]))
+
+				if len(ev_in) >= lines:
+					ret[connhash] = {
+						"count": c[0],
+						"connhash": connhash,
+						"text": ev_in[lines-1]["data"],
+						"childs": [],
+						"sample_id": c[3]
+					}
+			else:
+				othercount += count
+
+		return ret
+
+	@db_wrapper
+	def connhash_tree(self, layers):
+		tree  = self.connhash_tree_lines(1, 10)
+		layer = tree
+
+		for lines in range(2,layers+1):
+			length = (lines-1) * 4
+			new_layer = self.connhash_tree_lines(lines, 0)
+			for connhash in new_layer:
+				connhash_old = connhash[:length]
+				if connhash_old in layer:
+					parent = layer[connhash_old]
+					parent["childs"].append(new_layer[connhash])
+			layer = new_layer
+
+		return tree
+				
+			
+
 # Controls Actions perfomed by Honeypot Clients
 class ClientController:
 
@@ -190,6 +240,7 @@ class ClientController:
 		else:
 			self.vt = None
 		self.cuckoo   = Cuckoo(config)
+		self.do_ip_to_asn_resolution = config.get("do_ip_to_asn_resolution", optional=True, default=True)
 
 	def get_asn(self, asn):
 		asn_obj = self.session.query(ASN).filter(ASN.asn == asn).first()
@@ -205,25 +256,28 @@ class ClientController:
 
 	@db_wrapper
 	def put_session(self, session):
-		ipinfo  = get_ip_info(session["ip"])
+		ipinfo  = None
 		asn     = None
 		block   = None
 		country = None
 
-		if ipinfo:
-			asn_obj = self.get_asn(ipinfo["asn"])
-			asn     = ipinfo["asn"]
-			block   = ipinfo["ipblock"]
-			country = ipinfo["country"]
+		if self.do_ip_to_asn_resolution:
+			ipinfo = get_ip_info(session["ip"])
+			if ipinfo:
+				asn_obj = self.get_asn(ipinfo["asn"])
+				asn     = ipinfo["asn"]
+				block   = ipinfo["ipblock"]
+				country = ipinfo["country"]
 
 		# Calculate "hash"
 		connhash = ""
 		for event in session["stream"]:
 			if event["in"]:
-				line = event["data"]
-				line     = line.strip()
-				linehash = abs(hash(line)) % 0xFFFF
-				connhash += struct.pack("!H", linehash)
+				line     = event["data"]
+				line     = ''.join(char for char in line if ord(char) < 128 and ord(char) > 32)
+				if line != "":
+					linehash = abs(hash(line)) % 0xFFFF
+					connhash += struct.pack("!H", linehash)
 		connhash = connhash.encode("hex")
 
 		backend_user = self.session.query(User).filter(

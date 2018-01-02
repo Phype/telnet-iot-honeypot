@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+    <title>Network | Hierarchical layout</title>
+
+    <style type="text/css">
+        body {
+            font: 10pt sans;
+        }
+
+        #mynetwork {
+            height: 800px;
+            border: 1px solid lightgray;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="http://visjs.org/dist/vis.js"></script>
+
+    <link rel="stylesheet" href="http://visjs.org/dist/vis-network.min.css">
+
+    <script type="text/javascript">
+        var nodes = [];
+        var edges = [];
+        var network = null;
+        var MAX   = 2000;
+
+        var nodes_dict = {};
+
+        function load() {
+          $.get("http://localhost:5000/connhashtree/20", null, draw);
+        }
+
+        function processNode(node, level) {
+            c  = (MAX - node.count) / MAX * 255;
+            nodes.push({
+                "level": level,
+                "id":    node.connhash,
+                "label": node.count + "\n" + node.text.replace("/bin/busybox", "").substr(0, 32),
+                "color": "rgb(" + c + "," + c + "," + c + ")"
+            });
+            nodes_dict[node.connhash] = node;
+            for (var i = 0; i < node.childs.length; i++) {
+                child    = node.childs[i];
+                edges.push({
+                    "from": node.connhash,
+                    "to":   child.connhash,
+                    "color": { 'color' : 'rgb(0,0,0)' }
+                });
+                processNode(child, level + 1);
+            }
+        }
+
+        function draw(data) {
+            data = JSON.parse(data);
+            console.log(data);
+            for (key in data) {
+                processNode(data[key], 0);
+            }
+
+            // create a network
+            var container = document.getElementById('mynetwork');
+            var options = {
+                layout: {
+                    hierarchical: {
+                        direction: "UD"
+                    }
+                }
+            };
+
+            data    = { "edges": edges, "nodes": nodes };
+            network = new vis.Network(container, data, options);
+
+            console.log(data);
+
+            // add event listeners
+            network.on("click", function (params) {
+                if (params.nodes.length == 1)
+                {
+                    var node = nodes_dict[params.nodes[0]];
+                    window.location.href = "http://localhost:5000/html/index.html#/connection/" + node.sample_id;
+                }
+            });
+        }
+
+    </script>
+    
+</head>
+
+<body onload="load();">
+<div id="mynetwork"></div>
+</body>
+</html>
+

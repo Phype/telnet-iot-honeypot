@@ -230,6 +230,10 @@ def get_tags():
 
 ### Hist
 
+@app.route("/connhashtree/<layers>")
+def connhash_tree(layers):
+	return json.dumps(web.connhash_tree(int(layers)))
+
 def hist_fill(start, end, delta, db_result):
 	result = []
 	start  = start - start % delta
