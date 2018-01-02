@@ -445,7 +445,7 @@ class Actions(object):
                 cmd.redirect_to = r[1]
                 cmd.redirect_append = True
             if r[0] == "<":
-                cmd.redirect_from = r[2]
+                cmd.redirect_from = r[1]
         
         return cmd 
 
