@@ -489,6 +489,35 @@ class Grammar(object):
                         address11 = self._read_redirects()
                         if address11 is not FAILURE:
                             elements0.append(address11)
+                            address12 = FAILURE
+                            remaining4, index7, elements6, address13 = 0, self._offset, [], True
+                            while address13 is not FAILURE:
+                                chunk3 = None
+                                if self._offset < self._input_size:
+                                    chunk3 = self._input[self._offset:self._offset + 1]
+                                if chunk3 == ' ':
+                                    address13 = TreeNode(self._input[self._offset:self._offset + 1], self._offset)
+                                    self._offset = self._offset + 1
+                                else:
+                                    address13 = FAILURE
+                                    if self._offset > self._failure:
+                                        self._failure = self._offset
+                                        self._expected = []
+                                    if self._offset == self._failure:
+                                        self._expected.append('" "')
+                                if address13 is not FAILURE:
+                                    elements6.append(address13)
+                                    remaining4 -= 1
+                            if remaining4 <= 0:
+                                address12 = TreeNode(self._input[index7:self._offset], index7, elements6)
+                                self._offset = self._offset
+                            else:
+                                address12 = FAILURE
+                            if address12 is not FAILURE:
+                                elements0.append(address12)
+                            else:
+                                elements0 = None
+                                self._offset = index1
                         else:
                             elements0 = None
                             self._offset = index1

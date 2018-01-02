@@ -4,7 +4,7 @@ cmd        <-  cmdbrace / cmdlist / empty
 cmdbrace   <-  " "* "(" " "* cmd " "* ")" " "*               %make_cmdbrace
 cmdlist    <-  cmdop / basecmd
 cmdop      <-  basecmd ("||" / "&&" / "|" / ";") cmd         %make_cmdop
-basecmd    <-  " "* arg (" "+ arg)* " "* redirects           %make_basecmd             
+basecmd    <-  " "* arg (" "+ arg)* " "* redirects " "*      %make_basecmd             
 arg        <-  arg_quot1 / arg_quot2 / arg_noquot / empty
 arg_noempty <-  arg_quot1 / arg_quot2 / arg_noquot
 arg_quot1  <-  "'" [^']* "'"                                 %make_arg_quot
