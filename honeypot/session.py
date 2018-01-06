@@ -5,6 +5,9 @@ import time
 import json
 import traceback
 
+import struct
+import socket
+
 from util.dbg import dbg
 
 from sampledb_client import SessionRecord
@@ -44,6 +47,33 @@ class Session:
 		data = self.env.readFile(path)
 		self.record.add_file(data, url=url, name=path, info=info)
 		self.files.append(path)
+		
+	def parse_shellcode(self, data):
+		# Hajime exclusive!
+		
+		if len(data) == 480:
+			sockaddr = data[0xf0:0xf0+8]
+			sockaddr = struct.unpack(">HHBBBB", sockaddr)
+			ip   = str(sockaddr[2]) + "." + str(sockaddr[3]) + "." + str(sockaddr[4]) + "." + str(sockaddr[5])
+			port = sockaddr[1]
+			dbg("Stub downloader started: " + ip + ":" + str(port))
+			
+			try:
+				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				s.connect((ip, port))
+				
+				data = ""
+				while True:
+					chunk = s.recv(1024)
+					if len(chunk) == 0:
+						break
+					data += chunk
+				
+				s.close()
+				
+				self.record.add_file(data, url="tcp://" + ip + ":" + str(port))
+			except:
+				traceback.print_exc()
 	
 	def found_file(self, path, data):
 		if path in self.files:
@@ -51,6 +81,7 @@ class Session:
 		else:
 			if len(data) > MIN_FILE_SIZE:
 				dbg("File created: " + path)
+				self.parse_shellcode(data)
 				self.record.add_file(data, name=path)
 			else:
 				dbg("Ignore small file: " + path + " (" + str(len(data)) + ") bytes")
