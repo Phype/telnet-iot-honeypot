@@ -54,26 +54,28 @@ class Session:
 		if len(data) == 480:
 			sockaddr = data[0xf0:0xf0+8]
 			sockaddr = struct.unpack(">HHBBBB", sockaddr)
-			ip   = str(sockaddr[2]) + "." + str(sockaddr[3]) + "." + str(sockaddr[4]) + "." + str(sockaddr[5])
-			port = sockaddr[1]
-			dbg("Stub downloader started: " + ip + ":" + str(port))
 			
-			try:
-				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				s.connect((ip, port))
+			if sockaddr[0] == 0x0200:
+				ip   = str(sockaddr[2]) + "." + str(sockaddr[3]) + "." + str(sockaddr[4]) + "." + str(sockaddr[5])
+				port = sockaddr[1]
+				dbg("Stub downloader started: " + ip + ":" + str(port))
+			
+				try:
+					s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+					s.connect((ip, port), timeout=10)
 				
-				data = ""
-				while True:
-					chunk = s.recv(1024)
-					if len(chunk) == 0:
-						break
-					data += chunk
+					data = ""
+					while True:
+						chunk = s.recv(1024)
+						if len(chunk) == 0:
+							break
+						data += chunk
 				
-				s.close()
+					s.close()
 				
-				self.record.add_file(data, url="tcp://" + ip + ":" + str(port))
-			except:
-				traceback.print_exc()
+					self.record.add_file(data, url="tcp://" + ip + ":" + str(port))
+				except:
+					traceback.print_exc()
 	
 	def found_file(self, path, data):
 		if path in self.files:
