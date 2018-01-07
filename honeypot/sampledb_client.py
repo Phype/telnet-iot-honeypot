@@ -9,10 +9,15 @@ import json
 from util.dbg import dbg
 from util.config import config
 
-if config.get("backend", optional=True) != None:
-	BACKEND = client.Client()
-else:
-	BACKEND = None
+_BACKEND = None
+def get_backend():
+	if _BACKEND:
+		return _BACKEND
+	elif config.get("backend", optional=True) != None:
+		_BACKEND = client.Client()
+		return _BACKEND
+	else:
+		return None
 
 def sha256(data):
     h = hashlib.sha256()
@@ -43,7 +48,7 @@ class SampleRecord:
 class SessionRecord:
 
 	def __init__(self):
-		self.back    = BACKEND
+		self.back    = get_backend()
 		self.logfile = config.get("log_raw", optional=True)
 	
 		self.urlset = {}

@@ -3,9 +3,11 @@ import sys
 import signal
 import json
 
-from honeypot.telnet  import Telnetd
-from honeypot.client  import Client
-from honeypot.session import Session
+from honeypot.telnet      import Telnetd
+from honeypot.client      import Client
+from honeypot.session     import Session
+from honeypot.shell.shell import test_shell
+
 from util.dbg import dbg
 
 srv = None
@@ -63,6 +65,8 @@ if __name__ == "__main__":
 	elif action == "rerun":
 		fname = sys.argv[2]
 		rerun_file(fname)
+	elif action == "shell":
+		test_shell()
 	else:
 		print "Command " + action + " unknown."
 

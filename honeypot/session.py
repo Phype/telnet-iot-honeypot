@@ -12,7 +12,7 @@ from util.dbg import dbg
 
 from sampledb_client import SessionRecord
 
-from grammar.shell import Env, parse
+from shell.shell import Env, run
 
 MIN_FILE_SIZE = 128
 PROMPT = " # "
