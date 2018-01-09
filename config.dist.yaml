@@ -28,6 +28,10 @@ backend: "http://localhost:5000"
 #   does include everything EXCEPT sample contents
 log_raw: null
 
+# Do not download any samples, use their url as content
+#   useful for debugging
+fake_dl: false
+
 #############################################
 # Backend configuration
 

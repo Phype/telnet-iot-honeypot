@@ -81,10 +81,11 @@ function gotConn(conn)
 
   // Check if the connection has ANY edge
   // associates/urls/samples
-  if (conn.urls.length == 0 && conn.conns_before.length == 0 && conn.conns_after.length == 0)
-  {
-    return;
-  }
+  
+  //if (conn.urls.length == 0 && conn.conns_before.length == 0 && conn.conns_after.length == 0)
+  //{
+  //  return;
+  //}
 
   conns[conn.id] = conn;
   ip = getIP(conn.ip, "ip");
@@ -107,9 +108,11 @@ function gotConn(conn)
   for (var u = 0; u < conn.urls.length; u++)
   {
     var url    = conn.urls[u];
-    if (url.ip != null && url.ip != "")
+    var urlid  = url.url; // url.ip;
+    if (urlid != null && urlid != "" ) //&& !url.url.startsWith("telnet://"))
     {
-      var url_ip = getIP(url.ip, "url");
+      console.log("url " + urlid);
+      var url_ip = getIP(urlid, "url");
 
       // Conn <-> URL
       ip.neighbors[url_ip.ip] = url_ip;

@@ -1,4 +1,3 @@
-
 import re
 import random
 import time
@@ -8,7 +7,8 @@ import traceback
 import struct
 import socket
 
-from util.dbg import dbg
+from util.dbg    import dbg
+from util.config import config
 
 from sampledb_client import SessionRecord
 
@@ -48,7 +48,7 @@ class Session:
 		self.record.add_file(data, url=url, name=path, info=info)
 		self.files.append(path)
 		
-	def parse_shellcode(self, data):
+	def parse_shellcode(self, data):		
 		# Hajime exclusive!
 		
 		if len(data) == 480:
@@ -58,23 +58,27 @@ class Session:
 			if sockaddr[0] == 0x0200:
 				ip   = str(sockaddr[2]) + "." + str(sockaddr[3]) + "." + str(sockaddr[4]) + "." + str(sockaddr[5])
 				port = sockaddr[1]
-				dbg("Stub downloader started: " + ip + ":" + str(port))
-			
-				try:
-					s = socket.create_connection((ip, port), timeout=10)
+				url  = "tcp://" + ip + ":" + str(port)
+				dbg("Stub downloader started: " + url)
 				
-					data = ""
-					while True:
-						chunk = s.recv(1024)
-						if len(chunk) == 0:
-							break
-						data += chunk
+				if config.get("fake_dl", optional=True, default=False):
+					self.record.add_file(str(hash(url)), url=url)
+				else:
+					try:
+						s = socket.create_connection((ip, port), timeout=10)
 				
-					s.close()
+						data = ""
+						while True:
+							chunk = s.recv(1024)
+							if len(chunk) == 0:
+								break
+							data += chunk
 				
-					self.record.add_file(data, url="tcp://" + ip + ":" + str(port))
-				except:
-					traceback.print_exc()
+						s.close()
+				
+						self.record.add_file(data, url=url)
+					except:
+						traceback.print_exc()
 	
 	def found_file(self, path, data):
 		if path in self.files:
@@ -107,11 +111,11 @@ class Session:
 		self.record.addInput(l + "\n")
 	
 		try:
-			tree = parse(l)
-			tree.run(self.env)
+			tree = run(l, self.env)
 		except:
 			dbg("Could not parse \""+l+"\"")
 			self.send_string("sh: syntax error near unexpected token `" + " " + "'\n")
+			traceback.print_exc()
 		
 		self.send_string(PROMPT)
 

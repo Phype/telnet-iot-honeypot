@@ -6,8 +6,10 @@ import traceback
 from getopt import gnu_getopt, GetoptError
 from tftpy  import TftpClient
 
-from util   import easy_getopt
-from base   import Proc
+from cmd_util import easy_getopt
+from base     import Proc
+
+from util.config import config
 
 class DummyIO(io.RawIOBase):
 	
@@ -100,6 +102,9 @@ Transfer a file from/to tftp server
 			traceback.print_exc()
 
 	def download(self, host, port, fname):
+		if config.get("fake_dl", optional=True, default=False):
+			return str(hash(host + str(port) + fname))
+			
 		output = DummyIO()
 		client = TftpClient(host, port)
 		

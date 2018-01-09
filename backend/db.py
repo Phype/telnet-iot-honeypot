@@ -55,6 +55,15 @@ class User(Base):
 		return {
 			"username": self.username
 		}
+		
+class Network(Base):
+	__tablename__ = 'network'
+	
+	id = Column('id', Integer, primary_key=True)
+
+	samples     = relationship("Sample",     back_populates="network")
+	urls        = relationship("Url",        back_populates="network")
+	connections = relationship("Connection", back_populates="network")
 
 class ASN(Base):
 	__tablename__ = 'asn'
@@ -95,6 +104,9 @@ class Sample(Base):
 	
 	urls = relationship("Url", back_populates="sample")
 	
+	network_id  = Column('network', None, ForeignKey('network.id'))
+	network     = relationship("Network", back_populates="samples")
+	
 	def json(self, depth=0):
 		return {
 			"sha256": self.sha256,
@@ -128,9 +140,12 @@ class Connection(Base):
 	ipblock = Column('ipblock', String(32))
 	country = Column('country', String(3))
 	
-	urls = relationship("Url", secondary=conns_urls, back_populates="connections")
-	tags = relationship("Tag", secondary=conns_tags, back_populates="connections")
-
+	urls    = relationship("Url", secondary=conns_urls, back_populates="connections")
+	tags    = relationship("Tag", secondary=conns_tags, back_populates="connections")
+	
+	network_id  = Column('network', None, ForeignKey('network.id'))
+	network     = relationship("Network", back_populates="connections")
+	
 	conns_before = relationship("Connection", secondary=conns_conns,
 			back_populates="conns_after", 
             primaryjoin=(conns_conns.c.id_last==id),
@@ -177,7 +192,10 @@ class Url(Base):
 	date = Column('date', Integer)
 	
 	sample_id = Column('sample', None, ForeignKey('samples.id'))
-	sample = relationship("Sample", back_populates="urls")
+	sample    = relationship("Sample", back_populates="urls")
+	
+	network_id  = Column('network', None, ForeignKey('network.id'))
+	network     = relationship("Network", back_populates="urls")
 	
 	connections = relationship("Connection", secondary=conns_urls, back_populates="urls")
 	

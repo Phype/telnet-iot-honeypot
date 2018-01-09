@@ -11,7 +11,7 @@ from simpleeval import simple_eval
 from argon2 import argon2_hash
 
 from additionalinfo import get_ip_info, get_url_info, get_asn_info
-from db import get_db, filter_ascii, Sample, Connection, Url, ASN, Tag, User
+from db import get_db, filter_ascii, Sample, Connection, Url, ASN, Tag, User, Network
 from virustotal import Virustotal
 
 from cuckoo import Cuckoo
@@ -256,10 +256,11 @@ class ClientController:
 
 	@db_wrapper
 	def put_session(self, session):
-		ipinfo  = None
-		asn     = None
-		block   = None
-		country = None
+		ipinfo     = None
+		asn        = None
+		block      = None
+		country    = None
+		network_id = None
 
 		if self.do_ip_to_asn_resolution:
 			ipinfo = get_ip_info(session["ip"])
@@ -289,39 +290,22 @@ class ClientController:
 			country=country, connhash=connhash, backend_user_id=backend_user.id)
 
 		self.session.add(conn)
-		self.session.flush()
-
-		req_urls = []
-		set_urls = set(session["urls"])
-		for url in set_urls:
-			db_url = self.db.get_url(url).fetchone()
-			url_id = 0
-
-			if db_url == None:
-				url_ip      = None
-				url_asn     = None
-				url_country = None
+		self.session.flush() # to get id
+ 
+		samples = []
+		urls    = []
+		for sample_json in session["samples"]:
+			sample, url = self.create_url_sample(sample_json)
+			
+			if network_id == None and sample.network_id != None:
+				network_id = sample.network_id
 				
-				if self.do_ip_to_asn_resolution:
-					url_ip, url_info = get_url_info(url)
-					if url_info:
-						asn_obj_url = self.get_asn(url_info["asn"])
-						url_asn     = url_info["asn"]
-						url_country = url_info["country"]
-
-				url_id = self.db.put_url(url, session["date"], url_ip, url_asn, url_country)
-				req_urls.append(url)
-
-			elif db_url["sample"] == None:
-				req_urls.append(url)
-				url_id = db_url["id"]
-
-			else:
-				# Sample exists already
-				# TODO: Check url for oldness
-				url_id = db_url["id"]
-
-			self.db.link_conn_url(conn.id, url_id)
+			if network_id == None and url.network_id != None:
+				network_id = url.network_id
+			
+			conn.urls.append(url)
+			samples.append(sample)
+			urls.append(url)
 
 		# Find previous connections
 		# A connection is associated when:
@@ -337,36 +321,96 @@ class ClientController:
 				Connection.id != conn.id).all())
 
 		for prev in previous_conns:
+			if network_id == None and prev.network_id != None:
+				network_id = prev.network_id
 			conn.conns_before.append(prev)
 
 		# Check connection against all tags
 		tags = self.session.query(Tag).all()
-		conn = self.session.query(Connection).filter(Connection.id == conn.id).first()
 		for tag in tags:
 			json_obj = conn.json(depth = 0)
 			json_obj["text_combined"] = filter_ascii(json_obj["text_combined"])
 			if simple_eval(tag.code, names=json_obj) == True:
 				self.db.link_conn_tag(conn.id, tag.id)
 
-		return req_urls
-
+		# Only create new networks for connections with urls or associtaed conns,
+		# to prevent the creation of thousands of networks
+		# NOTE: only conns with network == NULL will get their network updated
+		#       later so whe should only create a network where we cannot easily
+		#       change it later
+		if (len(conn.urls) > 0 or len(previous_conns) > 0) and network_id == None:
+			network_id = self.create_network().id
+		
+		# Update network on self
+		conn.network_id = network_id
+		
+		# Update network on all added Urls
+		for url in urls:
+			if url.network_id == None:
+				url.network_id = network_id
+				
+		# Update network on all added Samples
+		for sample in samples:
+			if sample.network_id == None:
+				sample.network_id = network_id
+		
+		# Update network on all previous connections withut one
+		if network_id != None:
+			for prev in previous_conns:
+				 if prev.network_id == None:
+				 	prev.network_id = network_id
+		
+		self.session.flush()
+		return []
+		
 	@db_wrapper
-	def put_sample_info(self, f):
-		url = f["url"]
-		url_id = self.db.get_url(url).fetchone()["id"]
+	def create_network(self):
+		net = Network()
+		self.session.add(net)
+		self.session.flush()
+		return net
 
-		result = None
-		try:
-			if self.vt != None:
-				vtobj  = self.vt.query_hash_sha256(f["sha256"])
-				if vtobj:
-					result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
-		except:
-			pass
+	def create_url_sample(self, f):
+		url = self.session.query(Url).filter(Url.url==f["url"]).first()
+		if url == None:
+			url_ip      = None
+			url_asn     = None
+			url_country = None
+			
+			if self.do_ip_to_asn_resolution:
+				url_ip, url_info = get_url_info(f["url"])
+				if url_info:
+					asn_obj_url = self.get_asn(url_info["asn"])
+					url_asn     = url_info["asn"]
+					url_country = url_info["country"]
+			
+			url = Url(url=f["url"], date=f["date"], ip=url_ip, asn=url_asn, country=url_country)
+			self.session.add(url)
+		
+		sample = self.session.query(Sample).filter(Sample.sha256 == f["sha256"]).first()
+		if sample == None:
+			result = None
+			try:
+				if self.vt != None:
+					vtobj  = self.vt.query_hash_sha256(f["sha256"])
+					if vtobj:
+						result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
+			except:
+				pass
 
-		sample_id = self.db.put_sample(f["sha256"], f["name"], f["length"], f["date"], f["info"], result)
-		self.db.link_url_sample(url_id, sample_id)
-		return f
+			sample = Sample(sha256=f["sha256"], name=f["name"], length=f["length"],
+				date=f["date"], info=f["info"], result=result)
+			self.session.add(sample)
+		
+		if sample.network_id != None and url.network_id == None:
+			url.network_id = sample.network_id
+		
+		if sample.network_id == None and url.network_id != None:
+			sample.network_id = url.network_id
+		
+		url.sample = sample
+		
+		return sample, url
 
 	@db_wrapper
 	def put_sample(self, data):

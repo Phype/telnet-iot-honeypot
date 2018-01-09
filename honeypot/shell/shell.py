@@ -201,8 +201,8 @@ class Actions(object):
     def make_redirects(self, input, start, end, elements):
         return elements
 
-def run(string):
-    return parse(filter_ascii(string).strip(), actions=Actions())
+def run(string, env):
+    return parse(filter_ascii(string).strip(), actions=Actions()).run(env)
 
 def test_shell():
     env = Env()
@@ -216,7 +216,6 @@ def test_shell():
         if line == "\n":
             continue
         line = line[:-1] 
-        tree = run(line)
-        tree.run(env)
+        tree = run(line, env)
         sys.stdout.flush()
 
