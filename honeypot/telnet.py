@@ -57,6 +57,7 @@ class Telnetd:
 	def run(self):
 		self.sock.bind((self.host, self.port))
 		self.sock.listen(10)
+		self.sock.setTimeout(None)
 		dbg("Socket open on port " + str(self.port))
 		while self.do_run:
 			try:
