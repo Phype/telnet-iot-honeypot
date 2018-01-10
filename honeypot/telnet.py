@@ -3,6 +3,8 @@ import socket
 import traceback
 import time
 
+from thread import start_new_thread
+
 from session import Session
 from util.dbg import dbg
 
@@ -72,12 +74,9 @@ class Telnetd:
 			dbg("Client connected at " + str(addr))
 
 			sess = TelnetSess(self, conn, addr)
-			sess.loop()
+			start_new_thread(sess.loop, ())
 		except:
 			traceback.print_exc()
-
-		if conn:
-			conn.close()
 
 	def stop(self):
 		self.do_run = False
@@ -132,6 +131,7 @@ class TelnetSess:
 			dbg("Connection closed")
 
 		self.session.end()
+		self.sock.close()
 
 	def test_naws(self):
 		#dbg("TEST NAWS")
@@ -232,3 +232,4 @@ class TelnetSess:
 			self.send(byte)
 		if cmd == Telnetd.WILL or cmd == Telnetd.WONT:
 			byte = self.recv()
+
