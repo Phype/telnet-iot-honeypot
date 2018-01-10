@@ -2,6 +2,7 @@ import os
 import sys
 import signal
 import json
+import socket
 
 from honeypot.telnet      import Telnetd
 from honeypot.client      import Client
@@ -56,6 +57,8 @@ if __name__ == "__main__":
 		action = sys.argv[1]
 
 	if action == None:
+		socket.setdefaulttimeout(15)
+	
 		srv = Telnetd(2223)
 		signal.signal(signal.SIGINT, signal_handler)
 		srv.run()
