@@ -32,6 +32,12 @@ log_raw: null
 #   useful for debugging
 fake_dl: false
 
+# Timeout in seconds for telnet session. Will expire if no bytes can be read from socket.
+telnet_session_timeout: 60
+
+# Maximum session length in seconds.
+telnet_max_session_length: 120
+
 #############################################
 # Backend configuration
 
