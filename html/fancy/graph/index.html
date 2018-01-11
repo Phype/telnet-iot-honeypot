@@ -8,7 +8,6 @@
 <script src="http://visjs.org/dist/vis.js"></script>
 
 <link rel="stylesheet" href="http://visjs.org/dist/vis-network.min.css">
-
 <style type="text/css">
 
 .code {
@@ -20,14 +19,15 @@
 }
 
 </style>
-
 <script src="../../apiurl.js"></script>
 <script type="text/javascript">
 
-var ips     = {};
-var conns   = {};
-var urls    = {};
-var samples = {};
+var ips        = {};
+var conns      = {};
+var urls       = {};
+var samples    = {};
+var graph_data = null;
+var globalnode = null;
 
 function print(s)
 {
@@ -151,6 +151,23 @@ function main()
   });
 }
 
+function addnode()
+{
+	var myid = "" + Math.random();
+
+	graph_data.nodes.add({
+		"id":		myid,
+		"label":	"newnewnew" 
+	});
+	
+	graph_data.edges.add({
+		"id":   globalnode + "-" + myid,
+		"from": globalnode,
+		"to":   myid,
+	});
+	
+}
+
 function draw()
 {
   var nodes = [];
@@ -193,7 +210,7 @@ function draw()
 
   // create a network
   var container = document.getElementById('mynetwork');
-  var data = {
+  graph_data = {
     nodes: new vis.DataSet(nodes),
     edges: new vis.DataSet(edges)
   };
@@ -202,12 +219,13 @@ function draw()
       improvedLayout: false
     }
   };
-  var network = new vis.Network(container, data, options);
+  var network = new vis.Network(container, graph_data, options);
   network.on("click", function (params) {
     if (params.nodes.length == 1)
     {
-      var newip = nodes2ip[params.nodes[0]];
-      window.location.href = "https://phype.pythonanywhere.com/#/connections?ip=" + newip;
+      globalnode = params.nodes[0];
+      //var newip = nodes2ip[params.nodes[0]];
+      //window.location.href = "https://phype.pythonanywhere.com/#/connections?ip=" + newip;
     }
   });
 }
@@ -217,7 +235,7 @@ function draw()
 </head>
 <body onload="main()">
 
-<button onclick="draw()">draw</button>
+<button onclick="draw()">draw</button><button onclick="addnode()">addnode</button>
 <div id="mynetwork"></div>
 <pre id="logbox">
 

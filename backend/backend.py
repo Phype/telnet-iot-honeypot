@@ -125,6 +125,11 @@ def fail(msg = "", code = 400):
 	obj = {"ok" : False, "msg" : msg}
 	return Response(json.dumps(obj), status=code, mimetype='application/json')
 
+
+@app.route("/networks", methods = ["GET"])
+def get_networks():
+	return json.dumps(web.get_networks())
+
 ### Samples
 
 @app.route("/sample/<sha256>")

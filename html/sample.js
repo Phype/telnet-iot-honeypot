@@ -35,6 +35,10 @@ app.config(function($routeProvider) {
 		templateUrl : "asn.html",
 		controller : "asn"
 	})
+	.when("/networks", {
+		templateUrl : "networks.html",
+		controller : "networks"
+	})
 	.when("/connections", {
 		templateUrl : "connectionlist.html",
 		controller : "connectionlist"
@@ -167,6 +171,31 @@ app.controller('tags', function($scope, $http, $routeParams) {
 	$http.get(api + "/tags").then(function (httpResult) {
 		$scope.tags = httpResult.data;
 	});
+
+});
+
+app.controller('networks', function($scope, $http, $routeParams) {
+
+	$scope.formatDate = formatDateTime;
+	$scope.nicenull = nicenull;
+	$scope.short  = short;
+	$scope.encurl = encurl;
+	$scope.decurl = decurl;
+
+	$http.get(api + "/networks").then(function (httpResult) {
+		$scope.networks = httpResult.data;
+		
+		for (var i = 0; i < $scope.networks.length; i++)
+		{
+			var item = $scope.networks[i];
+			item.order = item.urls.length + item.connections.length
+				+ item.samples.length;
+		}
+	});
+	
+	$scope.filterNoSamples = function(network) {
+		return network.samples.length > 0;
+	};
 
 });
 

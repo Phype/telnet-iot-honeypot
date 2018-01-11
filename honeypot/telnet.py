@@ -64,8 +64,6 @@ class Telnetd:
 				self.handle()
 			except:
 				traceback.print_exc()
-			# ONLY HANDLE ONE CLIENT
-			# self.stop()
 		self.sock.close()
 		dbg("Socket Closed")
 

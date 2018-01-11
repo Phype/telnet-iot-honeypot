@@ -64,6 +64,14 @@ class Network(Base):
 	samples     = relationship("Sample",     back_populates="network")
 	urls        = relationship("Url",        back_populates="network")
 	connections = relationship("Connection", back_populates="network")
+	
+	def json(self):
+		return {
+			"id":          self.id,
+			"samples":     map(lambda i: i.sha256, self.samples),
+			"urls":        map(lambda i: i.url, self.urls),
+			"connections": map(lambda i: i.id, self.connections)
+		}
 
 class ASN(Base):
 	__tablename__ = 'asn'

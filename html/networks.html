@@ -1,0 +1,18 @@
+<h1>Networks</h1>
+
+<table class="table table-condensed">
+
+	<tr>
+		<th>#</th>
+		<th>No Connections</th>
+		<th>No Urls</th>
+		<th>No Samples</th>
+	</tr>
+	<tr ng-repeat="network in networks | filter:filterNoSamples | orderBy:'-order'">
+		<td>{{ network.id }}</td>
+		<td>{{ network.connections.length }}</td>
+		<td>{{ network.urls.length }}</td>
+		<td>{{ network.samples.length }}</td>
+	</tr>
+
+</table>

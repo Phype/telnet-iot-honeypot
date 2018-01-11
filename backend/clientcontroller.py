@@ -125,6 +125,15 @@ class WebController:
 			})
 
 		return clist
+		
+	##
+	
+	@db_wrapper
+	def get_networks(self):
+		networks = self.session.query(Network).all()
+		ret      = map(lambda network: network.json(), networks)
+		
+		return ret
 
 	##
 
