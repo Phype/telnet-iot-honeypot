@@ -132,6 +132,27 @@ class WebController:
 	def get_networks(self):
 		networks = self.session.query(Network).all()
 		ret      = map(lambda network: network.json(), networks)
+		return ret
+	
+	@db_wrapper
+	def get_network(self, net_id):
+		network  = self.session.query(Network).filter(Network.id == net_id).first()
+		ret      = network.json()
+		
+		ret["connectiontimes"] = map(lambda connection: connection.date, network.connections)
+		
+		has_infected = set([])
+		for connection in network.connections:
+			for connection_before in connection.conns_before:
+				if connection.ip != connection_before.ip:
+					has_infected.add(("i:" + connection.ip, "i:" + connection_before.ip))
+
+			for url in connection.urls:
+				has_infected.add(("u:" + url.url, "i:" + connection.ip))		
+				
+				if url.sample:
+					has_infected.add(("s:" + url.sample.sha256, "u:" + url.url))
+		ret["has_infected"] = list(has_infected)
 		
 		return ret
 

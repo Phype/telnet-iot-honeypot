@@ -125,10 +125,15 @@ def fail(msg = "", code = 400):
 	obj = {"ok" : False, "msg" : msg}
 	return Response(json.dumps(obj), status=code, mimetype='application/json')
 
+### Networks
 
 @app.route("/networks", methods = ["GET"])
 def get_networks():
 	return json.dumps(web.get_networks())
+
+@app.route("/network/<net_id>", methods = ["GET"])
+def get_network(net_id):
+	return json.dumps(web.get_network(net_id))
 
 ### Samples
 
@@ -176,7 +181,7 @@ def get_connection(id):
 @app.route("/connections")
 def get_connections():
 	obj          = {}
-	allowed_keys = ["ipblock", "user", "password", "ip", "country", "asn_id"]
+	allowed_keys = ["ipblock", "user", "password", "ip", "country", "asn_id", "network_id"]
 	
 	for k,v in request.args.iteritems():
 		if k in allowed_keys:

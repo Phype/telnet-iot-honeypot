@@ -165,13 +165,15 @@ class Connection(Base):
 	
 	def json(self, depth=0):
 		return {
-			"id": self.id,
-			"ip": self.ip,
+			"id":   self.id,
+			"ip":   self.ip,
 			"date": self.date,
 			"user": self.user,
 			"password": self.password,
 			"connhash": self.connhash,
 			"stream": None if depth == 0 else json.loads(self.stream),
+			
+			"network_id": self.network_id,
 			
 			"asn": None if self.asn == None else self.asn.json(0),
 			

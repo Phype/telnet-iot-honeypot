@@ -1,0 +1,25 @@
+<h1>Network Info</h1>
+
+<table class="table">
+
+	<tr><td>id</td><td><b>{{ network.id }}</b></td></tr>
+	<tr><td>Connections</td><td><b>{{ network.connections.length }}</b> connections from <b>{{ formatDate(network.firsttime) }}</b> to <b>{{ formatDate(network.lasttime) }}</b></td></tr>
+	<tr><td>Urls</td><td>{{ network.urls.length }}</td></tr>
+	<tr><td>Samples</td><td>{{ network.samples.length }}</td></tr>
+
+</table>
+
+<!--
+<h2>Connections from the Network <small><a href="#/connections?network_id={{ network.id }}">see all</a></small></h2>
+<div style="height: 15em; width: 100%">
+<canvas id="timechart" class="chart chart-line"
+	chart-data="timechart_data" chart-options="timechart_options"
+	chart-labels="timechart_labels" chart-colors="timechart_colors">
+</canvas>
+</div>
+-->
+
+<h2>Network graph</small></h2>
+<div style="height: 15em; width: 100%">
+<vis-network data="graph_data" options="graph_options" style="width: 100%; height: 200px;"></vis-network>
+</div>
