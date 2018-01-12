@@ -131,7 +131,14 @@ class WebController:
 	@db_wrapper
 	def get_networks(self):
 		networks = self.session.query(Network).all()
-		ret      = map(lambda network: network.json(), networks)
+		ret      = []
+		for network in networks:
+			n = network.json()
+			ips = set()
+			for connection in network.connections:
+				ips.add(connection.ip)
+			n["ips"] = list(ips)
+			ret.append(n)
 		return ret
 	
 	@db_wrapper

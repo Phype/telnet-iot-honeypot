@@ -192,8 +192,7 @@ app.controller('networks', function($scope, $http, $routeParams) {
 		for (var i = 0; i < $scope.networks.length; i++)
 		{
 			var item = $scope.networks[i];
-			item.order = item.urls.length + item.connections.length
-				+ item.samples.length;
+			item.order = item.ips.length;
 		}
 	});
 	
@@ -242,9 +241,42 @@ app.controller('network', function($scope, $http, $routeParams) {
 			var tdiff = (a.length-i-1) * tstep;
 			return formatDateTime(now - tdiff);
 		});
-
-    	/////
+		
+	});
+	
+	$scope.timechart_options = {
+		"animation": isMobile ? false : {},
+		"responsive": true,
+		"maintainAspectRatio": false,
+    };
     
+    $scope.graph_events = {
+    	"click": function(ev) {
+    		if (ev.nodes.length == 1) {
+    			var n    = ev.nodes[0];
+    			var d    = n.substr(2);
+    			var link = null;
+    			
+				if (n.startsWith("i:")) link = "#/connections?ip=" + d;
+				if (n.startsWith("s:")) link = "#/sample/" + d;
+				if (n.startsWith("u:")) link = "#/url/" + encurl(d);
+				
+				window.location.href = link;
+    			
+    		}
+    	}
+    };
+	
+	$scope.graph_options = {
+		"interaction": { "tooltipDelay": 0 },
+	};
+	$scope.graph_data = {
+		"nodes": [],
+		"edges": []
+	};
+	
+	$scope.graph_enabled = false;
+	$scope.loadgraph = function() {
 		var graph_nodes     = [];
 		var graph_nodes_set = {};
 		var node = function(n) {
@@ -273,23 +305,7 @@ app.controller('network', function($scope, $http, $routeParams) {
 			"nodes": graph_nodes,
 			"edges": graph_edges
 		};
-		
-		console.log($scope.graph_data);
-	});
-	
-	$scope.timechart_options = {
-		"animation": isMobile ? false : {},
-		"responsive": true,
-		"maintainAspectRatio": false,
-    };
-	
-	$scope.graph_options = {
-		"improvedLayout": false,
-		"interaction": { "tooltipDelay": 0 },
-	};
-	$scope.graph_data = {
-		"nodes": [],
-		"edges": []
+		$scope.graph_enabled = true;
 	};
 
 });

@@ -5,12 +5,14 @@
 	<tr>
 		<th>#</th>
 		<th>No Connections</th>
+		<th>No IPs</th>
 		<th>No Urls</th>
 		<th>No Samples</th>
 	</tr>
 	<tr ng-repeat="network in networks | filter:filterNoSamples | orderBy:'-order'">
 		<td><a href="#/network/{{ network.id }}">{{ network.id }}</a></td>
 		<td>{{ network.connections.length }}</td>
+		<td>{{ network.ips.length }}</td>
 		<td>{{ network.urls.length }}</td>
 		<td>{{ network.samples.length }}</td>
 	</tr>
