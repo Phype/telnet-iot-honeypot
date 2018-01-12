@@ -15,6 +15,11 @@
 			<span ng-show="sample.result == null">Unknown, <a href="https://www.virustotal.com/latest-scan/{{ sample.sha256 }}" target="_blank">search yourself</a></span>
 		</td>
 	</tr>
+	<tr><td>Network / Malware</td><td>
+		<a href="#/network/{{ sample.network.id }}">{{ sample.network.id }}</a>
+		<span> / </span>
+		<a href="#/malware/{{ sample.network.malware.id }}">{{ sample.network.malware.name != null ? sample.network.malware.name : sample.network.malware.id }}</a>
+	</td></tr>
 
 </table>
 

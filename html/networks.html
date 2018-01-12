@@ -4,6 +4,7 @@
 
 	<tr>
 		<th>#</th>
+		<th>Malware</th>
 		<th>No Connections</th>
 		<th>No IPs</th>
 		<th>No Urls</th>
@@ -11,6 +12,7 @@
 	</tr>
 	<tr ng-repeat="network in networks | filter:filterNoSamples | orderBy:'-order'">
 		<td><a href="#/network/{{ network.id }}">{{ network.id }}</a></td>
+		<td><a href="#/malware/{{ network.malware.id }}">{{ network.malware.name != null ? network.malware.name : network.malware.id }}</a></td>
 		<td>{{ network.connections.length }}</td>
 		<td>{{ network.ips.length }}</td>
 		<td>{{ network.urls.length }}</td>

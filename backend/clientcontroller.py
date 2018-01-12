@@ -11,13 +11,15 @@ from simpleeval import simple_eval
 from argon2 import argon2_hash
 
 from additionalinfo import get_ip_info, get_url_info, get_asn_info
-from db import get_db, filter_ascii, Sample, Connection, Url, ASN, Tag, User, Network
+from db import get_db, filter_ascii, Sample, Connection, Url, ASN, Tag, User, Network, Malware
 from virustotal import Virustotal
 
 from cuckoo import Cuckoo
 
 from util.dbg import dbg
 from util.config import config
+
+from difflib import ndiff
 
 @decorator
 def db_wrapper(func, *args, **kwargs):
@@ -133,7 +135,7 @@ class WebController:
 		networks = self.session.query(Network).all()
 		ret      = []
 		for network in networks:
-			n = network.json()
+			n   = network.json()
 			ips = set()
 			for connection in network.connections:
 				ips.add(connection.ip)
@@ -162,6 +164,13 @@ class WebController:
 		ret["has_infected"] = list(has_infected)
 		
 		return ret
+
+	##
+	
+	@db_wrapper
+	def get_malwares(self):
+		malwares = self.session.query(Malware).all()
+		return map(lambda m: m.json(), malwares)
 
 	##
 
@@ -291,6 +300,25 @@ class ClientController:
 				self.session.add(asn_obj)
 				return asn_obj.json(depth=1)
 
+	def calc_connhash_similiarity(self, h1, h2):
+		l = min(len(h1), len(h2))
+		r = 0
+		for i in range(0, l):
+			r += int(h1[i] != h2[i])
+		return float(r)/float(l)
+
+	def calc_connhash(self, stream):
+		output = ""
+		for event in stream:
+		    if event["in"]:
+		        line  = event["data"]
+		        line  = line.strip()
+		        parts = line.split(" ")
+		        for part in parts:
+		            part_hash = chr(hash(part) % 0xFF)
+		            output += part_hash
+		return output
+
 	@db_wrapper
 	def put_session(self, session):
 		ipinfo     = None
@@ -307,16 +335,7 @@ class ClientController:
 				block   = ipinfo["ipblock"]
 				country = ipinfo["country"]
 
-		# Calculate "hash"
-		connhash = ""
-		for event in session["stream"]:
-			if event["in"]:
-				line     = event["data"]
-				line     = ''.join(char for char in line if ord(char) < 128 and ord(char) > 32)
-				if line != "":
-					linehash = abs(hash(line)) % 0xFFFF
-					connhash += struct.pack("!H", linehash)
-		connhash = connhash.encode("hex")
+		connhash = self.calc_connhash(session["stream"]).encode("hex")
 
 		backend_user = self.session.query(User).filter(
 			User.username == session["backend_username"]).first()
@@ -399,6 +418,36 @@ class ClientController:
 				 	prev.network_id = network_id
 		
 		self.session.flush()
+
+		# Check for Malware type
+		# 	only if our network exists AND has no malware associated
+		if conn.network != None and conn.network.malware == None:
+			# Find connections with similar connhash
+			similar_conns = (self.session.query(Connection)
+				.filter(func.length(Connection.connhash) == len(connhash))
+				.all())
+
+			min_sim  = 2
+			min_conn = None
+			for similar in similar_conns:
+				if similar.network_id != None:
+					c1  = connhash.decode("hex")
+					c2  = similar.connhash.decode("hex")
+					sim = self.calc_connhash_similiarity(c1, c2)
+					if sim < min_sim and similar.network.malware != None:
+						min_sim  = sim
+						min_conn = similar
+
+			# 0.9: 90% or more words in session are equal
+			#	think this is probably the same kind of malware
+			#	doesn't need to be the same botnet though!
+			if min_sim < 0.9:
+				conn.network.malware = min_conn.network.malware
+			else:
+				conn.network.malware = Malware()
+				self.session.add(conn.network.malware)
+				self.session.flush()
+
 		return []
 		
 	@db_wrapper

@@ -64,14 +64,33 @@ class Network(Base):
 	samples     = relationship("Sample",     back_populates="network")
 	urls        = relationship("Url",        back_populates="network")
 	connections = relationship("Connection", back_populates="network")
+
+	malware_id  = Column('malware', None, ForeignKey('malware.id'))
+	malware     = relationship("Malware", back_populates="networks")
 	
-	def json(self):
+	def json(self, depth=0):
 		return {
 			"id":          self.id,
 			"samples":     map(lambda i: i.sha256, self.samples),
 			"urls":        map(lambda i: i.url, self.urls),
-			"connections": map(lambda i: i.id, self.connections)
+			"connections": map(lambda i: i.id, self.connections),
+			"malware":     self.malware.json(depth=0)
 		}
+
+class Malware(Base):
+	__tablename__ = 'malware'
+
+	id       = Column('id', Integer, primary_key=True)
+	name     = Column('name', String(32))
+	networks = relationship("Network", back_populates="malware")
+
+	def json(self, depth=0):
+		return {
+			"id":          self.id,
+			"name":        self.name,
+			"networks":    map(lambda i: i.id if depth == 0 else i.json(), self.networks)
+		}
+	
 
 class ASN(Base):
 	__tablename__ = 'asn'
@@ -124,7 +143,8 @@ class Sample(Base):
 			"result": self.result,
 			"info": self.info,
 			"urls": len(self.urls) if depth == 0 else map(lambda url :
-                url.json(depth - 1), self.urls)
+                url.json(depth - 1), self.urls),
+			"network": self.network_id if depth == 0 else self.network.json()
 		}
 	
 class Connection(Base):
@@ -173,7 +193,7 @@ class Connection(Base):
 			"connhash": self.connhash,
 			"stream": None if depth == 0 else json.loads(self.stream),
 			
-			"network_id": self.network_id,
+			"network": self.network_id if depth == 0 else self.network.json(),
 			
 			"asn": None if self.asn == None else self.asn.json(0),
 			
@@ -232,6 +252,7 @@ class Url(Base):
 				
 			"ip": self.ip,
 			"country": self.country,
+			"network": self.network_id if depth == 0 else self.network.json()
 		}
 
 class Tag(Base):

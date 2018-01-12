@@ -135,6 +135,12 @@ def get_networks():
 def get_network(net_id):
 	return json.dumps(web.get_network(net_id))
 
+### Malwares
+
+@app.route("/malwares", methods = ["GET"])
+def get_malwares():
+	return json.dumps(web.get_malwares())
+
 ### Samples
 
 @app.route("/sample/<sha256>")
@@ -243,62 +249,6 @@ def get_tags():
 @app.route("/connhashtree/<layers>")
 def connhash_tree(layers):
 	return json.dumps(web.connhash_tree(int(layers)))
-
-def hist_fill(start, end, delta, db_result):
-	result = []
-	start  = start - start % delta
-	end    = end   - end   % delta
-
-	now    = start
-	for row in db_result:
-		while now + delta < row["hour"]:
-			now = now + delta
-			result.append(0)
-		
-		now = row["hour"]
-		result.append(row["count"])		
-	while now + delta < end:
-		now = now + delta
-		result.append(0)
-
-	obj = {"start" : start, "end" : end, "delta" : delta, "data" : result}
-	return obj
-
-@app.route("/history")
-def hist_global():
-	try:
-		db = get_db()
-		
-		delta  = 3600 * 6
-		end    = int(time.time())
-		start  = end - delta * 24
-		
-		start  = start - start % delta
-		end    = end   - end   % delta + delta
-		
-		obj = hist_fill(start, end, delta, db.history_global(start, end, delta))
-		return json.dumps(obj)
-	finally:
-		db.end()
-		
-@app.route("/history/<sha256>")
-def hist_sample(sha256):
-	try:
-		sample = db.get_sample(sha256).fetchone()
-		if not sample:
-			return fail("sample not found", 404)
-		
-		delta  = 3600 * 6
-		end    = int(time.time())
-		start  = end - delta * 24
-		
-		start  = start - start % delta
-		end    = end   - end   % delta + delta
-		
-		obj = hist_fill(start, end, delta, db.history_sample(sample["id"], start, end, delta))
-		return json.dumps(obj)
-	finally:
-		db.end()
 		
 ### ASN
 

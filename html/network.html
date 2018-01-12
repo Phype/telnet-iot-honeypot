@@ -5,6 +5,7 @@
 		<table class="table">
 
 			<tr><td>id</td><td><b>{{ network.id }}</b></td></tr>
+			<tr><td>Malware</td><td><b>{{ network.malware.name != null ? network.malware.name : network.malware.id }}</b> <a href="#/malware/{{ network.malware.id }}">see</a></td></tr>
 			<tr><td>Connections</td><td><b>{{ network.connections.length }}</b> from <b>{{ formatDate(network.firsttime) }}</b> to <b>{{ formatDate(network.lasttime) }}</b> <a href="#/connections?network_id={{ network.id }}">see all</a></td></tr>
 			<tr><td>Urls</td><td>{{ network.urls.length }}</td></tr>
 			<tr><td>Samples</td><td>{{ network.samples.length }}</td></tr>
@@ -20,12 +21,13 @@
 			chart-labels="timechart_labels" chart-colors="timechart_colors">
 		</canvas>
 		</div>
+		<center><small><b>Connections per Hour</b></small></center>
 	</div>
 
 	<div class="col-md-12 col-xs-12">
-		<h2>Network graph </small><small><a ng-click="loadgraph()">load graph</a></small></h2>
+		<h2>Network graph <small><a ng-click="loadgraph()">load graph</a></small></h2>
 		<div style="height: 15em; width: 100%" ng-show="graph_enabled">
-		<vis-network data="graph_data" options="graph_options" events="graph_events" style="width: 100%; height: 200px;"></vis-network>
+			<vis-network data="graph_data" options="graph_options" events="graph_events" style="width: 100%; height: 200px;"></vis-network>
 		</div>
 	</div>
 </div>

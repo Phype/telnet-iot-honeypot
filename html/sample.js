@@ -211,7 +211,7 @@ app.controller('network', function($scope, $http, $routeParams) {
 	$scope.decurl = decurl;
 
 	var id = $routeParams.id;
-	var tstep = 60 * 60 * 6;
+	var tstep = 60 * 60 * 4;
 		
 	var roundDate = function(date) {
 		return Math.floor(date / tstep);
@@ -232,7 +232,7 @@ app.controller('network', function($scope, $http, $routeParams) {
 		{
 			var t = $scope.network.connectiontimes[i];
 			var r = roundDate(now - t);
-			data[r]++;
+			data[r] += 0.25;
 		}
 		
 		data.reverse();

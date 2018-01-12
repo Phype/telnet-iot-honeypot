@@ -4,7 +4,11 @@
 
 	<tr><td>Date</td><td>{{ formatDate(connection.date) }}</td></tr>
 	<tr><td>Duration</td><td>{{ connection.duration }} seconds</td></tr>
-	<tr><td>Network</td><td>{{ connection.network_id }}</td></tr>
+	<tr><td>Network / Malware</td><td>
+		<a href="#/network/{{ connection.network.id }}">{{ connection.network.id }}</a>
+		<span> / </span>
+		<a href="#/malware/{{ connection.network.malware.id }}">{{ connection.network.malware.name != null ? connection.network.malware.name : connection.network.malware.id }}</a>
+	</td></tr>
 	<!-- <tr><td>ID</td><td>{{ connection.id }}</td></tr> -->
 	<!-- <tr><td>Honeypot name</td><td>{{ connection.backend_user }}</td></tr> -->
 	<tr>
