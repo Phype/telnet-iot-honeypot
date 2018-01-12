@@ -35,7 +35,12 @@ class SampleRecord:
 		self.date   = int(time.time())
 		self.info   = info
 		self.data   = data
-		self.sha256 = sha256(data)
+		if data:
+			self.sha256 = sha256(data)
+			self.length = len(data)
+		else:
+			self.sha256 = None
+			self.length = None
 	
 	def json(self):
 		return {
@@ -45,7 +50,7 @@ class SampleRecord:
 			"date":   self.date,
 			"sha256": self.sha256,
 			"info":   self.info,
-			"length": len(self.data)
+			"length": self.length
 		}
 
 class SessionRecord:

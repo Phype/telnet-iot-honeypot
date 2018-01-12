@@ -41,12 +41,15 @@ class Session:
 		path = data["path"]
 		url  = data["url"]
 		info = data["info"]
+		data = data["data"]
 
 		dbg("Downloaded " + url + " to " + path)
 
-		data = self.env.readFile(path)
-		self.record.add_file(data, url=url, name=path, info=info)
-		self.files.append(path)
+		if data:
+			self.record.add_file(data, url=url, name=path, info=info)
+			self.files.append(path)
+		else:
+			self.record.add_file(None, url=url, name=path, info=info)
 		
 	def parse_shellcode(self, data):		
 		# Hajime exclusive!

@@ -9,4 +9,5 @@ review-sampels.py
 *.kate-swp
 *.sql
 *.log
+*.json
 config.yaml

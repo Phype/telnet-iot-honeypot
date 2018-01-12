@@ -93,7 +93,8 @@ Transfer a file from/to tftp server
 			env.action("download", {
 				"url":  "tftp://" + host + ":" + str(port) + "/" + path,
 				"path": fname,
-				"info": None
+				"info": None,
+				"data": data
 			})
 			
 			self.env.write("\nFinished. Saved to " + fname + ".\n")

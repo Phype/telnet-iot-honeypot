@@ -26,35 +26,45 @@ class Wget(Proc):
 			info = ""
 		else:
 			hdr = { "User-Agent" : "Wget/1.15 (linux-gnu)" }
-			r = requests.get(url, stream=True, timeout=5.0, headers=hdr)
+			r   = None
+			try:
+				r = requests.get(url, stream=True, timeout=5.0, headers=hdr)
+				if echo:
+					env.write(" connected\n")
+					enc.write("HTTP request sent, awaiting response... 200 OK\n")
+					env.write("Length: unspecified [text/html]\n")
+					env.write("Saving to: '"+path+"'\n\n")
+					env.write("     0K .......... 7,18M=0,001s\n\n")
+					env.write(date+" (7,18 MB/s) - '"+path+"' saved [11213]\n")
 
-			if echo:
-				env.write(" connected\nHTTP request sent, awaiting response... 200 OK\n")
-				env.write("Length: unspecified [text/html]\n")
-				env.write("Saving to: '"+path+"'\n\n")
-				env.write("     0K .......... 7,18M=0,001s\n\n")
-				env.write(date+" (7,18 MB/s) - '"+path+"' saved [11213]\n")
+				data = ""
+				for chunk in r.iter_content(chunk_size = 4096):
+					data = data + chunk
 
-			data = ""
-			for chunk in r.iter_content(chunk_size = 4096):
-				data = data + chunk
+				info = ""
+				for his in r.history:
+					info = info + "HTTP " + str(his.status_code) + "\n"
+					for k,v in his.headers.iteritems():
+						info = info + k + ": " + v + "\n"
+						info = info + "\n"
 
-			info = ""
-			for his in r.history:
-				info = info + "HTTP " + str(his.status_code) + "\n"
-				for k,v in his.headers.iteritems():
-				    info = info + k + ": " + v + "\n"
-				    info = info + "\n"
+				info = info + "HTTP " + str(r.status_code) + "\n"
+				for k,v in r.headers.iteritems():
+					info = info + k + ": " + v + "\n"
+			except:
+				data = None
+				info = "Download failed"
+				if echo:
+					env.write(" failed: Connection timed out.\n")
+					env.write("Giving up.\n\n")	
 
-			info = info + "HTTP " + str(r.status_code) + "\n"
-			for k,v in r.headers.iteritems():
-				info = info + k + ": " + v + "\n"
-
-		env.writeFile(path, data)
+		if data:
+			env.writeFile(path, data)
 		env.action("download", {
 		    "url":  url,
 		    "path": path,
-		    "info": info
+		    "info": info,
+		    "data": data
 		})
 
 	def run(self, env, args):

@@ -334,15 +334,16 @@ class ClientController:
 		for sample_json in session["samples"]:
 			sample, url = self.create_url_sample(sample_json)
 			
-			if network_id == None and sample.network_id != None:
-				network_id = sample.network_id
+			if sample:
+				if network_id == None and sample.network_id != None:
+					network_id = sample.network_id
+				samples.append(sample)
 				
-			if network_id == None and url.network_id != None:
-				network_id = url.network_id
-			
-			conn.urls.append(url)
-			samples.append(sample)
-			urls.append(url)
+			if url:
+				if network_id == None and url.network_id != None:
+					network_id = url.network_id
+				conn.urls.append(url)
+				urls.append(url)
 
 		# Find previous connections
 		# A connection is associated when:
@@ -424,29 +425,31 @@ class ClientController:
 			url = Url(url=f["url"], date=f["date"], ip=url_ip, asn=url_asn, country=url_country)
 			self.session.add(url)
 		
-		sample = self.session.query(Sample).filter(Sample.sha256 == f["sha256"]).first()
-		if sample == None:
-			result = None
-			try:
-				if self.vt != None:
-					vtobj  = self.vt.query_hash_sha256(f["sha256"])
-					if vtobj:
-						result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
-			except:
-				pass
+		if f["sha256"] != None:
+			sample = self.session.query(Sample).filter(Sample.sha256 == f["sha256"]).first()
+			if sample == None:
+				result = None
+				try:
+					if self.vt != None:
+						vtobj  = self.vt.query_hash_sha256(f["sha256"])
+						if vtobj:
+							result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
+				except:
+					pass
 
-			sample = Sample(sha256=f["sha256"], name=f["name"], length=f["length"],
-				date=f["date"], info=f["info"], result=result)
-			self.session.add(sample)
+				sample = Sample(sha256=f["sha256"], name=f["name"], length=f["length"],
+					date=f["date"], info=f["info"], result=result)
+				self.session.add(sample)
 		
-		if sample.network_id != None and url.network_id == None:
-			url.network_id = sample.network_id
+			if sample.network_id != None and url.network_id == None:
+				url.network_id = sample.network_id
 		
-		if sample.network_id == None and url.network_id != None:
-			sample.network_id = url.network_id
+			if sample.network_id == None and url.network_id != None:
+				sample.network_id = url.network_id
+		else:
+			sample = None
 		
 		url.sample = sample
-		
 		return sample, url
 
 	@db_wrapper
