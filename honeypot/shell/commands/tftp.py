@@ -100,7 +100,12 @@ Transfer a file from/to tftp server
 			self.env.write("\nFinished. Saved to " + fname + ".\n")
 		except:
 			env.write("tftp: timeout\n")
-			traceback.print_exc()
+			env.action("download", {
+				"url":  "tftp://" + host + ":" + str(port) + "/" + path,
+				"path": fname,
+				"info": None,
+				"data": None
+			})
 
 	def download(self, host, port, fname):
 		if config.get("fake_dl", optional=True, default=False):
