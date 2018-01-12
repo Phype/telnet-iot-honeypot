@@ -1,5 +1,6 @@
 
 import requests
+import traceback
 
 from util.config import config
 
@@ -31,7 +32,7 @@ class Wget(Proc):
 				r = requests.get(url, stream=True, timeout=5.0, headers=hdr)
 				if echo:
 					env.write(" connected\n")
-					enc.write("HTTP request sent, awaiting response... 200 OK\n")
+					env.write("HTTP request sent, awaiting response... 200 OK\n")
 					env.write("Length: unspecified [text/html]\n")
 					env.write("Saving to: '"+path+"'\n\n")
 					env.write("     0K .......... 7,18M=0,001s\n\n")
@@ -52,6 +53,7 @@ class Wget(Proc):
 				for k,v in r.headers.iteritems():
 					info = info + k + ": " + v + "\n"
 			except:
+				traceback.print_exc()
 				data = None
 				info = "Download failed"
 				if echo:
