@@ -16,4 +16,11 @@
 
 <h2>URLs located in AS{{ asn.asn }}</h2>
 
+<table class="table">
+
+	<tr><th>Connections</th><th>Url</th><th>Sample</th></tr>
+	<tr ng-repeat="url in asn.urls"><td>{{ url.connections }}</td><td>{{ url.url }}</td><td>{{ url.sample }}</td></tr>
+
+</table>
+
 <small>Coming soon</small>

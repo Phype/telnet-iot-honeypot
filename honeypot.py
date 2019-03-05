@@ -2,6 +2,7 @@ import os
 import sys
 import signal
 import json
+import socket
 
 from honeypot.telnet      import Telnetd
 from honeypot.client      import Client
@@ -9,6 +10,7 @@ from honeypot.session     import Session
 from honeypot.shell.shell import test_shell
 
 from util.dbg import dbg
+from util.config import config
 
 srv = None
 
@@ -51,12 +53,31 @@ if not os.path.exists("samples"):
 
 if __name__ == "__main__":
 	action = None
+	configFile = None
 
-	if len(sys.argv) > 1:
-		action = sys.argv[1]
-
+	i = 0
+	while i+1 < len(sys.argv):
+		i += 1		
+		arg = sys.argv[i]
+		
+		if arg == "-c":
+			if i+1 < len(sys.argv):
+				configFile = sys.argv[i+1]
+				print "Using config file " + configFile
+				i += 1
+				continue
+			else:
+				print "warning: expected argument after \"-c\""
+		else:
+			action = arg
+			
+	if configFile:
+		config.loadUserConfig(configFile)
+	
 	if action == None:
-		srv = Telnetd(2223)
+		socket.setdefaulttimeout(15)
+		
+		srv = Telnetd(config.get("telnet_addr"), config.get("telnet_port"))
 		signal.signal(signal.SIGINT, signal_handler)
 		srv.run()
 	elif action == "import":

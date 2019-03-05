@@ -1,48 +1,59 @@
 import sys
 import traceback
 
+from binary import run_binary
+
 class Proc:
-	procs = {}
+    procs = {}
 
-	@staticmethod
-	def register(name, obj):
-		Proc.procs[name] = obj
+    @staticmethod
+    def register(name, obj):
+        Proc.procs[name] = obj
 
-	@staticmethod
-	def get(name):
-		if name in Proc.procs:
-			return Proc.procs[name]
-		else:
-			return None
+    @staticmethod
+    def get(name):
+        if name in Proc.procs:
+            return Proc.procs[name]
+        else:
+            return None
 
 class StaticProc(Proc):
-	def __init__(self, output, result=0):
-		self.output = output
-		self.result = result
+    def __init__(self, output, result=0):
+        self.output = output
+        self.result = result
 
-	def run(self, env, args):
-		env.write(self.output)
-		return self.result
+    def run(self, env, args):
+        env.write(self.output)
+        return self.result
 
 class FuncProc(Proc):
-	def __init__(self, func):
-		self.func = func
+    def __init__(self, func):
+        self.func = func
 
-	def run(self, env, args):
-		env.write(self.func(args))
-		return 0
+    def run(self, env, args):
+        env.write(self.func(args))
+        return 0
 
 # Basic Procs
 
-class Shell(Proc):
+class Exec(Proc):
 
     def run(self, env, args):
         if len(args) == 0:
-            # env.write("Busybox built-in shell (ash)\n")
             return 0
         
         if args[0][0] == ">":
             name = "true"
+        elif args[0].startswith("./"):
+            fname = args[0][2:]
+            fdata = env.readFile(fname)
+            
+            if fdata == None:
+                env.write("sh: 1: ./" + fname + ": not found\n")
+                return 1
+            else:
+                run_binary(fdata, fname, args[1:], env)
+                return 0
         else:
             name = args[0]
             args = args[1:]
@@ -65,6 +76,19 @@ class Shell(Proc):
 class BusyBox(Proc):
 
     def run(self, env, args):
+        
+        if len(args) == 0:
+            env.write("""BusyBox v1.27.2 (Ubuntu 1:1.27.2-2ubuntu3) multi-call binary.
+BusyBox is copyrighted by many authors between 1998-2015.
+Licensed under GPLv2. See source distribution for detailed
+copyright notices.
+
+Usage: busybox [function [arguments]...]
+
+Currently defined functions:
+    """ + " ".join(Proc.procs.keys()) + "\n\n")
+            return 0
+
         name = args[0]
         args = args[1:]
         if Proc.get(name):
@@ -107,7 +131,7 @@ class Echo(Proc):
 class Rm(Proc):
 
     def run(self, env, args):
-        if args[0] in env.files:
+        if args[0] in env.listfiles():
             env.deleteFile(args[0])
             return 0
         else:
@@ -117,7 +141,7 @@ class Rm(Proc):
 class Ls(Proc):
 
     def run(self, env, args):
-        for f in env.files:
+        for f in env.listfiles().keys():
             env.write(f + "\n")
         return 0
 
@@ -174,7 +198,7 @@ Proc.register("dd",      Dd())
 Proc.register("rm",      Rm())
 Proc.register("echo",    Echo())
 Proc.register("busybox", BusyBox())
-Proc.register("sh",      Shell())
+Proc.register("exec",    Exec())
 
 Proc.register("cd",      StaticProc(""))
 Proc.register("true",    StaticProc(""))
@@ -188,7 +212,10 @@ Proc.register("ps",      StaticProc(
 
 # Other files
 
-from wget import Wget
-from tftp import Tftp
+from wget  import Wget
+from shell import Shell
+
+# tftp disabled
+#from tftp import Tftp
 
 

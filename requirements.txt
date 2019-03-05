@@ -2,6 +2,8 @@ setuptools
 werkzeug
 flask
 flask-httpauth
+flask-socketio
+eventlet
 sqlalchemy
 requests
 decorator

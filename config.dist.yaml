@@ -28,6 +28,27 @@ backend: "http://localhost:5000"
 #   does include everything EXCEPT sample contents
 log_raw: null
 
+# Save samples in sample_dir
+log_samples: False
+
+# Do not download any samples, use their url as content
+#   useful for debugging
+fake_dl: false
+
+# Telnet port
+telnet_addr: ""
+telnet_port: 2323
+
+# Timeout in seconds for telnet session. Will expire if no bytes can be read from socket.
+telnet_session_timeout: 60
+
+# Maximum session length in seconds.
+telnet_max_session_length: 120
+
+# Minimum time between 2 connection from the same ip, if closer together
+# they will be refused
+telnet_ip_min_time_between_connections: 30
+
 #############################################
 # Backend configuration
 
@@ -36,6 +57,10 @@ log_raw: null
 # using sqlite: "sqlite:///database.db"
 # using mysql:  ""mysql+mysqldb://USER:PASSWORD@MYSQL_HOST/DATABASE_NAME","
 sql: "sqlite:///database.db"
+
+# IP Address and port for http interface
+http_port: 5000
+http_addr: "127.0.0.1"
 
 # Max connections to sql db, maybe restricted in some scenarios
 max_db_conn: 1
@@ -48,8 +73,10 @@ vt_key:       "GET_YOUR_OWN"
 submit_to_vt: false
 
 # Enable or Disable IP to ASN resolution
-# Disabling will fasten up importing big amounts of data
-do_ip_to_asn_resolution: true
+# Options: "none" | "offline" | "online"
+#    offline works by importing data from https://lite.ip2location.com/ - dowload must be done manually
+#    online  works by querying origin.asn.cymru.com
+ip_to_asn_resolution: "online"
 
 cuckoo_enabled:  false,
 cuckoo_url_base: "http://127.0.0.1:8090"

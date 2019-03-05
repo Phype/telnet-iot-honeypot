@@ -6,8 +6,10 @@ import traceback
 from getopt import gnu_getopt, GetoptError
 from tftpy  import TftpClient
 
-from util   import easy_getopt
-from base   import Proc
+from cmd_util import easy_getopt
+from base     import Proc
+
+from util.config import config
 
 class DummyIO(io.RawIOBase):
 	
@@ -91,15 +93,24 @@ Transfer a file from/to tftp server
 			env.action("download", {
 				"url":  "tftp://" + host + ":" + str(port) + "/" + path,
 				"path": fname,
-				"info": None
+				"info": None,
+				"data": data
 			})
 			
 			self.env.write("\nFinished. Saved to " + fname + ".\n")
 		except:
 			env.write("tftp: timeout\n")
-			traceback.print_exc()
+			env.action("download", {
+				"url":  "tftp://" + host + ":" + str(port) + "/" + path,
+				"path": fname,
+				"info": None,
+				"data": None
+			})
 
 	def download(self, host, port, fname):
+		if config.get("fake_dl", optional=True, default=False):
+			return str(hash(host + str(port) + fname))
+			
 		output = DummyIO()
 		client = TftpClient(host, port)
 		

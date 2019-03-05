@@ -4,12 +4,17 @@
 
 	<tr><td>Date</td><td>{{ formatDate(connection.date) }}</td></tr>
 	<tr><td>Duration</td><td>{{ connection.duration }} seconds</td></tr>
+	<tr><td>Network / Malware</td><td>
+		<a href="#/network/{{ connection.network.id }}">#{{ connection.network.id }}</a>
+		<span> / </span>
+		<a href="#/malware/{{ connection.network.malware.id }}">{{ connection.network.malware.name != null ? connection.network.malware.name : fakenames[connection.network.malware.id] }}</a>
+	</td></tr>
 	<!-- <tr><td>ID</td><td>{{ connection.id }}</td></tr> -->
-	<!-- <tr><td>Honeypot name</td><td>{{ connection.backend_user }}</td></tr> -->
+	<tr><td>Honeypot name</td><td>{{ connection.backend_user }}</td></tr>
 	<tr>
 		<td>IP</td>
 		<td>
-			<span ng-show="connection.asn"><a href="#/connections?country={{ connection.country }}"><span class="glyphicon glyphicon-screenshot"></span></a> <img src="img/flags/{{ connection.country.toLowerCase() }}.png"> {{ connection.countryname }} <br></span>
+			<span ng-show="connection.asn"><a href="#/connections?country={{ connection.country }}"><span class="glyphicon glyphicon-screenshot"></span></a> <img src="img/flags/{{ connection.country.toLowerCase() }}.png"> {{ connection.city + ', ' + connection.countryname }} <a target="_blank" href="http://www.openstreetmap.org/?zoom=13&lat={{ connection.latitude }}&lon={{ connection.longitude }}">map</a> <br></span>
 			<span><a href="#/connections?ip={{ connection.ip }}"><span class="glyphicon glyphicon-screenshot"></span></a></span> {{ connection.ip }}<br>
 			<span ng-show="connection.asn"><a href="#/asn/{{ connection.asn.asn }}"><span class="glyphicon glyphicon-screenshot"></span></a> AS{{ connection.asn.asn }} <b>{{ connection.asn.name }}</b>
 			</span><br>

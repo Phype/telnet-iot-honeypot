@@ -1,9 +1,14 @@
 from flask import Flask, request, Response, redirect, send_from_directory
 from flask_httpauth import HTTPBasicAuth
+from flask_socketio import SocketIO
+
 auth = HTTPBasicAuth()
 
 from db import get_db
-from clientcontroller import ClientController, WebController, AuthController
+
+from clientcontroller import ClientController
+from webcontroller import WebController
+from authcontroller import AuthController
 
 from util.config import config
 
@@ -11,12 +16,14 @@ import os
 import json
 import base64
 import time
+import signal
 
 app  = Flask(__name__)
 
 ctrl     = ClientController()
 web      = WebController()
 authctrl = AuthController()
+socketio = SocketIO(app)
 
 app.debug = True
 
@@ -35,9 +42,12 @@ def red(obj, attributes):
 #
 ###
 
+
+SECS_PER_MONTH = 3600 * 24 * 31
+
 @app.after_request
 def add_cors(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Origin"]  = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE"
     response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-type"
     return response
@@ -94,7 +104,11 @@ def test_login():
 def put_conn():
 	session = request.json
 	session["backend_username"] = auth.username()	
-	return json.dumps(ctrl.put_session(session))
+	
+	session = ctrl.put_session(session)
+	socketio.emit('session', session)
+	
+	return json.dumps(session)
 
 @app.route("/sample/<sha256>", methods = ["PUT"])
 @auth.login_required
@@ -124,6 +138,66 @@ def put_sample():
 def fail(msg = "", code = 400):
 	obj = {"ok" : False, "msg" : msg}
 	return Response(json.dumps(obj), status=code, mimetype='application/json')
+
+### Networks
+
+@app.route("/housekeeping", methods = ["GET"])
+def housekeeping():
+	ctrl.do_housekeeping()
+	return "DONE"
+
+@app.route("/networks", methods = ["GET"])
+def get_networks():
+	return json.dumps(web.get_networks())
+
+@app.route("/network/<net_id>", methods = ["GET"])
+def get_network(net_id):
+	return json.dumps(web.get_network(net_id))
+
+@app.route("/network/<net_id>/locations", methods = ["GET"])
+def get_network_locations(net_id):
+	now = int(time.time())
+	loc = web.get_connection_locations(now - SECS_PER_MONTH, now, int(net_id))
+	return json.dumps(loc)
+
+@app.route("/network/<net_id>/history", methods = ["GET"])
+def get_network_history(net_id):
+	
+	not_before = request.args.get("not_before")
+	not_after  = request.args.get("not_after")
+	
+	if not_before == None or not_after == None:
+		not_after  = int(time.time())
+		not_before = not_after - SECS_PER_MONTH
+	else:
+		not_before = int(not_before)
+		not_after  = int(not_after)
+		
+	d = web.get_network_history(not_before, not_after, int(net_id))
+	return json.dumps(d)
+
+@app.route("/network/biggest_history", methods = ["GET"])
+def get_network_biggest_history():
+	
+	not_before = request.args.get("not_before")
+	not_after  = request.args.get("not_after")
+	
+	if not_before == None or not_after == None:
+		not_after  = int(time.time())
+		not_before = not_after - SECS_PER_MONTH
+	else:
+		not_before = int(not_before)
+		not_after  = int(not_after)
+		
+	d = web.get_biggest_networks_history(not_before, not_after)
+	return json.dumps(d)
+
+
+### Malwares
+
+@app.route("/malwares", methods = ["GET"])
+def get_malwares():
+	return json.dumps(web.get_malwares())
 
 ### Samples
 
@@ -171,7 +245,7 @@ def get_connection(id):
 @app.route("/connections")
 def get_connections():
 	obj          = {}
-	allowed_keys = ["ipblock", "user", "password", "ip", "country", "asn_id"]
+	allowed_keys = ["ipblock", "user", "password", "ip", "country", "asn_id", "network_id"]
 	
 	for k,v in request.args.iteritems():
 		if k in allowed_keys:
@@ -213,6 +287,12 @@ def get_newest_connections():
 	connections = web.get_newest_connections()
 	return json.dumps(connections)
 
+@app.route("/connection/locations")
+def get_connection_locations():
+	now   = int(time.time())
+	loc   = web.get_connection_locations(now - SECS_PER_MONTH, now)
+	return json.dumps(loc)
+
 ### Tags
 
 @app.route("/tag/<name>")
@@ -233,62 +313,6 @@ def get_tags():
 @app.route("/connhashtree/<layers>")
 def connhash_tree(layers):
 	return json.dumps(web.connhash_tree(int(layers)))
-
-def hist_fill(start, end, delta, db_result):
-	result = []
-	start  = start - start % delta
-	end    = end   - end   % delta
-
-	now    = start
-	for row in db_result:
-		while now + delta < row["hour"]:
-			now = now + delta
-			result.append(0)
-		
-		now = row["hour"]
-		result.append(row["count"])		
-	while now + delta < end:
-		now = now + delta
-		result.append(0)
-
-	obj = {"start" : start, "end" : end, "delta" : delta, "data" : result}
-	return obj
-
-@app.route("/history")
-def hist_global():
-	try:
-		db = get_db()
-		
-		delta  = 3600 * 6
-		end    = int(time.time())
-		start  = end - delta * 24
-		
-		start  = start - start % delta
-		end    = end   - end   % delta + delta
-		
-		obj = hist_fill(start, end, delta, db.history_global(start, end, delta))
-		return json.dumps(obj)
-	finally:
-		db.end()
-		
-@app.route("/history/<sha256>")
-def hist_sample(sha256):
-	try:
-		sample = db.get_sample(sha256).fetchone()
-		if not sample:
-			return fail("sample not found", 404)
-		
-		delta  = 3600 * 6
-		end    = int(time.time())
-		start  = end - delta * 24
-		
-		start  = start - start % delta
-		end    = end   - end   % delta + delta
-		
-		obj = hist_fill(start, end, delta, db.history_sample(sample["id"], start, end, delta))
-		return json.dumps(obj)
-	finally:
-		db.end()
 		
 ### ASN
 
@@ -300,5 +324,12 @@ def get_asn(asn):
 	
 	return json.dumps(info)
 
+def run():
+	signal.signal(15, stop)
+	socketio.run(app, host=config.get("http_addr"), port=config.get("http_port"))
+
+def stop():
+	print "asdasdasd"
+
 if __name__ == "__main__":
-	app.run()
+	run()

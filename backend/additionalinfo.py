@@ -2,12 +2,13 @@ import dns.resolver
 import ipaddress
 import urlparse
 import re
-
 import traceback
 
+import ipdb.ipdb
+
 def filter_ascii(string):
-        string = ''.join(char for char in string if ord(char) < 128 and ord(char) > 32 or char in "\r\n ")
-        return string
+		string = ''.join(char for char in string if ord(char) < 128 and ord(char) > 32 or char in "\r\n ")
+		return string
 
 def query_txt(cname):
 	try:
@@ -126,10 +127,11 @@ def get_url_info(url):
 	
 	return None
 
-#print get_ip_info("79.220.249.125")
-#print get_ip_info("2a00:1450:4001:81a::200e")
-#print get_asn_info(3320)
+if __name__ == "__main__":
+	print get_ip_info("79.220.249.125")
+	print get_ip_info("2a00:1450:4001:81a::200e")
+	print get_asn_info(3320)
 
-#print url_info("http://google.com")
-#print url_info("http://183.144.16.51:14722/.i")
-#print url_info("http://[::1]:14722/.i")
+	print get_url_info("http://google.com")
+	print get_url_info("http://183.144.16.51:14722/.i")
+	print get_url_info("http://[::1]:14722/.i")

@@ -9,14 +9,16 @@ import json
 from util.dbg import dbg
 from util.config import config
 
-_BACKEND = None
+BACKEND = None
+
 def get_backend():
-	global _BACKEND
-	if _BACKEND:
-		return _BACKEND
+	global BACKEND
+
+	if BACKEND != None:
+		return BACKEND
 	elif config.get("backend", optional=True) != None:
-		_BACKEND = client.Client()
-		return _BACKEND
+		BACKEND = client.Client()
+		return BACKEND
 	else:
 		return None
 
@@ -33,7 +35,12 @@ class SampleRecord:
 		self.date   = int(time.time())
 		self.info   = info
 		self.data   = data
-		self.sha256 = sha256(data)
+		if data:
+			self.sha256 = sha256(data)
+			self.length = len(data)
+		else:
+			self.sha256 = None
+			self.length = None
 	
 	def json(self):
 		return {
@@ -43,14 +50,16 @@ class SampleRecord:
 			"date":   self.date,
 			"sha256": self.sha256,
 			"info":   self.info,
-			"length": len(self.data)
+			"length": self.length
 		}
 
 class SessionRecord:
 
 	def __init__(self):
-		self.back    = get_backend()
-		self.logfile = config.get("log_raw", optional=True)
+		self.back        = get_backend()
+		self.logfile     = config.get("log_raw",     optional=True)
+		self.log_samples = config.get("log_samples", optional=True, default=False)
+		self.sample_dir  = config.get("sample_dir",  optional=not(self.log_samples))
 	
 		self.urlset = {}
 		
@@ -74,8 +83,8 @@ class SessionRecord:
 			"user"          : self.user,
 			"pass"          : self.password,
 			"date"          : self.date,
-			"urls"          : self.urls,
 			"stream"        : self.stream,
+			"samples"       : map(lambda sample: sample.json(), self.urls),
 		}
 
 	def addInput(self, text):
@@ -106,23 +115,22 @@ class SessionRecord:
 		if name == None:
 			name = url.split("/")[-1].strip()
 
-		self.urlset[url] = SampleRecord(url, name, info, data)
-		self.urls.append(url)
+		sample = SampleRecord(url, name, info, data)
+		self.urlset[url] = sample
+		self.urls.append(sample)
 
 	def commit(self):
 		self.log_raw(self.json())
-		
-		for url in self.urls:
-			self.log_raw(self.urlset[url].json())
+
+		if self.log_samples:
+			for sample in self.urls:
+				if sample.data:
+					fp = open(self.sample_dir + "/" + sample.sha256, "wb")
+					fp.write(sample.data)
+					fp.close()
 	
 		# Ignore connections without any input
 		if len(self.stream) > 1 and self.back != None:
 			upload_req = self.back.put_session(self.json())
-	
-			for url in upload_req:
-				dbg("Upload requested: " + url)
 
-				sample = self.urlset[url]
-				self.back.put_sample_info(sample.json())
-				self.back.put_sample(sample.data)
 

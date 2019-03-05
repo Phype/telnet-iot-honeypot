@@ -3,8 +3,35 @@ import socket
 import traceback
 import time
 
+from thread import start_new_thread
+
 from session import Session
 from util.dbg import dbg
+from util.config import config
+
+class IPFilter:
+
+	def __init__(self):
+		self.map = {}
+		self.timeout = config.get("telnet_ip_min_time_between_connections")
+
+	def add_ip(self, ip):
+		self.map[ip] = time.time()
+
+	def is_allowed(self, ip):
+		self.clean()
+		return not(ip in self.map)
+
+	def clean(self):
+
+		todelete = []
+
+		for ip in self.map:
+			if self.map[ip] + self.timeout < time.time():
+				todelete.append(ip)
+
+		for ip in todelete:
+			del self.map[ip]
 
 class Telnetd:
 	cmds   = {}
@@ -45,23 +72,23 @@ class Telnetd:
 	# Options
 	NAWS = 31
 
-	def __init__(self, port):
-		self.host    = "0.0.0.0"
-		self.port    = port
-		self.sock    = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.do_run  = True
+	def __init__(self, addr, port):
+		self.host     = addr
+		self.port     = port
+		self.sock     = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.do_run   = True
+		self.ipfilter = IPFilter()
 
 	def run(self):
 		self.sock.bind((self.host, self.port))
 		self.sock.listen(10)
-		dbg("Socket open on port " + str(self.port))
+		self.sock.settimeout(None)
+		dbg("Socket open on " + str(self.host) +  ":" + str(self.port))
 		while self.do_run:
 			try:
 				self.handle()
 			except:
 				traceback.print_exc()
-			# ONLY HANDLE ONE CLIENT
-			# self.stop()
 		self.sock.close()
 		dbg("Socket Closed")
 
@@ -70,14 +97,16 @@ class Telnetd:
 		try:
 			conn, addr = self.sock.accept()
 			dbg("Client connected at " + str(addr))
-
-			sess = TelnetSess(self, conn, addr)
-			sess.loop()
+			
+			if self.ipfilter.is_allowed(addr[0]):
+				self.ipfilter.add_ip(addr[0])
+				sess = TelnetSess(self, conn, addr)
+				start_new_thread(sess.loop, ())
+			else:
+				dbg("Connection limit for " + addr[0] + " exceeded, closing")
+				conn.close()
 		except:
 			traceback.print_exc()
-
-		if conn:
-			conn.close()
 
 	def stop(self):
 		self.do_run = False
@@ -86,8 +115,8 @@ class TelnetSess:
 	def __init__(self, serv, sock, remote):
 		self.serv    = serv
 		self.sock    = sock
-		self.timeout = 15.0 # Read timeout
-		self.maxtime = 60.0 # Max session time
+		self.timeout = config.get("telnet_session_timeout")
+		self.maxtime = config.get("telnet_max_session_length")
 		self.db_id   = 0
 		self.remote  = remote
 		self.session = None
@@ -132,6 +161,7 @@ class TelnetSess:
 			dbg("Connection closed")
 
 		self.session.end()
+		self.sock.close()
 
 	def test_naws(self):
 		#dbg("TEST NAWS")
@@ -232,3 +262,4 @@ class TelnetSess:
 			self.send(byte)
 		if cmd == Telnetd.WILL or cmd == Telnetd.WONT:
 			byte = self.recv()
+

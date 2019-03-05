@@ -1,4 +1,3 @@
-
 import re
 import random
 import time
@@ -7,8 +6,11 @@ import traceback
 
 import struct
 import socket
+import select
+import errno
 
-from util.dbg import dbg
+from util.dbg    import dbg
+from util.config import config
 
 from sampledb_client import SessionRecord
 
@@ -41,13 +43,16 @@ class Session:
 		path = data["path"]
 		url  = data["url"]
 		info = data["info"]
+		data = data["data"]
 
 		dbg("Downloaded " + url + " to " + path)
 
-		data = self.env.readFile(path)
-		self.record.add_file(data, url=url, name=path, info=info)
-		self.files.append(path)
-		
+		if data:
+			self.record.add_file(data, url=url, name=path, info=info)
+			self.files.append(path)
+		else:
+			self.record.add_file(None, url=url, name=path, info=info)
+			
 	def found_file(self, path, data):
 		if path in self.files:
 			pass
@@ -78,11 +83,11 @@ class Session:
 		self.record.addInput(l + "\n")
 	
 		try:
-			tree = parse(l)
-			tree.run(self.env)
+			tree = run(l, self.env)
 		except:
 			dbg("Could not parse \""+l+"\"")
 			self.send_string("sh: syntax error near unexpected token `" + " " + "'\n")
+			traceback.print_exc()
 		
 		self.send_string(PROMPT)
 

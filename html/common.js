@@ -1,4 +1,6 @@
- 
+
+var fakenames = ["Boar","Stallion","Yak","Beaver","Salamander","Eagle Owl","Impala","Elephant","Chameleon","Argali","Lemur","Addax","Colt","Whale","Dormouse","Budgerigar","Dugong","Squirrel","Okapi","Burro","Fish","Crocodile","Finch","Bison","Gazelle","Basilisk","Puma","Rooster","Moose","Musk Deer","Thorny Devil","Gopher","Gnu","Panther","Porpoise","Lamb","Parakeet","Marmoset","Coati","Alligator","Elk","Antelope","Kitten","Capybara","Mule","Mouse","Civet","Zebu","Horse","Bald Eagle","Raccoon","Pronghorn","Parrot","Llama","Tapir","Duckbill Platypus","Cow","Ewe","Bighorn","Hedgehog","Crow","Mustang","Panda","Otter","Mare","Goat","Dingo","Hog","Mongoose","Guanaco","Walrus","Springbok","Dog","Kangaroo","Badger","Fawn","Octopus","Buffalo","Doe","Camel","Shrew","Lovebird","Gemsbok","Mink","Lynx","Wolverine","Fox","Gorilla","Silver Fox","Wolf","Ground Hog","Meerkat","Pony","Highland Cow","Mynah Bird","Giraffe","Cougar","Eland","Ferret","Rhinoceros"];
+
 function extractHash() {
 	var table  = {};
 	var values = window.location.hash.substr(1);

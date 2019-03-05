@@ -1,17 +1,19 @@
 grammar cmd
 
-cmd        <-  cmdbrace / cmdlist / empty
-cmdbrace   <-  " "* "(" " "* cmd " "* ")" " "*               %make_cmdbrace
-cmdlist    <-  cmdop / basecmd
-cmdop      <-  basecmd ("||" / "&&" / "|" / ";") cmd         %make_cmdop
-basecmd    <-  " "* arg (" "+ arg)* " "* redirects " "*      %make_basecmd             
+cmd        <- cmdlist / empty
+cmdlist    <- cmdsingle (sep (";" / "&") sep cmdlist)?                                           %make_list
+cmdsingle  <- cmdpipe  (sep ("||" / "&&") sep cmdsingle)?                                        %make_single
+cmdpipe    <- cmdredir  (sep ("|" !"|") sep cmdpipe)?                                            %make_pipe
+cmdredir   <- cmdargs ( sep (">>-" / ">>" / "<<" / "<>" / "<&" / ">&" / "<" / ">") sep arg )*    %make_redir
+cmdargs    <- cmdbrac / args 
+cmdbrac    <- "(" sep cmd sep ")"                                                                %make_cmdbrac
+args       <- arg (" "+ arg)*                                                                    %make_args
+
 arg        <-  arg_quot1 / arg_quot2 / arg_noquot / empty
 arg_noempty <-  arg_quot1 / arg_quot2 / arg_noquot
-arg_quot1  <-  "'" [^']* "'"                                 %make_arg_quot
-arg_quot2  <-  '"' [^"]* '"'                                 %make_arg_quot
-arg_noquot <-  [^ ;|&()"'><]+                                %make_arg_noquot
+arg_quot1  <-  "'" [^']* "'"                                  %make_arg_quot
+arg_quot2  <-  '"' [^"]* '"'                                  %make_arg_quot
+arg_noquot <-  [^ ;|&()"'><]+                                 %make_arg_noquot
+
 empty      <-  ""?
-
-redirects  <-  redirect*                                       %make_redirects
-redirect   <-  " "* [&0123]? " "* ([<>]+) " "* [&0123]? " "* arg_noempty  %make_redirect
-
+sep        <- " "*

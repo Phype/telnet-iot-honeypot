@@ -25,7 +25,7 @@ Vagrant.configure(2) do |config|
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
   config.vm.network "forwarded_port", guest: 5000, host: 5000
-  config.vm.network "forwarded_port", guest: 2223, host: 2223
+  config.vm.network "forwarded_port", guest: 2323, host: 2323
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -40,7 +40,7 @@ Vagrant.configure(2) do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  # config.vm.synced_folder "../", "/vagrant_data"
+  config.vm.synced_folder "../../", "/vagrant_data"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -51,7 +51,7 @@ Vagrant.configure(2) do |config|
     vb.gui = false
   
     # Customize the amount of memory on the VM:
-    vb.memory   = "768"
+    vb.memory   = "1024"
     # vb.cpus   = 2
   end
 
@@ -68,22 +68,27 @@ Vagrant.configure(2) do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  config.vm.provision "shell", inline: <<-SHELL
+  config.vm.provision "shell", privileged: 'false', inline: <<-SHELL
     sudo apt-get update
-    sudo apt-get install -y python-pip libmysqlclient-dev python-mysqldb git sqlite3 screen
+    sudo apt-get install -y python-pip sqlite3 screen libmysqlclient-dev python-mysqldb
     
-    git clone https://github.com/Phype/telnet-iot-honeypot.git
-    sudo chown -R ubuntu:ubuntu telnet-iot-honeypot
+    cp -r /vagrant_data telnet-iot-honeypot
+    cd telnet-iot-honeypot
+	rm database.db
+	rm config.yaml
 
-    cd telnet-iot-honeypot    
     export LC_ALL=C
     sudo pip install -r requirements.txt
+
+	sudo bash create_config.sh
+	sudo bash vagrant/mariadb/mysql.sh
   SHELL
 
-  config.vm.provision "shell", run: 'always', inline: <<-SHELL
-    sudo su ubuntu -c 'screen -dmS backend  bash -c "cd /home/ubuntu/telnet-iot-honeypot; python backend.py"'
+  config.vm.provision "shell", privileged: 'false', run: 'always', inline: <<-SHELL
+    screen -dmS backend  bash -c "cd telnet-iot-honeypot; python backend.py"
     sleep 5
-    sudo su ubuntu -c 'screen -dmS honeypot bash -c "cd /home/ubuntu/telnet-iot-honeypot; python honeypot.py"'
-    sudo su ubuntu -c 'screen -list'
+    screen -dmS honeypot bash -c "cd telnet-iot-honeypot; python honeypot.py"
+    screen -list
   SHELL
 end
+

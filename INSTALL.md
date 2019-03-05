@@ -70,6 +70,10 @@ admin user, see the file `config.yaml`.
 
 ## Running
 
+Create a config:
+
+	bash create_config.sh
+
 Start the backend:
 
 	python backend.py

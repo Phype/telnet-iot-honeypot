@@ -1,48 +1,92 @@
 # Telnet IoT honeypot
 
-Live Demo: http://phype.pythonanywhere.com/
-
 'Python telnet honeypot for catching botnet binaries'
 
 This project implements a python telnet server trying to act
 as a honeypot for IoT Malware which spreads over horribly
 insecure default passwords on telnet servers on the internet.
 
-Other than https://github.com/stamparm/hontel or https://github.com/micheloosterhof/cowrie (examples),
-which provides full (via chroot) or simulated behaviour of a linux
-system this honeypots goal is just to collect statistics of (IoT) botnets.
-This means that the honeypot must be made to work with every form of automated telnet session,
-which may try to infect the honeypot with malware.
-Luckily, these malwares infection processes are quite simple,
-just using wget do download something and running it.
+The honeypot works by emulating a shell enviroment, just like 
+cowrie (https://github.com/micheloosterhof/cowrie).
+The aim of this project is primarily to automatically analyse
+Botnet connections and "map" Botnets by linking diffrent
+connections and even Networks together.
 
 ## Architecture
 
-The application has a client/server architekture,
+The application has a client/server architecture,
 with a client (the actual honeypot) accepting telnet connections
-and a server aggregating connection data and sample analysis.
+and a server which receives information about connections and
+does the analysis.
 
-However, for local deployments, the application can also be run
-in local mode to eliminate the need to run a client and server locally.
+The backend server exposes a HTTP interface which is used
+to access to frontend as well as by the clients to push new
+Connection information to the backend.
+
+## Automatic analysis
+
+The Backend uses 2 diffrent mechanisms to automatically link
+connections:
+
+### Networks
+
+Networks are discovered Botnets. A network is the set of all linked
+connections, urls and samples. Urls and samples
+are linked when they are used in a connection. Two connections are linked
+when both connections are recieved by the same honeypot client
+(mutliple clients are supported!) and use the same credentials in a short
+period of time (defautl 2 minutes) or come from the same IP address.
+
+### Malware
+
+Multiple networks are identified to use the same type of malware
+if the text entered during sessions of the networks aro mostly the
+same. This comparison is done using sort of "hash"-function which
+basically translates a session (or connection) into a sequence
+of words and then maps each word to a single byte so this resulting
+sequence of bytes can be easily searched.
 
 # Running
 
 The application has a config file named config.py.
 Samples are included for local and client/server deployments.
 
-## Client/Local Mode
+## Configuration
 
-	python honeypot.py
+The backend requires a SQL-database (default sqlite) which is initialized
+at first run. Before the first run you should generate a admin account
+which is used to generate more users. The admin account can also directly
+used by a client to post connections. When more than one honeypots shall be
+connected, creating multiple users is recommended.
 
-## Server
+	bash create_config.sh
+
+Both client and backend will read the files `config.yaml` and `config.dist.yaml`
+to read configuration parameters. The `config.dist.yaml` file includes
+default values for all but admin user credentials and these parameters
+are overwirtten by entries in the `config.yaml` file.
+
+## Running the Server
 
 	python backend.py
 
+## Running the Client
+
+	python honeypot.py
+
+The client cannot be started without the server running. To use a diffrent configuration
+for the client you can use the `-c` switch like this:
+
+	python honeypot.py -c myconfig.yaml
+
+If you only want to check the honeypot functionality,
+you can start the client in interactive mode:
+
+	python honeypot shell
+
 ## Opening the frontend
 
-After the server is started, open `html/index.html` in your favorite browser.
-For this to work, the url in `html/apiurl.js` should point to your running backend,
-which it should do automatically for local deployments.
+After the server is started, open `http://127.0.0.1/` in your favorite browser.
 
 ## Sample Connection
 
@@ -61,3 +105,5 @@ which it should do automatically for local deployments.
 ![Screenshot 1](images/screen1.png)
 
 ![Screenshot 2](images/screen2.png)
+
+![Screenshot 3](images/screen3.png)

@@ -3,6 +3,13 @@ import hashlib
 import traceback
 import struct
 import json
+import time
+import socket
+import urlparse
+import random
+
+import additionalinfo
+import ipdb.ipdb
 
 from sqlalchemy import desc, func, and_, or_
 from decorator import decorator
@@ -10,8 +17,7 @@ from functools import wraps
 from simpleeval import simple_eval
 from argon2 import argon2_hash
 
-from additionalinfo import get_ip_info, get_url_info, get_asn_info
-from db import get_db, filter_ascii, Sample, Connection, Url, ASN, Tag, User
+from db import get_db, filter_ascii, Sample, Connection, Url, ASN, Tag, User, Network, Malware, IPRange, db_wrapper
 from virustotal import Virustotal
 
 from cuckoo import Cuckoo
@@ -19,216 +25,16 @@ from cuckoo import Cuckoo
 from util.dbg import dbg
 from util.config import config
 
-@decorator
-def db_wrapper(func, *args, **kwargs):
-	self = args[0]
-	if self.session:
-		return func(*args, **kwargs)
-	else:
-		self.db      = get_db()
-		self.session = self.db.sess
+from difflib import ndiff
 
-		try:
-			return func(*args, **kwargs)
-		finally:
-			self.db.end()
-			self.db = None
-			self.session = None
-
-class AuthController:
-
-	def __init__(self):
-		self.session = None
-		self.salt    = config.get("backend_salt")
-		self.checkInitializeDB()
-
-	def pwhash(self, username, password):
-		return argon2_hash(str(password), self.salt + str(username), buflen=32).encode("hex")
-
-	@db_wrapper
-	def checkInitializeDB(self):
-		user = self.session.query(User).filter(User.id == 1).first()
-		if user == None:
-			admin_name = config.get("backend_user")
-			admin_pass = config.get("backend_pass")
-
-			print 'Creating admin user "' + admin_name + '" see config for password'
-			self.addUser(admin_name, admin_pass, 1)
-
-	@db_wrapper
-	def getUser(self, username):
-		user = self.session.query(User).filter(User.username == username).first()
-		return user.json(depth=1) if user else None
-
-	@db_wrapper
-	def addUser(self, username, password, id=None):
-		user = User(username=username, password=self.pwhash(username, password))
-		if id != None:
-			user.id = id
-		self.session.add(user)
-		return user.json()
-
-	@db_wrapper
-	def checkAdmin(self, user):
-		user = self.session.query(User).filter(User.username == user).first()
-		if user == None:
-			return False
-		return user.id == 1
-
-	@db_wrapper
-	def checkLogin(self, username, password):
-		user = self.session.query(User).filter(User.username == username).first()
-		if user == None:
-			return False
-		if self.pwhash(username, password) == user.password:
-			return True
-		else:
-			return False
-
-class WebController:
-
-	def __init__(self):
-		self.session  = None
-
-	@db_wrapper
-	def get_connection(self, id):
-		connection = self.session.query(Connection).filter(Connection.id == id).first()
-
-		if connection:
-			return connection.json(depth=1)
-		else:
-			return None
-
-	@db_wrapper
-	def get_connections(self, filter_obj={}, older_than=None):
-		query = self.session.query(Connection).filter_by(**filter_obj)
-
-		if older_than:
-			query = query.filter(Connection.date < older_than)
-
-		query = query.order_by(desc(Connection.date))
-
-		connections = query.limit(32).all()
-		return map(lambda connection : connection.json(), connections)
-
-	@db_wrapper
-	def get_connections_fast(self):
-		conns = self.session.query(Connection).all()
-
-		clist = []
-		for conn in conns:
-			clist.append({
-				"id": conn.id,
-				"ip": conn.ip,
-				"conns_before": map(lambda c: c.id, conn.conns_before),
-				"conns_after": map(lambda c: c.id, conn.conns_after)
-			})
-
-		return clist
-
-	##
-
-	@db_wrapper
-	def get_sample(self, sha256):
-		sample = self.session.query(Sample).filter(Sample.sha256 == sha256).first()
-		return sample.json(depth=1) if sample else None
-
-	@db_wrapper
-	def get_newest_samples(self):
-		samples = self.session.query(Sample).order_by(desc(Sample.date)).limit(16).all()
-		return map(lambda sample : sample.json(), samples)
-
-	##
-
-	@db_wrapper
-	def get_url(self, url):
-		url_obj = self.session.query(Url).filter(Url.url == url).first()
-		return url_obj.json(depth=1) if url_obj else None
-
-	@db_wrapper
-	def get_newest_urls(self):
-		urls = self.session.query(Url).order_by(desc(Url.date)).limit(16).all()
-		return map(lambda url : url.json(), urls)
-
-	##
-
-	@db_wrapper
-	def get_tag(self, name):
-		tag = self.session.query(Tag).filter(Tag.name == name).first()
-		return tag.json(depth=1) if tag else None
-
-	@db_wrapper
-	def get_tags(self):
-		tags = self.session.query(Tag).all()
-		return map(lambda tag : tag.json(), tags)
-
-	##
-
-	@db_wrapper
-	def get_country_stats(self):
-		stats = self.session.query(func.count(Connection.country), Connection.country).group_by(Connection.country).all()
-		return stats
-
-	##
-
-	@db_wrapper
-	def get_asn(self, asn):
-		asn_obj = self.session.query(ASN).filter(ASN.asn == asn).first()
-
-		if asn_obj:
-			return asn_obj.json(depth=1)
-		else:
-			return null
-
-	##
-	
-	@db_wrapper
-	def connhash_tree_lines(self, lines, mincount):
-		length     = 1 + lines * 4
-		othercount = 0
-		
-		ret   = {}
-		dbres = self.session.query(func.count(Connection.id),
-			func.substr(Connection.connhash, 0, length).label("c"),
-			Connection.stream, Connection.id).group_by("c").all()
-
-		for c in dbres:
-			count    = c[0]
-			connhash = c[1]
-			if count > mincount:
-				ev_in = filter(lambda ev : ev["in"], json.loads(c[2]))
-
-				if len(ev_in) >= lines:
-					ret[connhash] = {
-						"count": c[0],
-						"connhash": connhash,
-						"text": ev_in[lines-1]["data"],
-						"childs": [],
-						"sample_id": c[3]
-					}
-			else:
-				othercount += count
-
-		return ret
-
-	@db_wrapper
-	def connhash_tree(self, layers):
-		tree  = self.connhash_tree_lines(1, 10)
-		layer = tree
-
-		for lines in range(2,layers+1):
-			length = (lines-1) * 4
-			new_layer = self.connhash_tree_lines(lines, 0)
-			for connhash in new_layer:
-				connhash_old = connhash[:length]
-				if connhash_old in layer:
-					parent = layer[connhash_old]
-					parent["childs"].append(new_layer[connhash])
-			layer = new_layer
-
-		return tree
-				
-			
+ANIMAL_NAMES = ["Boar","Stallion","Yak","Beaver","Salamander","Eagle Owl","Impala","Elephant","Chameleon","Argali","Lemur","Addax","Colt",
+				"Whale","Dormouse","Budgerigar","Dugong","Squirrel","Okapi","Burro","Fish","Crocodile","Finch","Bison","Gazelle","Basilisk",
+				"Puma","Rooster","Moose","Musk Deer","Thorny Devil","Gopher","Gnu","Panther","Porpoise","Lamb","Parakeet","Marmoset","Coati",
+				"Alligator","Elk","Antelope","Kitten","Capybara","Mule","Mouse","Civet","Zebu","Horse","Bald Eagle","Raccoon","Pronghorn",
+				"Parrot","Llama","Tapir","Duckbill Platypus","Cow","Ewe","Bighorn","Hedgehog","Crow","Mustang","Panda","Otter","Mare",
+				"Goat","Dingo","Hog","Mongoose","Guanaco","Walrus","Springbok","Dog","Kangaroo","Badger","Fawn","Octopus","Buffalo","Doe",
+				"Camel","Shrew","Lovebird","Gemsbok","Mink","Lynx","Wolverine","Fox","Gorilla","Silver Fox","Wolf","Ground Hog","Meerkat",
+				"Pony","Highland Cow","Mynah Bird","Giraffe","Cougar","Eland","Ferret","Rhinoceros"]
 
 # Controls Actions perfomed by Honeypot Clients
 class ClientController:
@@ -240,133 +46,377 @@ class ClientController:
 		else:
 			self.vt = None
 		self.cuckoo   = Cuckoo(config)
-		self.do_ip_to_asn_resolution = config.get("do_ip_to_asn_resolution", optional=True, default=True)
-
-	def get_asn(self, asn):
-		asn_obj = self.session.query(ASN).filter(ASN.asn == asn).first()
-
-		if asn_obj:
-			return asn_obj.json(depth=1)
-		else:
-			asn_info = get_asn_info(asn)
-			if asn_info:
-				asn_obj = ASN(asn=asn, name=asn_info['name'], reg=asn_info['reg'], country=asn_info['country'])
-				self.session.add(asn_obj)
-				return asn_obj.json(depth=1)
+		
+		self.do_ip_to_asn_resolution = False
+		self.ip2asn = config.get("ip_to_asn_resolution", optional=True, default=True)
+		if self.ip2asn == "offline":
+			self.do_ip_to_asn_resolution = True
+			self.fill_db_ipranges()
+		if self.ip2asn == "online":
+			self.do_ip_to_asn_resolution = True
 
 	@db_wrapper
-	def put_session(self, session):
-		ipinfo  = None
-		asn     = None
-		block   = None
-		country = None
+	def _get_asn(self, asn_id):
+		asn_obj = self.session.query(ASN).filter(ASN.asn == asn_id).first()
+		
+		if asn_obj:
+			return asn_obj
+		else:
+			asn_info = additionalinfo.get_asn_info(asn_id)
+			if asn_info:
+				asn_obj = ASN(asn=asn_id, name=asn_info['name'], reg=asn_info['reg'], country=asn_info['country'])
+				self.session.add(asn_obj)
+				return asn_obj
+			
+		return None
 
-		if self.do_ip_to_asn_resolution:
-			ipinfo = get_ip_info(session["ip"])
-			if ipinfo:
-				asn_obj = self.get_asn(ipinfo["asn"])
-				asn     = ipinfo["asn"]
-				block   = ipinfo["ipblock"]
-				country = ipinfo["country"]
+	def calc_connhash_similiarity(self, h1, h2):
+		l = min(len(h1), len(h2))
+		r = 0
+		for i in range(0, l):
+			r += int(h1[i] != h2[i])
 
-		# Calculate "hash"
-		connhash = ""
-		for event in session["stream"]:
+		if l == 0: return 0
+		return float(r)/float(l)
+
+	def calc_connhash(self, stream):
+		output = ""
+		for event in stream:
 			if event["in"]:
-				line     = event["data"]
-				line     = ''.join(char for char in line if ord(char) < 128 and ord(char) > 32)
-				if line != "":
-					linehash = abs(hash(line)) % 0xFFFF
-					connhash += struct.pack("!H", linehash)
-		connhash = connhash.encode("hex")
+				line  = event["data"]
+				line  = line.strip()
+				parts = line.split(" ")
+				for part in parts:
+					part_hash = chr(hash(part) % 0xFF)
+					output += part_hash
 
+		# Max db len is 256, half because of hex encoding
+		return output[:120]
+
+	@db_wrapper
+	def fill_db_ipranges(self):		
+		if self.session.query(IPRange.ip_min).count() != 0:
+			return
+		
+		print "Filling IPRange Tables"
+		
+		asntable = ipdb.ipdb.get_asn()
+		progress = 0
+		
+		for row in ipdb.ipdb.get_geo_iter():
+			progress += 1
+			if progress % 1000 == 0:
+				self.session.commit()
+				self.session.flush()
+				print str(100.0 * float(row[0]) / 4294967296.0) + "% / " + str(100.0 * progress / 3315466) + "%" 
+			
+			ip = IPRange(ip_min = int(row[0]), ip_max=int(row[1]))
+			
+			ip.country   = row[2]
+			ip.region    = row[4]
+			ip.city      = row[5]
+			ip.zipcode   = row[8]
+			ip.timezone  = row[9]
+			ip.latitude  = float(row[6])
+			ip.longitude = float(row[7])
+			
+			asn_data = asntable.find_int(ip.ip_min)
+			
+			if asn_data:
+				asn_id = int(asn_data[3])
+				asn_db = self.session.query(ASN).filter(ASN.asn == asn_id).first()
+				
+				if asn_db == None:
+					asn_db = ASN(asn = asn_id, name = asn_data[4], country=ip.country)
+					self.session.add(asn_db)
+				
+				ip.asn = asn_db
+				
+				# Dont add session if we cannot find an asn for it
+				self.session.add(ip)
+		
+		print "IPranges loaded"
+		
+	@db_wrapper
+	def get_ip_range_offline(self, ip):
+		ip_int = ipdb.ipdb.ipstr2int(ip)
+		
+		range = self.session.query(IPRange).filter(and_(IPRange.ip_min <= ip_int, 
+			ip_int <= IPRange.ip_max)).first()
+		
+		return range
+	
+	def get_ip_range_online(self, ip):
+		
+		addinfo = additionalinfo.get_ip_info(ip)
+		
+		# TODO: Ugly hack
+		range = IPRange(ip_min=1, ip_max=2)
+		
+		range.country   = addinfo["country"]
+		range.city      = ""
+		range.latitude  = 0
+		range.longitude = 0
+		range.asn_id    = int(addinfo["asn"])
+		range.asn       = self._get_asn(range.asn_id)
+		range.cidr      = addinfo["ipblock"]
+		
+		return range
+	
+	def get_ip_range(self, ip):
+		if self.ip2asn == "online":
+			return self.get_ip_range_online(ip)
+		else:
+			return self.get_ip_range_offline(ip)
+		
+	def get_url_info(self, url):
+		parsed = urlparse.urlparse(url)
+		host   = parsed.netloc.split(':')[0]
+		
+		if host[0].isdigit():
+			ip = host
+		else:
+			try:
+				ip = socket.gethostbyname(host)
+			except:
+				return None
+			
+		range  = self.get_ip_range(ip)
+		return ip, range
+	
+	@db_wrapper
+	def do_housekeeping(self):
+		
+		for malware in self.session.query(Malware).all():
+			malware.name = random.choice(ANIMAL_NAMES)
+		
+		# rebuild nb_firstconns
+		if False:
+			
+			net_cache = {}
+			
+			for conn in self.session.query(Connection).all():
+				if len(conn.conns_before) == 0:
+					if conn.network_id in net_cache:
+						net_cache[conn.network_id] += 1
+					else:
+						net_cache[conn.network_id] = 1
+			
+			for network in self.session.query(Network).all():
+				if network.id in net_cache:
+					network.nb_firstconns = net_cache[network.id]
+				else:
+					network.nb_firstconns = 0
+					
+				print "Net " + str(network.id) + ": " + str(network.nb_firstconns)
+	
+	@db_wrapper
+	def put_session(self, session):
+		
+		connhash = self.calc_connhash(session["stream"]).encode("hex")
+		
 		backend_user = self.session.query(User).filter(
 			User.username == session["backend_username"]).first()
-
+		
 		conn = Connection(ip=session["ip"], user=session["user"],
 			date=session["date"], password=session["pass"],
-			stream=json.dumps(session["stream"]), asn_id=asn, ipblock=block,
-			country=country, connhash=connhash, backend_user_id=backend_user.id)
-
+			stream=json.dumps(session["stream"]),
+			connhash=connhash, backend_user_id=backend_user.id)
+		
+		conn.user     = filter_ascii(conn.user)
+		conn.password = filter_ascii(conn.password)
+		
+		if self.do_ip_to_asn_resolution:
+			range = self.get_ip_range(conn.ip)
+			if range:
+				conn.country = range.country
+				conn.city    = range.city
+				conn.lat     = range.latitude
+				conn.lon     = range.longitude
+				conn.asn     = range.asn
+		
 		self.session.add(conn)
-		self.session.flush()
+		self.session.flush() # to get id
+		
+		network_id = None
+		
+		samples = []
+		urls    = []
+		for sample_json in session["samples"]:
+			# Ignore junk - may clean up the db a bit
+			if sample_json["length"] < 2000:
+				continue
 
-		req_urls = []
-		set_urls = set(session["urls"])
-		for url in set_urls:
-			db_url = self.db.get_url(url).fetchone()
-			url_id = 0
-
-			if db_url == None:
-				url_ip      = None
-				url_asn     = None
-				url_country = None
+			sample, url = self.create_url_sample(sample_json)
+			
+			if sample:
+				if network_id == None and sample.network_id != None:
+					network_id = sample.network_id
+				samples.append(sample)
 				
-				if self.do_ip_to_asn_resolution:
-					url_ip, url_info = get_url_info(url)
-					if url_info:
-						asn_obj_url = self.get_asn(url_info["asn"])
-						url_asn     = url_info["asn"]
-						url_country = url_info["country"]
-
-				url_id = self.db.put_url(url, session["date"], url_ip, url_asn, url_country)
-				req_urls.append(url)
-
-			elif db_url["sample"] == None:
-				req_urls.append(url)
-				url_id = db_url["id"]
-
-			else:
-				# Sample exists already
-				# TODO: Check url for oldness
-				url_id = db_url["id"]
-
-			self.db.link_conn_url(conn.id, url_id)
+			if url:
+				if network_id == None and url.network_id != None:
+					network_id = url.network_id
+				conn.urls.append(url)
+				urls.append(url)
 
 		# Find previous connections
 		# A connection is associated when:
 		#  - same honeypot/user
 		#  - connection happened as long as 120s before
 		#  - same client ip OR same username/password combo
-		assoc_timediff = 120
+		assoc_timediff        = 120
+		assoc_timediff_sameip = 3600
+		
 		previous_conns = (self.session.query(Connection).
-				filter(Connection.date > (conn.date - assoc_timediff),
-				or_(and_(Connection.user == conn.user, Connection.password == conn.password), 
-				Connection.ip == conn.ip),
+				filter(
+				or_(
+					and_(
+						Connection.date > (conn.date - assoc_timediff),
+						Connection.user == conn.user,
+						Connection.password == conn.password
+					),
+					and_(
+						Connection.date > (conn.date - assoc_timediff_sameip),
+						Connection.ip == conn.ip
+					)
+				),
 				Connection.backend_user_id == conn.backend_user_id,
 				Connection.id != conn.id).all())
 
 		for prev in previous_conns:
+			if network_id == None and prev.network_id != None:
+				network_id = prev.network_id
 			conn.conns_before.append(prev)
 
 		# Check connection against all tags
 		tags = self.session.query(Tag).all()
-		conn = self.session.query(Connection).filter(Connection.id == conn.id).first()
 		for tag in tags:
 			json_obj = conn.json(depth = 0)
 			json_obj["text_combined"] = filter_ascii(json_obj["text_combined"])
 			if simple_eval(tag.code, names=json_obj) == True:
 				self.db.link_conn_tag(conn.id, tag.id)
 
-		return req_urls
+		# Only create new networks for connections with urls or associtaed conns,
+		# to prevent the creation of thousands of networks
+		# NOTE: only conns with network == NULL will get their network updated
+		#       later so whe should only create a network where we cannot easily
+		#       change it later
+		if (len(conn.urls) > 0 or len(previous_conns) > 0) and network_id == None:
+			network_id = self.create_network().id
+		
+		# Update network on self
+		conn.network_id = network_id
+		
+		# Update network on all added Urls
+		for url in urls:
+			if url.network_id == None:
+				url.network_id = network_id
+				
+		# Update network on all added Samples
+		for sample in samples:
+			if sample.network_id == None:
+				sample.network_id = network_id
+		
+		# Update network on all previous connections withut one
+		if network_id != None:
+			for prev in previous_conns:
+				if prev.network_id == None:
+					prev.network_id = network_id
+					
+					# Update number of first conns on network
+					if len(prev.conns_before) == 0:
+						conn.network.nb_firstconns += 1
+		
+		self.session.flush()
 
+		# Check for Malware type
+		# 	only if our network exists AND has no malware associated
+		if conn.network != None and conn.network.malware == None:
+			# Find connections with similar connhash
+			similar_conns = (self.session.query(Connection)
+				.filter(func.length(Connection.connhash) == len(connhash))
+				.all())
+
+			min_sim  = 2
+			min_conn = None
+			for similar in similar_conns:
+				if similar.network_id != None:
+					c1  = connhash.decode("hex")
+					c2  = similar.connhash.decode("hex")
+					sim = self.calc_connhash_similiarity(c1, c2)
+					if sim < min_sim and similar.network.malware != None:
+						min_sim  = sim
+						min_conn = similar
+
+			# 0.9: 90% or more words in session are equal
+			#	think this is probably the same kind of malware
+			#	doesn't need to be the same botnet though!
+			if min_sim < 0.9:
+				conn.network.malware = min_conn.network.malware
+			else:
+				conn.network.malware = Malware()
+				conn.network.malware.name = random.choice(ANIMAL_NAMES)
+				
+				self.session.add(conn.network.malware)
+				self.session.flush()
+		
+		# Update network number of first connections
+		if len(previous_conns) == 0 and conn.network_id != None:
+			conn.network.nb_firstconns += 1
+
+		return conn.json(depth=1)
+		
 	@db_wrapper
-	def put_sample_info(self, f):
-		url = f["url"]
-		url_id = self.db.get_url(url).fetchone()["id"]
+	def create_network(self):
+		net = Network()
+		self.session.add(net)
+		self.session.flush()
+		return net
 
-		result = None
-		try:
-			if self.vt != None:
-				vtobj  = self.vt.query_hash_sha256(f["sha256"])
-				if vtobj:
-					result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
-		except:
-			pass
+	def create_url_sample(self, f):
+		url = self.session.query(Url).filter(Url.url==f["url"]).first()
+		if url == None:
+			url_ip      = None
+			url_asn     = None
+			url_country = None
+			
+			if self.do_ip_to_asn_resolution:
+				url_ip, url_range = self.get_url_info(f["url"])
+				if url_range:
+					url_asn     = url_range.asn_id
+					url_country = url_range.country
+			
+			url = Url(url=f["url"], date=f["date"], ip=url_ip, asn_id=url_asn, country=url_country)
+			self.session.add(url)
+		
+		if f["sha256"] != None:
+			sample = self.session.query(Sample).filter(Sample.sha256 == f["sha256"]).first()
+			if sample == None:
+				result = None
+				try:
+					if self.vt != None:
+						vtobj  = self.vt.query_hash_sha256(f["sha256"])
+						if vtobj:
+							result = str(vtobj["positives"]) + "/" + str(vtobj["total"]) + " " + self.vt.get_best_result(vtobj)
+				except:
+					pass
 
-		sample_id = self.db.put_sample(f["sha256"], f["name"], f["length"], f["date"], f["info"], result)
-		self.db.link_url_sample(url_id, sample_id)
-		return f
+				sample = Sample(sha256=f["sha256"], name=f["name"], length=f["length"],
+					date=f["date"], info=f["info"], result=result)
+				self.session.add(sample)
+		
+			if sample.network_id != None and url.network_id == None:
+				url.network_id = sample.network_id
+		
+			if sample.network_id == None and url.network_id != None:
+				sample.network_id = url.network_id
+		else:
+			sample = None
+		
+		url.sample = sample
+		
+		return sample, url
 
 	@db_wrapper
 	def put_sample(self, data):

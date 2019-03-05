@@ -1,0 +1,245 @@
+<html>
+<head>
+
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="http://visjs.org/dist/vis.js"></script>
+
+<link rel="stylesheet" href="http://visjs.org/dist/vis-network.min.css">
+<style type="text/css">
+
+.code {
+	font-family: monospace;
+}
+
+.code-line.isinput {
+	font-weight: bold;
+}
+
+</style>
+<script src="../../apiurl.js"></script>
+<script type="text/javascript">
+
+var ips        = {};
+var conns      = {};
+var urls       = {};
+var samples    = {};
+var graph_data = null;
+var globalnode = null;
+
+function print(s)
+{
+  console.log(s);
+  //$("#logbox").append(document.createTextNode( s + "\n" ));
+}
+
+function getIPConns(ip, olderthan)
+{
+  var url = api + "/connections?ip=" + ip;
+  if (olderthan != null) url += "&older_than=" + olderthan + "&";
+  
+  $.get(url, null, function (data) {
+    print("IPconns: " + ip + ", " + olderthan);
+    var myconns = JSON.parse(data);
+    for (var i = 0; i < myconns.length; i++)
+    {
+      getConn(myconns[i].id);
+    }
+    if (myconns.length > 0)
+    {
+      var date = myconns[myconns.length - 1].date;
+      getIPConns(ip, date);
+    }
+  });
+}
+
+function getIP(ip, type)
+{
+  if (ip in ips)
+  {
+    return ips[ip];
+  } else {
+    print("New ip " + ip);
+    ips[ip] = {
+      "ip":        ip,
+      "conns":     {},
+      "neighbors": {},
+      "type":      type
+    }
+
+    //getIPConns(ip, null);
+
+    return ips[ip];
+  }
+}
+
+function gotConn(conn)
+{
+  print("Conn:  " + conn.id);
+
+  // Check if the connection has ANY edge
+  // associates/urls/samples
+  
+  //if (conn.urls.length == 0 && conn.conns_before.length == 0 && conn.conns_after.length == 0)
+  //{
+  //  return;
+  //}
+
+  conns[conn.id] = conn;
+  ip = getIP(conn.ip, "ip");
+  
+  for (var i = 0; i < conn.conns_before.length; i++)
+  {
+    assoc_id = conn.conns_before[i]["id"];
+    assoc_ip = getIP(conn.conns_before[i]["ip"], "ip");
+    print("Assoc: " + assoc_id);
+
+    // Connect Associates Connections
+    ip.neighbors[assoc_ip.ip] = assoc_ip;
+    assoc_ip.neighbors[ip.ip] = ip;
+
+    ip.conns[conn.id] = conn;
+    //getConn(assoc_id);
+  }
+
+  // Connect Urls (Resolved IP)
+  for (var u = 0; u < conn.urls.length; u++)
+  {
+    var url    = conn.urls[u];
+    var urlid  = url.url; // url.ip;
+    if (urlid != null && urlid != "" ) //&& !url.url.startsWith("telnet://"))
+    {
+      console.log("url " + urlid);
+      var url_ip = getIP(urlid, "url");
+
+      // Conn <-> URL
+      ip.neighbors[url_ip.ip] = url_ip;
+      url_ip.neighbors[ip.ip] = ip;
+
+      // URL <-> Sample
+      if (url.sample != null) {
+        var sample_ip = getIP(url.sample, "sample");
+        url_ip.neighbors[sample_ip.ip] = sample_ip;
+        sample_ip.neighbors[url_ip.ip] = url_ip;
+      }
+    }
+  }
+}
+
+function getConn(id)
+{
+  if (!(id in conns))
+  {
+    $.get(api + "/connection/" + id, null, function (data) {
+      gotConn(JSON.parse(data));
+    });
+  }
+}
+
+function main()
+{
+  $.get(api + "/connections", null, function(data) {
+    var myconns = JSON.parse(data);
+    var max_id = myconns[1].id;
+
+    for (var i = 1; i <= max_id; i++)
+    {
+      getConn(i);
+    }
+  });
+}
+
+function addnode()
+{
+	var myid = "" + Math.random();
+
+	graph_data.nodes.add({
+		"id":		myid,
+		"label":	"newnewnew" 
+	});
+	
+	graph_data.edges.add({
+		"id":   globalnode + "-" + myid,
+		"from": globalnode,
+		"to":   myid,
+	});
+	
+}
+
+function draw()
+{
+  var nodes = [];
+  var edges = [];
+  var edgeds_hash = {};
+  var nodes2ip = {}
+
+  var counter = 0;
+  for (ip_id in ips) {
+    ip = ips[ip_id];
+    ip.counter = counter;
+
+    nodes2ip[counter] = ip_id;
+
+    var color = "#ccc";
+    if (ip.type == "url") color = "#77f";
+    if (ip.type == "sample") color = "#f77";
+
+    nodes.push({
+      "id": counter,
+      "label": ip_id.substr(0,16),
+      "color": color
+    });
+    counter++;
+  }
+
+  for (ip_id in ips) {
+    ip = ips[ip_id];
+
+    for (nb_id in ip.neighbors)
+    {
+      nb = ips[nb_id];
+      if (!(nb.counter + "-" + ip.counter in edgeds_hash))
+      {
+        edges.push({from: ip.counter, to: nb.counter});
+        edgeds_hash[ip.counter + "-" + nb.counter] = true;
+      }
+    }
+  }
+
+  // create a network
+  var container = document.getElementById('mynetwork');
+  graph_data = {
+    nodes: new vis.DataSet(nodes),
+    edges: new vis.DataSet(edges)
+  };
+  var options = {
+    layout: {
+      improvedLayout: false
+    }
+  };
+  var network = new vis.Network(container, graph_data, options);
+  network.on("click", function (params) {
+    if (params.nodes.length == 1)
+    {
+      globalnode = params.nodes[0];
+      //var newip = nodes2ip[params.nodes[0]];
+      //window.location.href = "https://phype.pythonanywhere.com/#/connections?ip=" + newip;
+    }
+  });
+}
+
+</script>
+
+</head>
+<body onload="main()">
+
+<button onclick="draw()">draw</button><button onclick="addnode()">addnode</button>
+<div id="mynetwork"></div>
+<pre id="logbox">
+
+</pre>
+
+</body>
+</html>

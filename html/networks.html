@@ -1,0 +1,33 @@
+<h1>Networks</h1>
+
+<!--<h2>Connections from the Network <small><a href="#/connections?network_id={{ network.id }}">see all</a></small></h2>-->
+
+<center><small><b>Initial Connections per Hour</b></small></center>
+<div style="height: 15em; width: 100%">
+<canvas id="timechart" class="chart chart-line"
+	chart-data="timechart_data" chart-options="timechart_options"
+	chart-labels="timechart_labels" chart-series="timechart_series">
+</canvas>
+</div>
+
+
+<table class="table table-condensed">
+
+	<tr>
+		<th>#</th>
+		<th>Malware</th>
+		<th>N⁰ initial Conn's</th>
+		<!-- <th>No IPs</th> -->
+		<th>N⁰ Urls</th>
+		<th>N⁰ Samples</th>
+	</tr>
+	<tr ng-repeat="network in networks | filter:filterNoSamples | orderBy:'-order'">
+		<td><a href="#/network/{{ network.id }}">#{{network.id}}</a></td>
+		<td><a href="#/malware/{{ network.malware.id }}">{{ network.malware.name != null ? network.malware.name : fakenames[network.malware.id] }}</a></td>
+		<td>{{ network.firstconns }}</td>
+		<!-- <td>{{ network.ips.length }}</td> -->
+		<td>{{ network.urls }}</td>
+		<td>{{ network.samples }}</td>
+	</tr>
+
+</table>
