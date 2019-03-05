@@ -11,6 +11,7 @@ from util.config import config
 
 _BACKEND = None
 def get_backend():
+	global _BACKEND
 	if _BACKEND:
 		return _BACKEND
 	elif config.get("backend", optional=True) != None:
