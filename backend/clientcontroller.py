@@ -156,7 +156,7 @@ class ClientController:
 			range = IPRange(ip_min=1, ip_max=2)
 			
 			range.country   = addinfo["country"]
-			range.city      = ""
+			range.city      = "Unknown"
 			range.latitude  = 0
 			range.longitude = 0
 			range.asn_id    = int(addinfo["asn"])

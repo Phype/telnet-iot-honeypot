@@ -3,7 +3,6 @@ werkzeug
 flask
 flask-httpauth
 flask-socketio
-eventlet
 sqlalchemy
 requests
 decorator
@@ -12,3 +11,4 @@ ipaddress
 simpleeval
 pyyaml
 argon2
+eventlet
