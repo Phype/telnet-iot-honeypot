@@ -145,24 +145,30 @@ class ClientController:
 			ip_int <= IPRange.ip_max)).first()
 		
 		return range
-	
+
 	def get_ip_range_online(self, ip):
 		
 		addinfo = additionalinfo.get_ip_info(ip)
 		
-		# TODO: Ugly hack
-		range = IPRange(ip_min=1, ip_max=2)
+		if addinfo:
 		
-		range.country   = addinfo["country"]
-		range.city      = ""
-		range.latitude  = 0
-		range.longitude = 0
-		range.asn_id    = int(addinfo["asn"])
-		range.asn       = self._get_asn(range.asn_id)
-		range.cidr      = addinfo["ipblock"]
+			# TODO: Ugly hack
+			range = IPRange(ip_min=1, ip_max=2)
+			
+			range.country   = addinfo["country"]
+			range.city      = ""
+			range.latitude  = 0
+			range.longitude = 0
+			range.asn_id    = int(addinfo["asn"])
+			range.asn       = self._get_asn(range.asn_id)
+			range.cidr      = addinfo["ipblock"]
+			
+			return range
 		
-		return range
-	
+		else:
+			
+			return None
+
 	def get_ip_range(self, ip):
 		if self.ip2asn == "online":
 			return self.get_ip_range_online(ip)
