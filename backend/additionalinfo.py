@@ -13,10 +13,11 @@ def filter_ascii(string):
 def query_txt(cname):
 	try:
 		answer = dns.resolver.query(cname, "TXT")
-		
+
 		for rr in answer.rrset:
 			if rr.strings: return rr.strings[0]
-	except:
+	except Exception as e:
+		traceback.print_exc()
 		pass
 
 	return None
@@ -60,6 +61,7 @@ def get_ip4_info(ip):
 	reverse = oktets[3] + "." + oktets[2] + "." + oktets[1] + "." + oktets[0]
 	
 	answer = query_txt(reverse + ".origin.asn.cymru.com")
+
 	if answer:
 		return txt_to_ipinfo(answer)
 	
