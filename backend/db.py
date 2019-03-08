@@ -351,7 +351,7 @@ if is_sqlite:
 	eng = sqlalchemy.create_engine(config.get("sql"),
 								poolclass=QueuePool,
 								pool_size=1,
-								max_overflow=1,
+								max_overflow=20,
 								connect_args={'check_same_thread': False})
 else:
 	eng = sqlalchemy.create_engine(config.get("sql"),
