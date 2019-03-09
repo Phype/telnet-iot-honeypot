@@ -72,6 +72,11 @@ are overwirtten by entries in the `config.yaml` file.
 
 ## Running the Client
 
+This project contains an own honeypot, however because of the client-server architecture,
+other honeypot can be used as well.
+
+### Using the built-in honeypot
+
 	python honeypot.py
 
 The client cannot be started without the server running. To use a diffrent configuration
@@ -83,6 +88,12 @@ If you only want to check the honeypot functionality,
 you can start the client in interactive mode:
 
 	python honeypot shell
+
+### Using cowrie
+
+I wrote an output plugin for cowrie, which has much more features than the built in honeypot.
+If you want to use cowrie instead, checkout my fork which includes the output module here:
+https://github.com/Phype/cowrie .
 
 ## Opening the frontend
 
