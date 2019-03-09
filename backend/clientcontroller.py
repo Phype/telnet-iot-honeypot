@@ -153,7 +153,7 @@ class ClientController:
 		if addinfo:
 		
 			# TODO: Ugly hack
-			range = IPRange(ip_min=1, ip_max=2)
+			range = type('',(object,),{})()
 			
 			range.country   = addinfo["country"]
 			range.city      = "Unknown"
