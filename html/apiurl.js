@@ -1,1 +1,1 @@
-var api = "http://" + window.location.host;
+var api = window.location.protocol + "//" + window.location.host;
