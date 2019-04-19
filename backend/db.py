@@ -40,6 +40,8 @@ def now():
 	return int(time.time())
 
 def filter_ascii(string):
+	if string == None:
+		string = ""
 	string = ''.join(char for char in string if ord(char) < 128 and ord(char) > 32 or char in "\r\n ")
 	return string
 
