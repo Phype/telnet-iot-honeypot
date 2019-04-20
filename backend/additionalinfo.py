@@ -12,7 +12,7 @@ def filter_ascii(string):
 
 def query_txt(cname):
 	try:
-		answer = dns.resolver.query(cname, "TXT")
+		answer = dns.resolver.query(filter_ascii(cname), "TXT")
 
 		for rr in answer.rrset:
 			if rr.strings: return rr.strings[0]
@@ -24,8 +24,8 @@ def query_txt(cname):
 
 def query_a(cname):
 	try:
-		answer = dns.resolver.query(cname, "A")
-		
+		answer = dns.resolver.query(filter_ascii(cname), "A")
+
 		for data in answer:
 			if data.address: return data.address
 	except:
@@ -36,7 +36,7 @@ def query_a(cname):
 
 def txt_to_ipinfo(txt):
 	parts = txt.split("|")
-	
+
 	return {
 		"asn":     filter_ascii(parts[0].strip()),
 		"ipblock": filter_ascii(parts[1].strip()),

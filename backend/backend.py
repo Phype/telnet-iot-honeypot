@@ -103,18 +103,21 @@ def test_login():
 @auth.login_required
 def put_conn():
 	session = request.json
-	session["backend_username"] = auth.username()	
-	
+	session["backend_username"] = auth.username()
+
+	print("--- PUT SESSION ---")
+	print(json.dumps(session))
+
 	session = ctrl.put_session(session)
 	socketio.emit('session', session)
-	
+
 	return json.dumps(session)
 
 @app.route("/sample/<sha256>", methods = ["PUT"])
 @auth.login_required
 def put_sample_info(sha256):
 	sample = request.json
-	
+
 	return json.dumps(ctrl.put_sample_info(sample))
 
 @app.route("/sample/<sha256>/update", methods = ["GET"])
@@ -326,7 +329,9 @@ def get_asn(asn):
 
 def run():
 	signal.signal(15, stop)
-	socketio.run(app, host=config.get("http_addr"), port=config.get("http_port"))
+
+	app.run(host=config.get("http_addr"), port=config.get("http_port"))
+	#socketio.run(app, host=config.get("http_addr"), port=config.get("http_port"))
 
 def stop():
 	print "asdasdasd"

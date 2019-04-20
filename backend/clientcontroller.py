@@ -308,22 +308,24 @@ class ClientController:
 		# NOTE: only conns with network == NULL will get their network updated
 		#       later so whe should only create a network where we cannot easily
 		#       change it later
-		if (len(conn.urls) > 0 or len(previous_conns) > 0) and network_id == None:
+		haslogin = conn.user != None and conn.user != ""
+		if (len(conn.urls) > 0 or len(previous_conns) > 0) and network_id == None and haslogin:
+			print(" --- create network --- ")
 			network_id = self.create_network().id
-		
+
 		# Update network on self
 		conn.network_id = network_id
-		
+
 		# Update network on all added Urls
 		for url in urls:
 			if url.network_id == None:
 				url.network_id = network_id
-				
+
 		# Update network on all added Samples
 		for sample in samples:
 			if sample.network_id == None:
 				sample.network_id = network_id
-		
+
 		# Update network on all previous connections withut one
 		if network_id != None:
 			for prev in previous_conns:
