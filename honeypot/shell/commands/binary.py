@@ -18,6 +18,7 @@ def run_binary(data, fname, args, env):
         
         sockaddr = data[pos:pos+8]
         sockaddr = struct.unpack(">HHBBBB", sockaddr)
+        pos += 8
         
         # Ignore ip addresses starting with 0 or > 224 (multicast)
         if (sockaddr[2] == 0 or sockaddr[2] >= 224):
@@ -26,7 +27,6 @@ def run_binary(data, fname, args, env):
         ip   = str(sockaddr[2]) + "." + str(sockaddr[3]) + "." + str(sockaddr[4]) + "." + str(sockaddr[5])
         port = sockaddr[1]
         tuples.append((ip, port))
-        pos += 8
 
     for addr in tuples:
         try:
