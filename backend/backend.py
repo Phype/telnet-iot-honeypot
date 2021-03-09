@@ -330,7 +330,7 @@ def get_asn(asn):
 def run():
 	signal.signal(15, stop)
 
-	app.run(host=config.get("http_addr"), port=config.get("http_port"))
+	app.run(host=config.get("http_addr"), port=config.get("http_port"),threaded=True)
 	#socketio.run(app, host=config.get("http_addr"), port=config.get("http_port"))
 
 def stop():
