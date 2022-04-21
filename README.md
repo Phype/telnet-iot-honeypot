@@ -1,6 +1,6 @@
 ## Disclaimer
 
-This project neither supported or in development anymore. It is based on python2 which has reached its EOL in 2020 and uses dependencies which keep getting harder to install over time. Use at your own risk! 
+This project neither supported or in development anymore. It is based on python2 which has reached its EOL in 2020 and uses dependencies which are getting harder to install over time. Use at your own risk! 
 
 # Telnet IoT honeypot
 
